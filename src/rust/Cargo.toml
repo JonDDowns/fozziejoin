@@ -1,0 +1,16 @@
+[package]
+name = 'fozziejoin'
+publish = false
+version = '0.1.0'
+edition = '2021'
+rust-version = '1.65'
+
+[lib]
+crate-type = [ 'staticlib' ]
+name = 'fozziejoin'
+
+[dependencies]
+extendr-api = '*'
+itertools = "0.14.0"
+rayon = "1.10.0"
+textdistance = "1.1.1"
