@@ -4,3 +4,4 @@
 - Inner join implemented for all string distance algorithms except LCS
 - Basic testing implemented
 - Project description updated
+- `fuzzy_join` API call updated to reflect future functionality for join types.

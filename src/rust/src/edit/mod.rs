@@ -1,7 +1,6 @@
 use crate::utils::sorted_unzip;
 use itertools::iproduct;
 use rayon::iter::*;
-use std::cmp::max;
 use std::collections::HashMap;
 use textdistance::str::{
     damerau_levenshtein, damerau_levenshtein_restricted, hamming, lcsstr, levenshtein,

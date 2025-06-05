@@ -59,5 +59,4 @@ NULL
 #' @export
 fozzie_join_rs <- function(df1, df2, by, method, how, q, max_distance) .Call(wrap__fozzie_join_rs, df1, df2, by, method, how, q, max_distance)
 
-
 # nolint end

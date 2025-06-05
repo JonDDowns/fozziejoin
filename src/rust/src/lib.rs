@@ -6,7 +6,7 @@ pub mod ngram;
 pub mod normalized;
 pub mod utils;
 
-use edit::{DamerauLevenshtein, EditDistance, Hamming, LCSStr, Levenshtein, OSA};
+use edit::{DamerauLevenshtein, EditDistance, Hamming, Levenshtein, OSA};
 use ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
 use normalized::{Jaro, JaroWinkler, NormalizedEditDistance};
 use utils::robj_index_map;
