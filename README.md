@@ -142,16 +142,17 @@ Basically everything.
     - [ ] Full join
     - [ ] Semi join
     - [ ] Anti join
-    - [ ] OSA
-- [ ] Distance Calculations
+- [X] Distance Calculations
     - [X] Levenshtein
-    - [ ] Damerau-Levenshtein
-    - [ ] Hamming
-    - [ ] Longest common substring distance (LCS).
-    - [ ] qgram	
-    - [ ] cosine
-    - [ ] Jaccard
-    - [ ] Jaro-Winkler
+    - [X] Damerau-Levenshtein
+    - [X] Hamming
+    - [X] Longest common substring distance (LCS).
+    - [X] qgram
+    - [X] cosine
+    - [X] Jaccard
+    - [X] Jaro-Winkler
+    - [X] Jaro
+    - [X] OSA
 - [ ] Quality of life
     - [ ] Allow for multi-column joins
     - [ ] Attach string distance output as a new column

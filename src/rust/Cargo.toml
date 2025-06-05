@@ -6,11 +6,11 @@ edition = '2021'
 rust-version = '1.65'
 
 [lib]
-crate-type = [ 'staticlib' ]
+crate-type = [ 'staticlib']
 name = 'fozziejoin'
 
 [dependencies]
-extendr-api = '*'
+extendr-api = "0.8.0"
 itertools = "0.14.0"
 rayon = "1.10.0"
 textdistance = "1.1.1"

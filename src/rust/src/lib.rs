@@ -1,142 +1,116 @@
 use extendr_api::prelude::*;
-use itertools::iproduct;
-use rayon::prelude::*;
-use std::cmp::max;
 use std::collections::HashMap;
-use textdistance::str::levenshtein;
+
+pub mod edit;
+pub mod ngram;
+pub mod normalized;
+pub mod utils;
+
+use edit::{DamerauLevenshtein, EditDistance, Hamming, LCSStr, Levenshtein, OSA};
+use ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
+use normalized::{Jaro, JaroWinkler, NormalizedEditDistance};
+use utils::robj_index_map;
 
 /// Performs a fuzzy join between two data frames based on approximate string matching.
 ///
-/// This function matches records in `df1` and `df2` using a specified column, allowing
-/// matches within a given Levenshtein distance (`max_distance`). It builds index maps
-/// for efficient lookup and comparison.
+/// This function matches records in `df1` and `df2` using specified column names, allowing
+/// matches within a given distance threshold using various fuzzy matching methods.
+/// It constructs index maps for efficient lookups and comparisons, ensuring minimal
+/// redundant calculations.
 ///
 /// # Parameters
 ///
-/// - `df1` (`List`): The first data frame. Note dataframes are a list of equal-length vectors.
+/// - `df1` (`List`): The first data frame (R List format), containing named vectors.
 /// - `df2` (`List`): The second data frame.
-/// - `by` (`Vec<String>`): A vector containing column names to join on.
-///   - `by[0]`: Column name in `df1`.
-///   - `by[1]`: Column name in `df2`.
-/// - `max_distance` (`i32`): The maximum allowable Levenshtein distance for a match.
+/// - `by` (`HashMap<String, String>`): A mapping of column names specifying join keys:
+///   - The key represents the column name in `df1`.
+///   - The value represents the corresponding column name in `df2`.
+/// - `method` (`String`): The fuzzy matching method to use. Supported methods:
+///   - `"osa"` - Optimal string alignment distance.
+///   - `"levenshtein"` or `"lv"` - Standard Levenshtein edit distance.
+///   - `"damerau_levensthein"` or `"dl"` - Damerau-Levenshtein edit distance.
+///   - `"hamming"` - Hamming distance (only works for equal-length strings).
+///   - `"lcs"` - Longest common subsequence similarity.
+///   - `"qgram"` - Q-gram comparison (requires `q` value).
+///   - `"cosine"` - Cosine similarity (requires `q` value).
+///   - `"jaccard"` - Jaccard similarity (requires `q` value).
+///   - `"jaro_winkler"` or `"jw"` - Jaro-Winkler similarity.
+///   - `"jaro"` - Standard Jaro similarity.
+/// - `q` (`Option<i32>`): The *q*-gram size (required for `"qgram"`, `"cosine"`, and `"jaccard"` methods).
+/// - `max_distance` (`f64`): Maximum allowable distance for a match.
 ///
 /// # Returns
 ///
-/// - `Robj`: A data frame containing matched records from both `df1` and `df2`,
+/// - `Robj`: A data frame containing matched records from `df1` and `df2`,
 ///   with column names suffixed as `.x` (from `df1`) and `.y` (from `df2`).
-///
-/// # Example
-///
-/// ```rust
-/// use extendr_api::prelude::*;
-///
-/// fn main() {
-///     let df1 = List::from_values(vec![
-///         ("name".to_string(), Robj::from(vec!["apple", "banana", "cherry"]))
-///     ]);
-///
-///     let df2 = List::from_values(vec![
-///         ("name".to_string(), Robj::from(vec!["appl", "bananna", "berry"]))
-///     ]);
-///
-///     let result = fuzzy_join(df1, df2, vec!["name".to_string(), "name".to_string()], 2);
-///     println!("{:?}", result);
-/// }
-/// ```
 ///
 /// # Notes
 ///
-/// - This function leverages **parallel iteration** (`par_iter()`) for performance optimization.
-/// - Ensures minimal redundant comparisons by only comparing unique values.
-/// - Only compares strings whose difference in length is within the user-specified max distance.
-/// - The resulting data frame maintains column alignment while allowing fuzzy matching.
+/// - Uses **parallel iteration** (`par_iter()`) for efficient comparisons.
+/// - Only evaluates string pairs where the difference in length is within `max_distance`.
+/// - Minimizes redundant checks by using **indexed maps** instead of naive pairwise comparisons.
+/// - Ensures column alignment while supporting fuzzy matching.
 ///
 /// # See Also
 ///
-/// - [`levenshtein`](https://docs.rs/levenshtein/latest/levenshtein/) - Used for calculating string distances.
-/// - [`extendr`](https://extendr.github.io/) - Enables Rust to interface with R.
+/// - [`levenshtein`](https://docs.rs/levenshtein/latest/levenshtein/) - Computes edit distances.
+/// - [`extendr`](https://extendr.github.io/) - Enables Rust interoperability with R.
 /// - [`data_frame!`](https://extendr.github.io/) - Constructs an R-compatible data frame.
 ///
 /// @export
 #[extendr]
-fn fozzie_join(df1: List, df2: List, by: Vec<String>, max_distance: i32) -> Robj {
-    let md = max_distance as usize;
-
+pub fn fozzie_join_rs(
+    df1: List,
+    df2: List,
+    by: HashMap<String, String>,
+    method: String,
+    how: String,
+    q: Option<i32>,
+    max_distance: f64,
+) -> Robj {
     // It's not uncommon to have the same string listed many times
     // Keep a list of indices for each string so comps only happen once
+    let keys: Vec<(&str, &str)> = by.iter().map(|(a, b)| (a.as_str(), b.as_str())).collect();
 
     // Left-hand side
-    let mut map1: HashMap<&str, Vec<usize>> = HashMap::new();
-    df1.dollar(&by[0])
-        .unwrap()
-        .as_str_iter()
-        .unwrap()
-        .enumerate()
-        .for_each(|(index, val)| {
-            map1.entry(val)
-                .and_modify(|v| v.push(index + 1))
-                .or_insert(vec![index + 1]);
-        });
+    let map1 = robj_index_map(&df1, &keys[0].0);
+    let map2 = robj_index_map(&df2, &keys[0].1);
 
-    // Right-hand side
-    let mut map2: HashMap<&str, Vec<usize>> = HashMap::new();
-    df2.dollar(&by[1])
-        .unwrap()
-        .as_str_iter()
-        .unwrap()
-        .enumerate()
-        .for_each(|(index, val)| {
-            map2.entry(val)
-                .and_modify(|v| v.push(&index + 1))
-                .or_insert(vec![index + 1]);
-        });
-
-    // We don't need to check any strings where lengths differ by more than max
-    // For RHS, keep a map of lengths of all strings
-    // We use this later to subset the columns we compare in each set
-    let mut length_hm: HashMap<usize, Vec<&str>> = HashMap::new();
-    for key in map2.keys() {
-        let key_len = key.len();
-        length_hm.entry(key_len).or_insert(Vec::new()).push(key);
-    }
-
-    // Begin generation of all matched indices
-    let (idx1, idx2): (Vec<usize>, Vec<usize>) = map1
-        .par_iter()
-        .filter_map(|(k1, v1)| {
-            // Get range of lengths within max distance of current
-            let k1_len = k1.len();
-            let start_len = max(k1_len - md, 0);
-            let end_len = k1_len + md + 1;
-
-            // Start a list to collect results
-            let mut idxs: Vec<(usize, usize)> = Vec::new();
-
-            // Begin making string comparisons
-            for i in start_len..end_len {
-                if let Some(lookup) = length_hm.get(&i) {
-                    lookup.iter().for_each(|k2| {
-                        let v2 = map2.get(k2).unwrap();
-
-                        // Run comparison, return idxs if match
-                        if k1 == k2 || levenshtein(&k1, &k2) <= md {
-                            iproduct!(v1, v2).for_each(|(v1, v2)| {
-                                idxs.push((*v1, *v2));
-                            });
-                        }
-                    });
-                }
-            }
-
-            // Return all matches, if any found
-            if idxs.is_empty() {
-                return None;
+    // Generate all matched indices
+    // For qgrams, we need to extract the value (which could be null)
+    let (idx1, idx2) = match method.as_str() {
+        "osa" => OSA.fuzzy_indices(map1, map2, max_distance as usize),
+        "levenshtein" | "lv" => Levenshtein.fuzzy_indices(map1, map2, max_distance as usize),
+        "damerau_levensthein" | "dl" => {
+            DamerauLevenshtein.fuzzy_indices(map1, map2, max_distance as usize)
+        }
+        "hamming" => Hamming.fuzzy_indices(map1, map2, max_distance as usize),
+        "lcs" => LCSStr.fuzzy_indices(map1, map2, max_distance as usize),
+        "qgram" => {
+            if let Some(qz) = q {
+                QGram.fuzzy_indices(map1, map2, max_distance, qz as usize)
             } else {
-                return Some(idxs);
+                panic!("Must provide q for method {}", method);
             }
-        })
-        .flatten()
-        .unzip();
+        }
+        "cosine" => {
+            if let Some(qz) = q {
+                Cosine.fuzzy_indices(map1, map2, max_distance, qz as usize)
+            } else {
+                panic!("Must provide q for method {}", method);
+            }
+        }
+        "jaccard" => {
+            if let Some(qz) = q {
+                Jaccard.fuzzy_indices(map1, map2, max_distance, qz as usize)
+            } else {
+                panic!("Must provide q for method {}", method);
+            }
+        }
+        "jaro_winkler" | "jw" => JaroWinkler.fuzzy_indices(map1, map2, max_distance),
+        "jaro" => Jaro.fuzzy_indices(map1, map2, max_distance),
+        _ => panic!("Ruhroh"),
+    };
 
     // Generate vectors of column names and R objects
     let num_cols: usize = df1.ncols() + df2.ncols();
@@ -168,5 +142,6 @@ fn fozzie_join(df1: List, df2: List, by: Vec<String>, max_distance: i32) -> Robj
 // Export the function to R
 extendr_module! {
     mod fozziejoin;
-    fn fozzie_join;
+    fn fozzie_join_rs;
+}
 }

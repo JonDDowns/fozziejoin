@@ -12,58 +12,52 @@ NULL
 
 #' Performs a fuzzy join between two data frames based on approximate string matching.
 #'
-#' This function matches records in `df1` and `df2` using a specified column, allowing
-#' matches within a given Levenshtein distance (`max_distance`). It builds index maps
-#' for efficient lookup and comparison.
+#' This function matches records in `df1` and `df2` using specified column names, allowing
+#' matches within a given distance threshold using various fuzzy matching methods.
+#' It constructs index maps for efficient lookups and comparisons, ensuring minimal
+#' redundant calculations.
 #'
 #' # Parameters
 #'
-#' - `df1` (`List`): The first data frame. Note dataframes are a list of equal-length vectors.
+#' - `df1` (`List`): The first data frame (R List format), containing named vectors.
 #' - `df2` (`List`): The second data frame.
-#' - `by` (`Vec<String>`): A vector containing column names to join on.
-#'   - `by[0]`: Column name in `df1`.
-#'   - `by[1]`: Column name in `df2`.
-#' - `max_distance` (`i32`): The maximum allowable Levenshtein distance for a match.
+#' - `by` (`HashMap<String, String>`): A mapping of column names specifying join keys:
+#'   - The key represents the column name in `df1`.
+#'   - The value represents the corresponding column name in `df2`.
+#' - `method` (`String`): The fuzzy matching method to use. Supported methods:
+#'   - `"osa"` - Optimal string alignment distance.
+#'   - `"levenshtein"` or `"lv"` - Standard Levenshtein edit distance.
+#'   - `"damerau_levensthein"` or `"dl"` - Damerau-Levenshtein edit distance.
+#'   - `"hamming"` - Hamming distance (only works for equal-length strings).
+#'   - `"lcs"` - Longest common subsequence similarity.
+#'   - `"qgram"` - Q-gram comparison (requires `q` value).
+#'   - `"cosine"` - Cosine similarity (requires `q` value).
+#'   - `"jaccard"` - Jaccard similarity (requires `q` value).
+#'   - `"jaro_winkler"` or `"jw"` - Jaro-Winkler similarity.
+#'   - `"jaro"` - Standard Jaro similarity.
+#' - `q` (`Option<i32>`): The *q*-gram size (required for `"qgram"`, `"cosine"`, and `"jaccard"` methods).
+#' - `max_distance` (`f64`): Maximum allowable distance for a match.
 #'
 #' # Returns
 #'
-#' - `Robj`: A data frame containing matched records from both `df1` and `df2`,
+#' - `Robj`: A data frame containing matched records from `df1` and `df2`,
 #'   with column names suffixed as `.x` (from `df1`) and `.y` (from `df2`).
-#'
-#' # Example
-#'
-#' ```rust
-#' use extendr_api::prelude::*;
-#'
-#' fn main() {
-#'     let df1 = List::from_values(vec![
-#'         ("name".to_string(), Robj::from(vec!["apple", "banana", "cherry"]))
-#'     ]);
-#'
-#'     let df2 = List::from_values(vec![
-#'         ("name".to_string(), Robj::from(vec!["appl", "bananna", "berry"]))
-#'     ]);
-#'
-#'     let result = fuzzy_join(df1, df2, vec!["name".to_string(), "name".to_string()], 2);
-#'     println!("{:?}", result);
-#' }
-#' ```
 #'
 #' # Notes
 #'
-#' - This function leverages **parallel iteration** (`par_iter()`) for performance optimization.
-#' - Ensures minimal redundant comparisons by only comparing unique values.
-#' - Only compares strings whose difference in length is within the user-specified max distance.
-#' - The resulting data frame maintains column alignment while allowing fuzzy matching.
+#' - Uses **parallel iteration** (`par_iter()`) for efficient comparisons.
+#' - Only evaluates string pairs where the difference in length is within `max_distance`.
+#' - Minimizes redundant checks by using **indexed maps** instead of naive pairwise comparisons.
+#' - Ensures column alignment while supporting fuzzy matching.
 #'
 #' # See Also
 #'
-#' - [`levenshtein`](https://docs.rs/levenshtein/latest/levenshtein/) - Used for calculating string distances.
-#' - [`extendr`](https://extendr.github.io/) - Enables Rust to interface with R.
+#' - [`levenshtein`](https://docs.rs/levenshtein/latest/levenshtein/) - Computes edit distances.
+#' - [`extendr`](https://extendr.github.io/) - Enables Rust interoperability with R.
 #' - [`data_frame!`](https://extendr.github.io/) - Constructs an R-compatible data frame.
 #'
 #' @export
-fozzie_join <- function(df1, df2, by, max_distance) .Call(wrap__fozzie_join, df1, df2, by, max_distance)
+fozzie_join_rs <- function(df1, df2, by, method, q, max_distance) .Call(wrap__fozzie_join_rs, df1, df2, by, method, q, max_distance)
 
 
 # nolint end
