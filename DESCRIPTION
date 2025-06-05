@@ -1,11 +1,11 @@
 Package: fozziejoin
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: Performant data frame joins with inexact string matching
+Version: 0.0.1
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+    person("Jon", "Downs", , "jon@jondowns.net", role = c("aut", "cre"))
+Description: Dataframes can be joined based on inexact matching using 
+	Levenshtein edit distance and similar algorithms.
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
