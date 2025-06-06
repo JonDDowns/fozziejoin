@@ -2,11 +2,13 @@ use extendr_api::prelude::*;
 use std::collections::HashMap;
 
 pub mod edit;
+pub mod merge;
 pub mod ngram;
 pub mod normalized;
 pub mod utils;
 
 use edit::{DamerauLevenshtein, EditDistance, Hamming, Levenshtein, OSA};
+use merge::Merge;
 use ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
 use normalized::{Jaro, JaroWinkler, NormalizedEditDistance};
 use utils::robj_index_map;
@@ -71,6 +73,7 @@ pub fn fozzie_join_rs(
     // Check for type of join requested
     match how.as_str() {
         "inner" => (),
+        "left" => (),
         _ => panic!("{how} is not currently a supported join type."),
     }
 
@@ -78,12 +81,12 @@ pub fn fozzie_join_rs(
     // Keep a list of indices for each string so comps only happen once
     let keys: Vec<(&str, &str)> = by.iter().map(|(a, b)| (a.as_str(), b.as_str())).collect();
 
-    // Left-hand side
+    // Convert the join key into a hashmap (string + vec occurrence indices)
     let map1 = robj_index_map(&df1, &keys[0].0);
     let map2 = robj_index_map(&df2, &keys[0].1);
 
     // Generate all matched indices
-    // For qgrams, we need to extract the value (which could be null)
+    // For metrics requiring qgrams, check whether a Q was supplied
     let (idx1, idx2) = match method.as_str() {
         "osa" => OSA.fuzzy_indices(map1, map2, max_distance as usize),
         "levenshtein" | "lv" => Levenshtein.fuzzy_indices(map1, map2, max_distance as usize),
@@ -115,34 +118,15 @@ pub fn fozzie_join_rs(
         }
         "jaro_winkler" | "jw" => JaroWinkler.fuzzy_indices(map1, map2, max_distance),
         "jaro" => Jaro.fuzzy_indices(map1, map2, max_distance),
-        _ => panic!("Ruhroh"),
+        _ => panic!("The join method {how} is not available."),
     };
 
-    // Generate vectors of column names and R objects
-    let num_cols: usize = df1.ncols() + df2.ncols();
-    let mut names: Vec<String> = Vec::with_capacity(num_cols);
-    let mut combined: Vec<Robj> = Vec::with_capacity(num_cols);
-
-    // Subset to matched records in left-hand side, push to main list
-    for (name, col1) in df1.iter() {
-        let vals = col1.slice(&idx1).unwrap();
-        names.push(name.to_string() + ".x");
-        combined.push(vals);
-    }
-
-    // Subset to matched records in right-hand side, push to main list
-    for (name, col2) in df2.iter() {
-        let vals = col2.slice(&idx2).unwrap();
-        names.push(name.to_string() + ".y");
-        combined.push(vals);
-    }
-
-    // Final type conversions and output
-    let out: Robj = List::from_names_and_values(names, combined)
-        .unwrap()
-        .as_robj()
-        .clone();
-    data_frame!(out)
+    let out = match how.as_str() {
+        "left" => Merge::left(&df1, &df2, idx1, idx2),
+        "inner" => Merge::inner(&df1, &df2, idx1, idx2),
+        _ => panic!("Join type not supported"),
+    };
+    out
 }
 
 // Export the function to R

@@ -8,26 +8,19 @@ impl QGramDistance for QGram {
         let qgrams_s1 = get_qgrams(s1, q);
         let qgrams_s2 = get_qgrams(s2, q);
 
-        let mut dot_product = 0;
-        let mut norm_s1 = 0;
-        let mut norm_s2 = 0;
+        let mut mismatch_count = 0;
 
         for (qgram, &count1) in &qgrams_s1 {
-            if let Some(&count2) = qgrams_s2.get(qgram) {
-                dot_product += count1 * count2;
+            let count2 = qgrams_s2.get(qgram).unwrap_or(&0);
+            mismatch_count += (count1 as i32 - *count2 as i32).abs();
+        }
+
+        for (qgram, &count2) in &qgrams_s2 {
+            if !qgrams_s1.contains_key(qgram) {
+                mismatch_count += count2 as i32;
             }
-            norm_s1 += count1 * count1;
         }
 
-        for &count2 in qgrams_s2.values() {
-            norm_s2 += count2 * count2;
-        }
-
-        if norm_s1 == 0 || norm_s2 == 0 {
-            return 1.0; // Maximum distance if no similarity
-        }
-
-        let similarity = dot_product as f64 / (norm_s1 as f64).sqrt() / (norm_s2 as f64).sqrt();
-        1.0 - similarity // Convert similarity to edit distance
+        mismatch_count as f64
     }
 }

@@ -1,7 +1,6 @@
 # fozziejoin: Performant data frame joins with inexact matching
 
-[NOTE]: This project is in very early development and for demonstration purposes only.
-The main achievement to date is proving a performance gain in a single use case versus the `stringdist_inner_join` function in `fuzzyjoin`.
+[NOTE]: This project is in very early development. It currently depends on the Rust toolchain. APIs may change in the future.
 
 The `fozziejoin` package uses Rust to perform R dataframe joins based on string distance metrics.
 It is intended to be a high-performance alternative to `stringdist_inner_join` and similar functions from the [fuzzyjoin package](https://github.com/dgrtwo/fuzzyjoin).
@@ -20,7 +19,7 @@ Wocka wocka!
 
 ## Getting started
 
-All code was written and tested on R 4.5.0 (x86-64-pc-linux-gnu platform) and Rust 1.65. 
+Code has been written on a combination of Windows (R 4.3.2, x86_64-w64-mingw32/64) and Linux (R 4.5.0, x86-64-pc-linux-gnu platform) and Rust 1.65. 
 
 ### Pre-requisites
 
@@ -43,7 +42,7 @@ git clone https://github.com/JonDDowns/fozziejoin
 cd ./fozziejoin
 ```
 
-Then, use `devtools` to install the package.
+Then, use `devtools` to install the package. Note that this requires the Rust toolchain and `cargo` to run properly.
 
 ```{R}
 devtools::install()
@@ -131,31 +130,35 @@ print(paste(
 #> [1] "Number of records in fozziejoin but not in fuzzyjoin: 0"
 ```
 
-## TODO
+## Known behvavior changes to `fuzzyjoin`
 
-Basically everything.
+- Matching on columns with `NA` would fail in `fuzzyjoin` but simply do not match in `fozziejoin`
+
+
+## TODO
 
 - [ ] Join Types
     - [X] Inner join
-    - [ ] Left join
+    - [X] Left join
     - [ ] Right join
     - [ ] Full join
-    - [ ] Semi join
     - [ ] Anti join
-- [X] Distance Calculations
+- [O] Distance Calculations
     - [X] Levenshtein
     - [X] Damerau-Levenshtein
     - [X] Hamming
-    - [X] Longest common substring distance (LCS).
+    - [ ] Longest common substring distance (LCS, current implementation incorrect and not user-accessible)
     - [X] qgram
     - [X] cosine
     - [X] Jaccard
-    - [X] Jaro-Winkler
+    - [O] Jaro-Winkler [partial: need to add toggles for p and bt]
     - [X] Jaro
     - [X] OSA
 - [ ] Quality of life
     - [ ] Allow for multi-column joins
-    - [ ] Attach string distance output as a new column
+    - [ ] Attach string distance output as column
     - [ ] Ignore case
+- [ ] Install from binary for Windows?
+- [ ] Benchmark of all methods?
 - [ ] CRAN distribution
 

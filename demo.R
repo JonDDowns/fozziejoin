@@ -1,11 +1,5 @@
 library(dplyr)
 library(fuzzyjoin)
-
-refresh <- TRUE
-if (refresh) {
-	#rextendr::document()
-	devtools::install()
-}
 library(fozziejoin)
 
 # Load misspelling data
@@ -15,8 +9,8 @@ set.seed(2016)
 sub_misspellings <- misspellings %>%
 	sample_n(100)
 
-method <- 'jaccard'
-max_dist <- 0.9
+method <- 'lv'
+max_dist <- 2
 q <- 3
 
 # Use the dictionary of words from the qdapDictionaries package,
@@ -32,8 +26,6 @@ timing_result <- microbenchmark::microbenchmark(
 			by = c(misspelling = "word"),
 			max_dist=max_dist,
 			method=method,
-			q=q,
-			distance_col = "dist"
 	),
 	fozzie = fozzie <- fozzie_join(
 		sub_misspellings,
@@ -41,9 +33,9 @@ timing_result <- microbenchmark::microbenchmark(
 		by = list('misspelling' = 'word'),
 		max_distance=max_dist,
 		method = method,
-		q=q
+		how="inner",
 	),
-	times=1
+	times=5
 )
 print(timing_result)
 
@@ -57,7 +49,7 @@ comp_cols <- c(
 	'word' = 'word.y',
 	'syllables' = 'syllables.y'
 )
-only_in_fuzzy <- dplyr::anti_join(joined, fozzie, by=comp_cols)
+only_in_fuzzy <- dplyr::anti_join(joined, fozzie, by=comp_cols, na_matches="na")
 print(paste(
 	"Number of records in fuzzyjoin but not in fozziejoin:",
 	nrow(only_in_fuzzy)
@@ -67,7 +59,7 @@ print(only_in_fuzzy)
 # Check for fozziejoin records not in fuzzyjoin
 # Swap names and values
 swapped_cols <- setNames(names(comp_cols), comp_cols)
-only_in_fozzie <- dplyr::anti_join(fozzie, joined, by=swapped_cols)
+only_in_fozzie <- dplyr::anti_join(as_tibble(fozzie), joined, by=swapped_cols)
 print(paste(
 	"Number of records in fuzzyjoin but not in fozziejoin:",
 	nrow(only_in_fozzie)

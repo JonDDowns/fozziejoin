@@ -58,6 +58,6 @@ impl NormalizedEditDistance for JaroWinkler {
 pub struct Jaro;
 impl NormalizedEditDistance for Jaro {
     fn compute(&self, s1: &str, s2: &str) -> f64 {
-        jaro(s1, s2)
+        1.0 - jaro(s1, s2)
     }
 }
