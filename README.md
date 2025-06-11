@@ -164,7 +164,7 @@ print(paste(
     - [X] OSA
 - [ ] Quality of life
     - [ ] Allow for multi-column joins
-    - [ ] Attach string distance output as column (similar to `distance_col` param in `fuzzyjoin`)
+    - [X] Attach string distance output as column (similar to `distance_col` param in `fuzzyjoin`)
     - [ ] Ignore case for strings
     - [ ] Add parameter to toggle number of threads
 - [ ] Install from binary for Windows?
