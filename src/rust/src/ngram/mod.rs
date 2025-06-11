@@ -1,4 +1,5 @@
-use crate::utils::sorted_unzip;
+use crate::utils::sort_unzip_triplet;
+use extendr_api::prelude::*;
 use itertools::iproduct;
 use rayon::prelude::*;
 use std::collections::HashMap;
@@ -16,20 +17,27 @@ pub trait QGramDistance: Send + Sync {
         map2: HashMap<&str, Vec<usize>>,
         max_distance: f64,
         q: usize,
-    ) -> (Vec<usize>, Vec<usize>) {
-        let idxs: Vec<(usize, usize)> = map1
+    ) -> (Vec<usize>, Vec<usize>, Vec<Option<f64>>) {
+        let idxs: Vec<(usize, usize, Option<f64>)> = map1
             .par_iter()
             .filter_map(|(k1, v1)| {
-                let mut idxs: Vec<(usize, usize)> = Vec::new();
+                if k1.is_na() {
+                    return None;
+                }
+
+                let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
 
                 for (k2, v2) in map2.iter() {
+                    if k2.is_na() {
+                        continue;
+                    }
                     if k2.len() < q {
                         continue;
                     }
 
                     if k1 == k2 {
                         iproduct!(v1, v2).for_each(|(v1, v2)| {
-                            idxs.push((*v1, *v2));
+                            idxs.push((*v1, *v2, Some(0.)));
                         });
                         continue;
                     }
@@ -38,7 +46,7 @@ pub trait QGramDistance: Send + Sync {
 
                     if dist <= max_distance {
                         iproduct!(v1, v2).for_each(|(a, b)| {
-                            idxs.push((*a, *b));
+                            idxs.push((*a, *b, Some(dist)));
                         });
                     }
                 }
@@ -51,7 +59,7 @@ pub trait QGramDistance: Send + Sync {
             })
             .flatten()
             .collect();
-        sorted_unzip(idxs)
+        sort_unzip_triplet(idxs)
     }
 }
 

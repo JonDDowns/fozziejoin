@@ -1,4 +1,5 @@
-use crate::utils::sorted_unzip;
+use crate::utils::sort_unzip_triplet;
+use extendr_api::prelude::*;
 use itertools::iproduct;
 use rayon::prelude::*;
 use std::collections::HashMap;
@@ -6,22 +7,29 @@ use textdistance::str::{jaro, jaro_winkler};
 
 pub trait NormalizedEditDistance: Send + Sync {
     fn compute(&self, s1: &str, s2: &str) -> f64;
-
     fn fuzzy_indices(
         &self,
         map1: HashMap<&str, Vec<usize>>,
         map2: HashMap<&str, Vec<usize>>,
         max_distance: f64,
-    ) -> (Vec<usize>, Vec<usize>) {
-        let idxs: Vec<(usize, usize)> = map1
+    ) -> (Vec<usize>, Vec<usize>, Vec<Option<f64>>) {
+        let idxs: Vec<(usize, usize, Option<f64>)> = map1
             .par_iter()
             .filter_map(|(k1, v1)| {
-                let mut idxs: Vec<(usize, usize)> = Vec::new();
+                // If NA value, can skip all further checks
+                if k1.is_na() {
+                    return None;
+                }
+                let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
 
                 for (k2, v2) in map2.iter() {
+                    // If comparison is NA string, skip
+                    if k2.is_na() {
+                        continue;
+                    }
                     if k1 == k2 {
                         iproduct!(v1, v2).for_each(|(v1, v2)| {
-                            idxs.push((*v1, *v2));
+                            idxs.push((*v1, *v2, Some(0.)));
                         });
                         continue;
                     }
@@ -30,7 +38,7 @@ pub trait NormalizedEditDistance: Send + Sync {
 
                     if dist <= max_distance {
                         iproduct!(v1, v2).for_each(|(a, b)| {
-                            idxs.push((*a, *b));
+                            idxs.push((*a, *b, Some(dist)));
                         });
                     }
                 }
@@ -44,7 +52,7 @@ pub trait NormalizedEditDistance: Send + Sync {
             .flatten()
             .collect();
 
-        sorted_unzip(idxs)
+        sort_unzip_triplet(idxs)
     }
 }
 

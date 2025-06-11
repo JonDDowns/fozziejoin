@@ -1,4 +1,5 @@
-use crate::utils::sorted_unzip;
+use crate::utils::sort_unzip_triplet;
+use extendr_api::prelude::*;
 use itertools::iproduct;
 use rayon::iter::*;
 use std::collections::HashMap;
@@ -14,8 +15,9 @@ pub trait EditDistance: Send + Sync {
         &self,
         map1: HashMap<&str, Vec<usize>>,
         map2: HashMap<&str, Vec<usize>>,
-        max_distance: usize,
-    ) -> (Vec<usize>, Vec<usize>) {
+        max_distance: f64,
+    ) -> (Vec<usize>, Vec<usize>, Vec<Option<f64>>) {
+        let md = max_distance as usize;
         // We don't need to check any strings where lengths differ by more than max
         // For RHS, keep a map of lengths of all strings
         // We use this later to subset the columns we compare in each set
@@ -26,37 +28,46 @@ pub trait EditDistance: Send + Sync {
         }
 
         // Begin generation of all matched indices
-        let idxs: Vec<(usize, usize)> = map1
+        let idxs: Vec<(usize, usize, Option<f64>)> = map1
             .par_iter()
             .filter_map(|(k1, v1)| {
+                // Skip all comparisons if string is NA
+                if k1.is_na() {
+                    return None;
+                }
+
                 // Get range of lengths within max distance of current
                 let k1_len = k1.len();
-                let start_len = k1_len.saturating_sub(max_distance);
-                let end_len = k1_len + max_distance + 1;
+                let start_len = k1_len.saturating_sub(md);
+                let end_len = k1_len + md + 1;
 
                 // Start a list to collect results
-                let mut idxs: Vec<(usize, usize)> = Vec::new();
+                let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
 
                 // Begin making string comparisons
                 for i in start_len..end_len {
                     if let Some(lookup) = length_hm.get(&i) {
                         lookup.iter().for_each(|k2| {
+                            // Skip this iter if RHS is NA
+                            if k2.is_na() {
+                                return;
+                            }
                             let v2 = map2.get(k2).unwrap();
 
                             // No need to run distance functions if exactly the same
                             if k1 == k2 {
                                 iproduct!(v1, v2).for_each(|(v1, v2)| {
-                                    idxs.push((*v1, *v2));
+                                    idxs.push((*v1, *v2, Some(0.)));
                                 });
                                 return;
                             }
 
-                            let dist = self.compute(&k1, &k2);
+                            let dist = self.compute(&k1, &k2) as f64;
 
                             // Check vs. threshold
                             if dist <= max_distance {
                                 iproduct!(v1, v2).for_each(|(v1, v2)| {
-                                    idxs.push((*v1, *v2));
+                                    idxs.push((*v1, *v2, Some(dist)));
                                 });
                                 return;
                             }
@@ -74,7 +85,7 @@ pub trait EditDistance: Send + Sync {
             .flatten()
             .collect();
 
-        sorted_unzip(idxs)
+        sort_unzip_triplet(idxs)
     }
 }
 

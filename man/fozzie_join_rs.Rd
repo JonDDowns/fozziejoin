@@ -4,7 +4,7 @@
 \alias{fozzie_join_rs}
 \title{Performs a fuzzy join between two data frames based on approximate string matching.}
 \usage{
-fozzie_join_rs(df1, df2, by, method, how, q, max_distance)
+fozzie_join_rs(df1, df2, by, method, how, max_distance, distance_col, q, p, bt)
 }
 \description{
 This function matches records in \code{df1} and \code{df2} using specified column names, allowing

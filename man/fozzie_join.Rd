@@ -10,8 +10,11 @@ fozzie_join(
   by,
   method = "levenshtein",
   how = "inner",
+  max_distance = 1,
+  distance_col = NULL,
   q = NULL,
-  max_distance = 1
+  p = 4,
+  bt = 0.1
 )
 }
 \arguments{
@@ -39,10 +42,10 @@ fozzie_join(
 \item \code{"jaro"} - Standard Jaro similarity.
 }}
 
+\item{max_distance}{Numeric value specifying the maximum allowable edit distance for a match.}
+
 \item{q}{Integer specifying the \emph{q}-gram size (only required for \code{"qgram"}, \code{"cosine"}, and \code{"jaccard"} methods).
 If \code{NULL}, an error will be raised for these methods.}
-
-\item{max_distance}{Numeric value specifying the maximum allowable edit distance for a match.}
 }
 \value{
 A data frame containing matched records from \code{df1} and \code{df2},

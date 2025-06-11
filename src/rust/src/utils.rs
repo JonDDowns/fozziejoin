@@ -52,11 +52,22 @@ pub fn robj_index_map<'a>(df: &'a List, key: &'a str) -> HashMap<&'a str, Vec<us
 /// assert_eq!(sorted_idx1, vec![1, 1, 2]);
 /// assert_eq!(sorted_idx2, vec![3, 4, 4]);
 /// ```
-pub fn sorted_unzip(mut pairs: Vec<(usize, usize)>) -> (Vec<usize>, Vec<usize>) {
-    // Parallel sort using `rayon`
-    pairs.par_sort_unstable_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
+pub fn sort_unzip_triplet(
+    mut items: Vec<(usize, usize, Option<f64>)>,
+) -> (Vec<usize>, Vec<usize>, Vec<Option<f64>>) {
+    items.par_sort_unstable_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
 
-    // Unzip sorted pairs into two separate vectors
-    let (idx1_sorted, idx2_sorted): (Vec<usize>, Vec<usize>) = pairs.into_iter().unzip();
-    (idx1_sorted, idx2_sorted)
+    // Initialize three separate vectors
+    let mut idx1_sorted = Vec::with_capacity(items.len());
+    let mut idx2_sorted = Vec::with_capacity(items.len());
+    let mut dist_sorted = Vec::with_capacity(items.len());
+
+    // Manually iterate over pairs and push values into vectors
+    for (i1, i2, dist) in items {
+        idx1_sorted.push(i1);
+        idx2_sorted.push(i2);
+        dist_sorted.push(dist);
+    }
+
+    (idx1_sorted, idx2_sorted, dist_sorted) // Return all three vectors
 }

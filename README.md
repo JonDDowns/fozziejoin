@@ -19,7 +19,8 @@ Wocka wocka!
 
 ## Getting started
 
-Code has been written on a combination of Windows (R 4.3.2, x86_64-w64-mingw32/64) and Linux (R 4.5.0, x86-64-pc-linux-gnu platform) and Rust 1.65. 
+Code has been written on a combination of Windows (R 4.3.2, x86_64-w64-mingw32/64) and Linux (R 4.5.0, x86-64-pc-linux-gnu platform).
+All builds to date are done using Rust 1.65. 
 
 ### Pre-requisites
 
@@ -42,13 +43,14 @@ git clone https://github.com/JonDDowns/fozziejoin
 cd ./fozziejoin
 ```
 
-Then, use `devtools` to install the package. Note that this requires the Rust toolchain and `cargo` to run properly.
+Then, use `devtools` to install the package.
+Note that this requires the Rust toolchain and `cargo` to run properly.
 
 ```{R}
 devtools::install()
 ```
 
-Alternatively, use `devtools::load_all()` to laod the package in development mode.
+Alternatively, use `devtools::load_all()` to load the package in development mode.
 
 ### Run benchmarks vs. `fuzzyjoin`
 
@@ -59,7 +61,6 @@ To run in a a reasonable amount of time, we take a random sample of 1000.
 ```{r}
 library(dplyr)
 library(fuzzyjoin)
-library(qdapDictionaries)
 library(fozziejoin)
 
 # Load misspelling data
@@ -71,7 +72,7 @@ sub_misspellings <- misspellings %>%
   sample_n(1000)
 ```
 
-Next, we load a dictionary of words from the qdapDictionaries package.
+Next, we load a dictionary of words from the `qdapDictionaries` package.
 
 ```{r}
 # Use the dictionary of words from the qdapDictionaries package,
@@ -80,10 +81,10 @@ library(qdapDictionaries)
 words <- tibble::as_tibble(DICTIONARY)
 ```
 
-Then, we use microbenchmark with 5 runs to compare the average clock time of each respective function.
+Then, we use microbenchmark to compare the average clock time of each respective function.
 
 ```{r}
-# Run each function 5x and compare results
+# Run each function multiple times and compare results
 timing_result <- microbenchmark::microbenchmark(
 	fuzzyjoin = joined <- sub_misspellings %>%
 		stringdist_inner_join(
@@ -132,18 +133,25 @@ print(paste(
 
 ## Known behvavior changes to `fuzzyjoin`
 
-- Matching on columns with `NA` would fail in `fuzzyjoin` but simply do not match in `fozziejoin`
+- Matching on columns with `NA` values would throw an error in `fuzzyjoin` but simply do not match in `fozziejoin`. This allows for NA values to persist in left, right, and full joins without matching all NA values to one another.
+- The boost threshold (`bt`) and prefix (`p`) parameters are not yet functional for Jaro-Winkler. Currently, all Jaro-Winkler calculations will use default values of 0.1 and 4, respectively. Note the `jw` method defaults in the `stringdist` (and, subsequently, `fuzzyjoin`) package effectively turn these parameters off. See the `jaro` method to replicate this behavior.
+- `fozziejoin` always assigns the suffix ".x" to columns from the LHS and ".y" to columns from the RHS. `fuzzyjoin` only does this when both LHS and RHS contain the same column name. `fozziejoin` may conform to the `fuzzyjoin` behavior in the future.
 
+## Acknowledgements
+
+- The `textdistance` crate for most string distance implementations. Currently, this crate is still used for some string distances. Others are based on `textdistance` implementations but with some performance tweaking for this use case.
+- The `fuzzyjoin` and `stringdist` packages in R. Much of the project is meant to replicate their APIs and special cases handling.
+- The `extendr` team. This project would not be possible without their great project.
 
 ## TODO
 
 - [ ] Join Types
     - [X] Inner join
     - [X] Left join
-    - [ ] Right join
+    - [X] Right join
     - [ ] Full join
     - [ ] Anti join
-- [O] Distance Calculations
+- [ ] Distance Calculations
     - [X] Levenshtein
     - [X] Damerau-Levenshtein
     - [X] Hamming
@@ -151,14 +159,16 @@ print(paste(
     - [X] qgram
     - [X] cosine
     - [X] Jaccard
-    - [O] Jaro-Winkler [partial: need to add toggles for p and bt]
+    - [ ] Jaro-Winkler [partial: need to add toggles for p and bt]
     - [X] Jaro
     - [X] OSA
 - [ ] Quality of life
     - [ ] Allow for multi-column joins
-    - [ ] Attach string distance output as column
-    - [ ] Ignore case
+    - [ ] Attach string distance output as column (similar to `distance_col` param in `fuzzyjoin`)
+    - [ ] Ignore case for strings
+    - [ ] Add parameter to toggle number of threads
 - [ ] Install from binary for Windows?
-- [ ] Benchmark of all methods?
+- [ ] Benchmark all methods vs `fuzzyjoin`
+- [ ] Proper attribution for all dependencies
 - [ ] CRAN distribution
 

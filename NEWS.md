@@ -1,3 +1,11 @@
+# fozziejoin 0.0.2
+
+- Right-hand join functionality implemented.
+- The parameter `distance_col` is live. It can be used to add the string distance of joined fields to the output.
+- Fixed an issue where left and right joins would replace `NA` in R character fields with a string with the string value "NA". Tests updated to expect a true `NA`.
+- Added explicit checks for `NA` strings in all Rust internals that perform fuzzy matches. If one or more values in a pair is `NA`, the pair is considered a non-match.
+- Updated README.
+
 # fozziejoin 0.0.1
 
 - NEWS.md added

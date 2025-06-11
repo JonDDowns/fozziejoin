@@ -2,7 +2,14 @@ use crate::merge::Merge;
 use extendr_api::prelude::*;
 
 impl Merge {
-    pub fn inner(df1: &List, df2: &List, idx1: Vec<usize>, idx2: Vec<usize>) -> Robj {
+    pub fn inner(
+        df1: &List,
+        df2: &List,
+        idx1: Vec<usize>,
+        idx2: Vec<usize>,
+        distance_col: Option<String>,
+        dist: &Vec<Option<f64>>,
+    ) -> Robj {
         // Generate vectors of column names and R objects
         let num_cols: usize = df1.ncols() + df2.ncols();
         let mut names: Vec<String> = Vec::with_capacity(num_cols);
@@ -19,6 +26,12 @@ impl Merge {
         for (name, col2) in df2.iter() {
             let vals = col2.slice(&idx2).unwrap();
             names.push(name.to_string() + ".y");
+            combined.push(vals);
+        }
+
+        if let Some(colname) = distance_col {
+            names.push(colname);
+            let vals = dist.into_robj();
             combined.push(vals);
         }
 
