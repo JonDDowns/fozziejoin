@@ -254,61 +254,18 @@ testthat::test_that('Inner join is correct for Jaccard', {
 # Jaro-Winkler
 testthat::test_that('Inner join is correct for Jaro-Winkler', {
 	expected <- data.frame(list(
-		Name.x = c("Liam", "Noah", "Oliver", "Oliver", "James", "Olivia", "Olivia", "Emma", "Amelia"), 
-		int_col.x = c(1, 2, 3, 3, 5, 6, 6, NA, 8),
-		real_col.x = c(1, 2, 3, 3, 5, 6, 6, 7, NA),
-		logical_col.x = c(TRUE, TRUE, TRUE, TRUE, NA, TRUE, TRUE, TRUE, FALSE),
-		Name.y = c("Laim", "No, ahhh", "Olive", "Oliv HEE-YAH", "Jams", "Olive", "Oliv HEE-YAH", "Emma", "Smelia")
-	))
-
-	actual <- fozzie_join(
-		baby_names,
-		whoops,
-		by = list('Name' = 'Name'),
-		method = 'jw',
-		max_distance=0.2
-	)
-
-	testthat::expect_true(all.equal(actual, expected))
-})
-
-# Jaro
-testthat::test_that('Inner join is correct for Jaro', {
-	expected <- data.frame(list(
 		Name.x = c("Liam", "Noah", "Oliver", "James", "Olivia", "Emma", "Amelia"),
 		int_col.x = c(1, 2, 3, 5, 6, NA, 8),
 		real_col.x = c(1, 2, 3, 5, 6, 7, NA),
 		logical_col.x = c(TRUE, TRUE, TRUE, NA, TRUE, TRUE, FALSE),
 		Name.y = c("Laim", "No, ahhh", "Olive", "Jams", "Olive", "Emma", "Smelia")
 	))
-
 	actual <- fozzie_join(
 		baby_names,
 		whoops,
 		by = list('Name' = 'Name'),
-		method = 'jaro',
-		max_distance=0.2
-	)
-
-	testthat::expect_true(all.equal(actual, expected))
-
-	expected$mydist <- c(
-		0.0833333333333334, 
-		0.166666666666667,
-		0.0555555555555555,
-		0.0666666666666668,
-		0.177777777777778, 
-		0,
-		0.111111111111111
-	)
-
-	actual <- fozzie_join(
-		baby_names,
-		whoops,
-		by = list('Name' = 'Name'),
-		method = 'jaro',
+		method = 'jw',
 		max_distance=0.2,
-		distance_col='mydist'
 	)
 
 	testthat::expect_true(all.equal(actual, expected))

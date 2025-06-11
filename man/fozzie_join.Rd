@@ -13,8 +13,8 @@ fozzie_join(
   max_distance = 1,
   distance_col = NULL,
   q = NULL,
-  p = 4,
-  bt = 0.1
+  max_prefix = 0,
+  prefix_weight = 0
 )
 }
 \arguments{
@@ -42,14 +42,31 @@ fozzie_join(
 \item \code{"jaro"} - Standard Jaro similarity.
 }}
 
+\item{how}{A string specifying the type of join to perform (\code{"inner"}, \code{"left"}, \code{"right"}, or \code{"full"}).
+\itemize{
+\item \code{"inner"} (default): Returns only matches.
+\item \code{"left"}: Returns all rows from \code{df1}, with matches from \code{df2}.
+\item \code{"right"}: Returns all rows from \code{df2}, with matches from \code{df1}.
+\item \code{"full"}: \link{Not implemented} Returns all rows from both \code{df1} and \code{df2}, matching where possible.
+\item \code{"anti"}: \link{Not implemented} Returns all rows from \code{df1} not in \code{df2}.
+}}
+
 \item{max_distance}{Numeric value specifying the maximum allowable edit distance for a match.}
+
+\item{distance_col}{Optional column name as a string to store the computed distance values in the output.
+If \code{NULL}, distances will not be included in the output.}
 
 \item{q}{Integer specifying the \emph{q}-gram size (only required for \code{"qgram"}, \code{"cosine"}, and \code{"jaccard"} methods).
 If \code{NULL}, an error will be raised for these methods.}
+
+\item{max_prefix}{Numeric threshold parameter that influences certain similarity calculations (default is \code{0.1}).}
+
+\item{prefix_weight}{Numeric parameter used for certain distance calculations (default is \code{4}).}
 }
 \value{
 A data frame containing matched records from \code{df1} and \code{df2},
 with column names suffixed as \code{.x} (from \code{df1}) and \code{.y} (from \code{df2}).
+If \code{distance_col} is provided, the computed distance values will be included.
 }
 \description{
 This function matches records in \code{df1} and \code{df2} based on a specified column,
@@ -59,7 +76,7 @@ approximate matching methods including Levenshtein, Damerau-Levenshtein, Jaro-Wi
 \examples{
 df1 <- data.frame(Name = c("Alice", "Bob", "Charlie"))
 df2 <- data.frame(Name = c("Alicia", "Robert", "Charles"))
-result <- fozzie_join(df1, df2, by = list(Name = "Name"), method = "levenshtein", max_distance = 2)
+result <- fozzie_join(df1, df2, by = list(Name = "Name"), method = "levenshtein", max_distance = 2, how = "inner", distance_col = "dist")
 print(result)
 
 }

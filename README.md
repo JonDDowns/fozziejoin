@@ -134,7 +134,8 @@ print(paste(
 ## Known behvavior changes to `fuzzyjoin`
 
 - Matching on columns with `NA` values would throw an error in `fuzzyjoin` but simply do not match in `fozziejoin`. This allows for NA values to persist in left, right, and full joins without matching all NA values to one another.
-- The boost threshold (`bt`) and prefix (`p`) parameters are not yet functional for Jaro-Winkler. Currently, all Jaro-Winkler calculations will use default values of 0.1 and 4, respectively. Note the `jw` method defaults in the `stringdist` (and, subsequently, `fuzzyjoin`) package effectively turn these parameters off. See the `jaro` method to replicate this behavior.
+- Jaro-Winkler distance
+    - The prefix scaling factor (`max_prefix`) is an integer representing a fixed number of characters. The analagous `stringdist` parameter, `bt`, was a proportion of string length.
 - `fozziejoin` always assigns the suffix ".x" to columns from the LHS and ".y" to columns from the RHS. `fuzzyjoin` only does this when both LHS and RHS contain the same column name. `fozziejoin` may conform to the `fuzzyjoin` behavior in the future.
 
 ## Acknowledgements
@@ -159,7 +160,7 @@ print(paste(
     - [X] qgram
     - [X] cosine
     - [X] Jaccard
-    - [ ] Jaro-Winkler [partial: need to add toggles for p and bt]
+    - [X] Jaro-Winkler
     - [X] Jaro
     - [X] OSA
 - [ ] Quality of life

@@ -10,7 +10,7 @@ pub mod utils;
 use edit::{DamerauLevenshtein, EditDistance, Hamming, Levenshtein, OSA};
 use merge::Merge;
 use ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
-use normalized::{Jaro, JaroWinkler, NormalizedEditDistance};
+use normalized::{jaro_winkler::JaroWinkler, NormalizedEditDistance};
 use utils::robj_index_map;
 
 /// Performs a fuzzy join between two data frames using approximate string matching.
@@ -36,7 +36,6 @@ use utils::robj_index_map;
 ///   - `"cosine"` - Cosine similarity (requires `q` parameter).
 ///   - `"jaccard"` - Jaccard similarity (requires `q` parameter).
 ///   - `"jaro_winkler"` | `"jw"` - Jaro-Winkler similarity.
-///   - `"jaro"` - Jaro similarity.
 /// - `q` (`Option<i32>`): *q*-gram size (required for `"qgram"`, `"cosine"`, and `"jaccard"`).
 /// - `max_distance` (`f64`): Maximum allowable edit distance.
 /// - `how` (`String`): Specifies the join type (`"inner"`, `"left"`, `"right"`).
@@ -45,8 +44,8 @@ use utils::robj_index_map;
 ///   - `"right"`: Returns all records from `df2`, with fuzzy matches from `df1`.
 /// - `distance_col` (`Option<String>`): Column name to store computed distance values.
 ///   If `None`, distances are not stored.
-/// - `p` (`Option<i32>`): Used for fine-tuning certain similarity calculations.
-/// - `bt` (`Option<f32>`): A threshold parameter influencing similarity computations.
+/// - `max_prefix` (`Option<i32>`): A threshold parameter influencing similarity computations.
+/// - `prefix_weight` (`Option<f32>`): Used for fine-tuning certain similarity calculations.
 ///
 /// # Returns
 ///
@@ -83,8 +82,8 @@ pub fn fozzie_join_rs(
     max_distance: f64,
     distance_col: Option<String>,
     q: Option<i32>,
-    p: Option<i32>,
-    bt: Option<f32>,
+    max_prefix: Option<i32>,
+    prefix_weight: Option<f64>,
 ) -> Robj {
     // Check for type of join requested
     match how.as_str() {
@@ -130,8 +129,18 @@ pub fn fozzie_join_rs(
                 panic!("Must provide q for method {}", method);
             }
         }
-        "jaro_winkler" | "jw" => JaroWinkler.fuzzy_indices(map1, map2, max_distance),
-        "jaro" => Jaro.fuzzy_indices(map1, map2, max_distance),
+        "jaro_winkler" | "jw" => {
+            let max_prefix: usize = match max_prefix {
+                Some(x) => x as usize,
+                _ => panic!("Parameter p not provided"),
+            };
+            let prefix_weight: f64 = match prefix_weight {
+                Some(x) => x,
+                _ => panic!("Parameter bt not provided"),
+            };
+            let jw = JaroWinkler::new(prefix_weight, max_prefix);
+            jw.fuzzy_indices(map1, map2, max_distance)
+        }
         _ => panic!("The join method {how} is not available."),
     };
 
