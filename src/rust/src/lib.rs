@@ -90,6 +90,7 @@ pub fn fozzie_join_rs(
         "inner" => (),
         "left" => (),
         "right" => (),
+        "anti" => (),
         _ => panic!("{how} is not currently a supported join type."),
     }
 
@@ -148,6 +149,7 @@ pub fn fozzie_join_rs(
         "inner" => Merge::inner(&df1, &df2, idx1, idx2, distance_col, &dist),
         "left" => Merge::left(&df1, &df2, idx1, idx2, distance_col, &dist),
         "right" => Merge::right(&df1, &df2, idx1, idx2, distance_col, &dist),
+        "anti" => Merge::anti(&df1, idx1),
         _ => panic!("Join type not supported"),
     };
     return out;

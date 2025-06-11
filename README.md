@@ -151,7 +151,7 @@ print(paste(
     - [X] Left join
     - [X] Right join
     - [ ] Full join
-    - [ ] Anti join
+    - [X] Anti join
 - [ ] Distance Calculations
     - [X] Levenshtein
     - [X] Damerau-Levenshtein
