@@ -42,7 +42,6 @@ constructs index maps for efficient lookups while minimizing redundant calculati
 \item \code{"cosine"} - Cosine similarity (requires \code{q} parameter).
 \item \code{"jaccard"} - Jaccard similarity (requires \code{q} parameter).
 \item \code{"jaro_winkler"} | \code{"jw"} - Jaro-Winkler similarity.
-\item \code{"jaro"} - Jaro similarity.
 }
 \item \code{q} (\verb{Option<i32>}): \emph{q}-gram size (required for \code{"qgram"}, \code{"cosine"}, and \code{"jaccard"}).
 \item \code{max_distance} (\code{f64}): Maximum allowable edit distance.

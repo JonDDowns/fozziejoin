@@ -322,3 +322,40 @@ testthat::test_that('Invalid columns throw error', {
 		)
 	)
 })
+
+# Levensthein
+testthat::test_that('Multi column joins work', {
+
+	left <- data.frame(
+		Name = c("Oliver", "James", "Emma", "Amelia"),
+		Pet = c("Sparky", "Spike", "Fido", "Bingo")
+	)
+	right <- data.frame(
+		Name = c("Olive", "Jams", "Emma", "Smelia"),
+		Pet = c("Sparky", "Spike", "Fuselage", "Bongo")
+	)
+
+	expected <- data.frame(list(
+		Name.x = c("Oliver", "James", "Amelia"), 
+		Pet.x = c("Sparky", "Spike", "Bingo"),
+		Name.y = c("Olive", "Jams", "Smelia"),
+		Pet.y = c("Sparky", "Spike", "Bongo"),
+		mydist_Name_Name = c(1, 1, 1),
+		mydist_Pet_Pet = c(0, 0, 1)
+	))
+
+	actual <- fozzie_join(
+		left,
+		right,
+		by = list('Name' = 'Name', "Pet" = "Pet"),
+		method = 'lv',
+		how='inner',
+		max_distance=1,
+		distance_col='mydist'
+	)
+
+	testthat::expect_true(all.equal(actual, expected))
+
+})
+
+

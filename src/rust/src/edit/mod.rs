@@ -17,7 +17,7 @@ pub trait EditDistance: Send + Sync {
         map2: HashMap<&str, Vec<usize>>,
         max_distance: f64,
         full: bool,
-    ) -> (Vec<usize>, Vec<usize>, Vec<Option<f64>>) {
+    ) -> Vec<(usize, usize, Option<f64>)> {
         let md = max_distance as usize;
         // We don't need to check any strings where lengths differ by more than max
         // For RHS, keep a map of lengths of all strings
@@ -99,8 +99,7 @@ pub trait EditDistance: Send + Sync {
             })
             .flatten()
             .collect();
-
-        sort_unzip_triplet(idxs)
+        idxs
     }
 }
 

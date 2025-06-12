@@ -9,7 +9,8 @@ impl Merge {
         idx1: Vec<usize>,
         idx2: Vec<usize>,
         distance_col: Option<String>,
-        dist: &Vec<Option<f64>>,
+        dist: &Vec<Vec<Option<f64>>>,
+        by: List,
     ) -> Robj {
         // Generate vectors of column names and R objects
         let num_cols: usize = df1.nrows() + df2.nrows();
@@ -176,11 +177,19 @@ impl Merge {
             combined.push(rhs_data);
         }
 
+        let ndist = dist.len();
         if let Some(colname) = distance_col {
-            names.push(colname);
-            let na_vals: Vec<Option<f64>> = vec![None; lhs_complement.len()];
-            let vals = dist.clone().extend(na_vals).into_robj();
-            combined.push(vals);
+            dist.iter().zip(by.iter()).for_each(|(x, (y, z))| {
+                let cname = match ndist {
+                    1 => colname.clone(),
+                    _ => colname.clone() + &format!("_{}_{}", y, z.as_str_vector().expect("hi")[0]),
+                };
+                names.push(cname);
+                let na_vals: Vec<Option<f64>> = vec![None; lhs_complement.len()];
+                let mut vals: Vec<Option<f64>> = x.clone();
+                vals.extend(na_vals);
+                combined.push(vals.into_robj());
+            });
         }
 
         let out: Robj = List::from_names_and_values(names, combined)

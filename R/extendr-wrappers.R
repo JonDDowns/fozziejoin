@@ -33,7 +33,6 @@ NULL
 #'   - `"cosine"` - Cosine similarity (requires `q` parameter).
 #'   - `"jaccard"` - Jaccard similarity (requires `q` parameter).
 #'   - `"jaro_winkler"` | `"jw"` - Jaro-Winkler similarity.
-#'   - `"jaro"` - Jaro similarity.
 #' - `q` (`Option<i32>`): *q*-gram size (required for `"qgram"`, `"cosine"`, and `"jaccard"`).
 #' - `max_distance` (`f64`): Maximum allowable edit distance.
 #' - `how` (`String`): Specifies the join type (`"inner"`, `"left"`, `"right"`).

@@ -1,7 +1,6 @@
 use crate::normalized::NormalizedEditDistance;
 use textdistance::{Algorithm, JaroWinkler as TDJaroWinkler};
 
-use crate::utils::sort_unzip_triplet;
 use extendr_api::prelude::*;
 use itertools::iproduct;
 use rayon::prelude::*;
@@ -37,7 +36,7 @@ impl NormalizedEditDistance for JaroWinkler {
         map2: HashMap<&str, Vec<usize>>,
         max_distance: f64,
         full: bool,
-    ) -> (Vec<usize>, Vec<usize>, Vec<Option<f64>>) {
+    ) -> Vec<(usize, usize, Option<f64>)> {
         let idxs: Vec<(usize, usize, Option<f64>)> = map1
             .par_iter()
             .filter_map(|(k1, v1)| {
@@ -77,7 +76,6 @@ impl NormalizedEditDistance for JaroWinkler {
             })
             .flatten()
             .collect();
-
-        sort_unzip_triplet(idxs)
+        idxs
     }
 }

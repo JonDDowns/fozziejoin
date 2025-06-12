@@ -1,4 +1,3 @@
-use crate::utils::sort_unzip_triplet;
 use extendr_api::prelude::*;
 use itertools::iproduct;
 use rayon::prelude::*;
@@ -18,7 +17,7 @@ pub trait QGramDistance: Send + Sync {
         max_distance: f64,
         q: usize,
         full: bool,
-    ) -> (Vec<usize>, Vec<usize>, Vec<Option<f64>>) {
+    ) -> Vec<(usize, usize, Option<f64>)> {
         let idxs: Vec<(usize, usize, Option<f64>)> = map1
             .par_iter()
             .filter_map(|(k1, v1)| {
@@ -31,7 +30,6 @@ pub trait QGramDistance: Send + Sync {
                 let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
 
                 for (k2, v2) in map2.iter() {
-                    println!("{k1}, {k2}");
                     if k2.is_na() && !full {
                         print!("Ding!");
                         continue;
@@ -64,7 +62,7 @@ pub trait QGramDistance: Send + Sync {
             })
             .flatten()
             .collect();
-        sort_unzip_triplet(idxs)
+        idxs
     }
 }
 

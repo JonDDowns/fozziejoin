@@ -164,7 +164,7 @@ print(paste(
     - [X] Jaro
     - [X] OSA
 - [ ] Quality of life
-    - [ ] Allow for multi-column joins
+    - [X] Allow for multi-column joins
     - [X] Attach string distance output as column (similar to `distance_col` param in `fuzzyjoin`)
     - [ ] Add parameter to toggle number of threads
 - [ ] Install from binary for Windows?

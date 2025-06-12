@@ -1,6 +1,5 @@
 pub mod jaro_winkler;
 
-use crate::utils::sort_unzip_triplet;
 use extendr_api::prelude::*;
 use itertools::iproduct;
 use rayon::prelude::*;
@@ -15,7 +14,7 @@ pub trait NormalizedEditDistance: Send + Sync {
         map2: HashMap<&str, Vec<usize>>,
         max_distance: f64,
         full: bool,
-    ) -> (Vec<usize>, Vec<usize>, Vec<Option<f64>>) {
+    ) -> Vec<(usize, usize, Option<f64>)> {
         let idxs: Vec<(usize, usize, Option<f64>)> = map1
             .par_iter()
             .filter_map(|(k1, v1)| {
@@ -56,6 +55,6 @@ pub trait NormalizedEditDistance: Send + Sync {
             .flatten()
             .collect();
 
-        sort_unzip_triplet(idxs)
+        idxs
     }
 }

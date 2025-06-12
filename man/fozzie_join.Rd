@@ -59,9 +59,9 @@ If \code{NULL}, distances will not be included in the output.}
 \item{q}{Integer specifying the \emph{q}-gram size (only required for \code{"qgram"}, \code{"cosine"}, and \code{"jaccard"} methods).
 If \code{NULL}, an error will be raised for these methods.}
 
-\item{max_prefix}{Numeric threshold parameter that influences certain similarity calculations (default is \code{0.1}).}
+\item{max_prefix}{For Jaro-Winkler edit distance, the max prefix size in characters (default is \code{0}).}
 
-\item{prefix_weight}{Numeric parameter used for certain distance calculations (default is \code{4}).}
+\item{prefix_weight}{For Jaro-Winkler edit distance, the adjustment factor for shared prefixes. The default must not be higher than the reciprocal of max_prefix (deafult is \code{0}).}
 }
 \value{
 A data frame containing matched records from \code{df1} and \code{df2},

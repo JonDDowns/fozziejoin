@@ -20,15 +20,15 @@ pub fn robj_index_map<'a>(df: &'a List, key: &'a str) -> HashMap<&'a str, Vec<us
     let mut map: HashMap<&str, Vec<usize>> = HashMap::new();
 
     let _ = df
-        .dollar(key) // Extract column data from the R List
+        .dollar(key)
         .expect(&format!("Column {key} does not exist or is not string."))
-        .as_str_iter() // Convert column values to an iterator of strings
+        .as_str_iter()
         .expect(&format!("Column {key} does not exist or is not string."))
         .enumerate()
         .for_each(|(index, val)| {
-            map.entry(val) // Insert or update mapping
-                .and_modify(|v| v.push(index + 1)) // Add index if key exists
-                .or_insert(vec![index + 1]); // Create new entry if key does not exist
+            map.entry(val)
+                .and_modify(|v| v.push(index + 1))
+                .or_insert(vec![index + 1]);
         });
 
     map
@@ -70,4 +70,35 @@ pub fn sort_unzip_triplet(
     }
 
     (idx1_sorted, idx2_sorted, dist_sorted) // Return all three vectors
+}
+
+pub fn transpose_map(
+    data: HashMap<(usize, usize), Vec<Option<f64>>>,
+) -> (Vec<usize>, Vec<usize>, Vec<Vec<Option<f64>>>) {
+    // Convert the HashMap into a sorted Vec by key
+    let mut sorted_entries: Vec<((usize, usize), Vec<Option<f64>>)> = data.into_iter().collect();
+    sorted_entries.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let mut keys1 = Vec::new();
+    let mut keys2 = Vec::new();
+    let mut transposed_values: Vec<Vec<Option<f64>>> = Vec::new();
+
+    // Determine the maximum vector length for handling uneven data
+    let max_len = sorted_entries
+        .iter()
+        .map(|(_, v)| v.len())
+        .max()
+        .unwrap_or(0);
+    transposed_values.resize(max_len, Vec::new());
+
+    for ((key1, key2), values) in sorted_entries {
+        keys1.push(key1);
+        keys2.push(key2);
+
+        for (i, &val) in values.iter().enumerate() {
+            transposed_values[i].push(val);
+        }
+    }
+
+    (keys1, keys2, transposed_values)
 }
