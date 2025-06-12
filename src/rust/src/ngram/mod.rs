@@ -17,21 +17,26 @@ pub trait QGramDistance: Send + Sync {
         map2: HashMap<&str, Vec<usize>>,
         max_distance: f64,
         q: usize,
+        full: bool,
     ) -> (Vec<usize>, Vec<usize>, Vec<Option<f64>>) {
         let idxs: Vec<(usize, usize, Option<f64>)> = map1
             .par_iter()
             .filter_map(|(k1, v1)| {
-                if k1.is_na() {
-                    return None;
+                if !full {
+                    if k1.is_na() {
+                        return None;
+                    }
                 }
 
                 let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
 
                 for (k2, v2) in map2.iter() {
-                    if k2.is_na() {
+                    println!("{k1}, {k2}");
+                    if k2.is_na() && !full {
+                        print!("Ding!");
                         continue;
                     }
-                    if k2.len() < q {
+                    if k2.len() < q && !full {
                         continue;
                     }
 
@@ -44,7 +49,7 @@ pub trait QGramDistance: Send + Sync {
 
                     let dist = self.compute(&k1, &k2, q);
 
-                    if dist <= max_distance {
+                    if dist <= max_distance || full {
                         iproduct!(v1, v2).for_each(|(a, b)| {
                             idxs.push((*a, *b, Some(dist)));
                         });

@@ -16,6 +16,7 @@ pub trait EditDistance: Send + Sync {
         map1: HashMap<&str, Vec<usize>>,
         map2: HashMap<&str, Vec<usize>>,
         max_distance: f64,
+        full: bool,
     ) -> (Vec<usize>, Vec<usize>, Vec<Option<f64>>) {
         let md = max_distance as usize;
         // We don't need to check any strings where lengths differ by more than max
@@ -26,20 +27,30 @@ pub trait EditDistance: Send + Sync {
             let key_len = key.len();
             length_hm.entry(key_len).or_insert(Vec::new()).push(key);
         }
+        let min_key = length_hm.keys().min().expect("Problem?!");
+        let max_key = length_hm.keys().max().expect("Problem?!");
 
         // Begin generation of all matched indices
         let idxs: Vec<(usize, usize, Option<f64>)> = map1
             .par_iter()
             .filter_map(|(k1, v1)| {
                 // Skip all comparisons if string is NA
-                if k1.is_na() {
-                    return None;
+                if !full {
+                    if k1.is_na() {
+                        return None;
+                    }
                 }
 
                 // Get range of lengths within max distance of current
                 let k1_len = k1.len();
-                let start_len = k1_len.saturating_sub(md);
-                let end_len = k1_len + md + 1;
+                let start_len = match full {
+                    true => *min_key,
+                    false => k1_len.saturating_sub(md),
+                };
+                let end_len = match full {
+                    true => *max_key + 1,
+                    false => k1_len.saturating_add(md + 1),
+                };
 
                 // Start a list to collect results
                 let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
@@ -48,11 +59,15 @@ pub trait EditDistance: Send + Sync {
                 for i in start_len..end_len {
                     if let Some(lookup) = length_hm.get(&i) {
                         lookup.iter().for_each(|k2| {
+                            let v2 = map2.get(k2).unwrap();
+
                             // Skip this iter if RHS is NA
-                            if k2.is_na() {
+                            if (k2.is_na() || k1.is_na()) && full {
+                                iproduct!(v1, v2).for_each(|(v1, v2)| {
+                                    idxs.push((*v1, *v2, NA_REAL));
+                                });
                                 return;
                             }
-                            let v2 = map2.get(k2).unwrap();
 
                             // No need to run distance functions if exactly the same
                             if k1 == k2 {
@@ -65,7 +80,7 @@ pub trait EditDistance: Send + Sync {
                             let dist = self.compute(&k1, &k2) as f64;
 
                             // Check vs. threshold
-                            if dist <= max_distance {
+                            if dist <= max_distance || full {
                                 iproduct!(v1, v2).for_each(|(v1, v2)| {
                                     idxs.push((*v1, *v2, Some(dist)));
                                 });

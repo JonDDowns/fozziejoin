@@ -8,24 +8,26 @@ use std::collections::HashMap;
 
 pub trait NormalizedEditDistance: Send + Sync {
     fn compute(&self, s1: &str, s2: &str) -> f64;
+
     fn fuzzy_indices(
         &self,
         map1: HashMap<&str, Vec<usize>>,
         map2: HashMap<&str, Vec<usize>>,
         max_distance: f64,
+        full: bool,
     ) -> (Vec<usize>, Vec<usize>, Vec<Option<f64>>) {
         let idxs: Vec<(usize, usize, Option<f64>)> = map1
             .par_iter()
             .filter_map(|(k1, v1)| {
                 // If NA value, can skip all further checks
-                if k1.is_na() {
+                if k1.is_na() && !full {
                     return None;
                 }
                 let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
 
                 for (k2, v2) in map2.iter() {
                     // If comparison is NA string, skip
-                    if k2.is_na() {
+                    if k2.is_na() && !full {
                         continue;
                     }
                     if k1 == k2 {
@@ -37,10 +39,11 @@ pub trait NormalizedEditDistance: Send + Sync {
 
                     let dist = self.compute(&k1, &k2);
 
-                    if dist <= max_distance {
+                    if dist <= max_distance || full {
                         iproduct!(v1, v2).for_each(|(a, b)| {
                             idxs.push((*a, *b, Some(dist)));
                         });
+                        continue;
                     }
                 }
 

@@ -146,11 +146,11 @@ print(paste(
 
 ## TODO
 
-- [ ] Join Types
+- [X] Join Types
     - [X] Inner join
     - [X] Left join
     - [X] Right join
-    - [ ] Full join
+    - [X] Full join
     - [X] Anti join
 - [ ] Distance Calculations
     - [X] Levenshtein
@@ -166,7 +166,6 @@ print(paste(
 - [ ] Quality of life
     - [ ] Allow for multi-column joins
     - [X] Attach string distance output as column (similar to `distance_col` param in `fuzzyjoin`)
-    - [ ] Ignore case for strings
     - [ ] Add parameter to toggle number of threads
 - [ ] Install from binary for Windows?
 - [ ] Benchmark all methods vs `fuzzyjoin`

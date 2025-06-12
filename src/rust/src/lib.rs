@@ -1,3 +1,4 @@
+use core::f64;
 use extendr_api::prelude::*;
 use std::collections::HashMap;
 
@@ -86,13 +87,14 @@ pub fn fozzie_join_rs(
     prefix_weight: Option<f64>,
 ) -> Robj {
     // Check for type of join requested
-    match how.as_str() {
-        "inner" => (),
-        "left" => (),
-        "right" => (),
-        "anti" => (),
+    let full = match how.as_str() {
+        "inner" => false,
+        "left" => false,
+        "right" => false,
+        "anti" => false,
+        "full" => true,
         _ => panic!("{how} is not currently a supported join type."),
-    }
+    };
 
     // It's not uncommon to have the same string listed many times
     // Keep a list of indices for each string so comps only happen once
@@ -104,28 +106,30 @@ pub fn fozzie_join_rs(
 
     // For metrics requiring qgrams, check whether a Q was supplied
     let (idx1, idx2, dist) = match method.as_str() {
-        "osa" => OSA.fuzzy_indices(map1, map2, max_distance),
-        "levenshtein" | "lv" => Levenshtein.fuzzy_indices(map1, map2, max_distance),
-        "damerau_levensthein" | "dl" => DamerauLevenshtein.fuzzy_indices(map1, map2, max_distance),
-        "hamming" => Hamming.fuzzy_indices(map1, map2, max_distance),
+        "osa" => OSA.fuzzy_indices(map1, map2, max_distance, full),
+        "levenshtein" | "lv" => Levenshtein.fuzzy_indices(map1, map2, max_distance, full),
+        "damerau_levensthein" | "dl" => {
+            DamerauLevenshtein.fuzzy_indices(map1, map2, max_distance, full)
+        }
+        "hamming" => Hamming.fuzzy_indices(map1, map2, max_distance, full),
         //"lcs" => LCSStr.fuzzy_indices(map1, map2, max_distance as usize),
         "qgram" => {
             if let Some(qz) = q {
-                QGram.fuzzy_indices(map1, map2, max_distance, qz as usize)
+                QGram.fuzzy_indices(map1, map2, max_distance, qz as usize, full)
             } else {
                 panic!("Must provide q for method {}", method);
             }
         }
         "cosine" => {
             if let Some(qz) = q {
-                Cosine.fuzzy_indices(map1, map2, max_distance, qz as usize)
+                Cosine.fuzzy_indices(map1, map2, max_distance, qz as usize, full)
             } else {
                 panic!("Must provide q for method {}", method);
             }
         }
         "jaccard" => {
             if let Some(qz) = q {
-                Jaccard.fuzzy_indices(map1, map2, max_distance, qz as usize)
+                Jaccard.fuzzy_indices(map1, map2, max_distance, qz as usize, full)
             } else {
                 panic!("Must provide q for method {}", method);
             }
@@ -133,20 +137,20 @@ pub fn fozzie_join_rs(
         "jaro_winkler" | "jw" => {
             let max_prefix: usize = match max_prefix {
                 Some(x) => x as usize,
-                _ => panic!("Parameter p not provided"),
+                _ => panic!("Parameter max_prefix not provided"),
             };
             let prefix_weight: f64 = match prefix_weight {
                 Some(x) => x,
-                _ => panic!("Parameter bt not provided"),
+                _ => panic!("Parameter prefix_weight not provided"),
             };
             let jw = JaroWinkler::new(prefix_weight, max_prefix);
-            jw.fuzzy_indices(map1, map2, max_distance)
+            jw.fuzzy_indices(map1, map2, max_distance, full)
         }
         _ => panic!("The join method {how} is not available."),
     };
 
     let out = match how.as_str() {
-        "inner" => Merge::inner(&df1, &df2, idx1, idx2, distance_col, &dist),
+        "inner" | "full" => Merge::inner(&df1, &df2, idx1, idx2, distance_col, &dist),
         "left" => Merge::left(&df1, &df2, idx1, idx2, distance_col, &dist),
         "right" => Merge::right(&df1, &df2, idx1, idx2, distance_col, &dist),
         "anti" => Merge::anti(&df1, idx1),
