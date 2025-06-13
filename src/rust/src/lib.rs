@@ -12,7 +12,6 @@ use edit::{DamerauLevenshtein, EditDistance, Hamming, Levenshtein, OSA};
 use merge::Merge;
 use ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
 use normalized::{jaro_winkler::JaroWinkler, NormalizedEditDistance};
-use rayon::ThreadPoolBuilder;
 use utils::{robj_index_map, transpose_map};
 
 /// Performs a fuzzy join between two data frames using approximate string matching.
@@ -86,14 +85,8 @@ pub fn fozzie_join_rs(
     q: Option<i32>,
     max_prefix: Option<i32>,
     prefix_weight: Option<f64>,
-    //nthread: Option<usize>,
+    nthread: Option<usize>,
 ) -> Robj {
-    //if let Some(nt) = nthread {
-    //    ThreadPoolBuilder::new()
-    //        .num_threads(nt)
-    //        .build_global()
-    //        .unwrap();
-    //}
     // Check for type of join requested
     let full = match how.as_str() {
         "inner" => false,
@@ -113,30 +106,32 @@ pub fn fozzie_join_rs(
 
         // For metrics requiring qgrams, check whether a Q was supplied
         let matchdat = match method.as_str() {
-            "osa" => OSA.fuzzy_indices(map1, map2, max_distance, full),
-            "levenshtein" | "lv" => Levenshtein.fuzzy_indices(map1, map2, max_distance, full),
-            "damerau_levensthein" | "dl" => {
-                DamerauLevenshtein.fuzzy_indices(map1, map2, max_distance, full)
+            "osa" => OSA.fuzzy_indices(map1, map2, max_distance, full, nthread),
+            "levenshtein" | "lv" => {
+                Levenshtein.fuzzy_indices(map1, map2, max_distance, full, nthread)
             }
-            "hamming" => Hamming.fuzzy_indices(map1, map2, max_distance, full),
+            "damerau_levensthein" | "dl" => {
+                DamerauLevenshtein.fuzzy_indices(map1, map2, max_distance, full, nthread)
+            }
+            "hamming" => Hamming.fuzzy_indices(map1, map2, max_distance, full, nthread),
             //"lcs" => LCSStr.fuzzy_indices(map1, map2, max_distance as usize),
             "qgram" => {
                 if let Some(qz) = q {
-                    QGram.fuzzy_indices(map1, map2, max_distance, qz as usize, full)
+                    QGram.fuzzy_indices(map1, map2, max_distance, qz as usize, full, nthread)
                 } else {
                     panic!("Must provide q for method {}", method);
                 }
             }
             "cosine" => {
                 if let Some(qz) = q {
-                    Cosine.fuzzy_indices(map1, map2, max_distance, qz as usize, full)
+                    Cosine.fuzzy_indices(map1, map2, max_distance, qz as usize, full, nthread)
                 } else {
                     panic!("Must provide q for method {}", method);
                 }
             }
             "jaccard" => {
                 if let Some(qz) = q {
-                    Jaccard.fuzzy_indices(map1, map2, max_distance, qz as usize, full)
+                    Jaccard.fuzzy_indices(map1, map2, max_distance, qz as usize, full, nthread)
                 } else {
                     panic!("Must provide q for method {}", method);
                 }
@@ -151,7 +146,7 @@ pub fn fozzie_join_rs(
                     _ => panic!("Parameter prefix_weight not provided"),
                 };
                 let jw = JaroWinkler::new(prefix_weight, max_prefix);
-                jw.fuzzy_indices(map1, map2, max_distance, full)
+                jw.fuzzy_indices(map1, map2, max_distance, full, nthread)
             }
             _ => panic!("The join method {how} is not available."),
         };

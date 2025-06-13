@@ -14,7 +14,8 @@ fozzie_join_rs(
   distance_col,
   q,
   max_prefix,
-  prefix_weight
+  prefix_weight,
+  nthread
 )
 }
 \description{

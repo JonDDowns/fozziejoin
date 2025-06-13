@@ -163,10 +163,10 @@ print(paste(
     - [X] Jaro-Winkler
     - [X] Jaro
     - [X] OSA
-- [ ] Quality of life
+- [X] Quality of life
     - [X] Allow for multi-column joins
     - [X] Attach string distance output as column (similar to `distance_col` param in `fuzzyjoin`)
-    - [ ] Add parameter to toggle number of threads
+    - [X] Add parameter to toggle number of threads
 - [ ] Install from binary for Windows?
 - [ ] Benchmark all methods vs `fuzzyjoin`
 - [ ] Proper attribution for all dependencies

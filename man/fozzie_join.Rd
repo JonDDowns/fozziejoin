@@ -14,7 +14,8 @@ fozzie_join(
   distance_col = NULL,
   q = NULL,
   max_prefix = 0,
-  prefix_weight = 0
+  prefix_weight = 0,
+  nthread = NULL
 )
 }
 \arguments{

@@ -45,7 +45,7 @@
 #' print(result)
 #'
 #' @export
-fozzie_join <- function(df1, df2, by, method='levenshtein', how='inner', max_distance=1, distance_col=NULL, q=NULL,  max_prefix = 0, prefix_weight = 0) {
+fozzie_join <- function(df1, df2, by, method='levenshtein', how='inner', max_distance=1, distance_col=NULL, q=NULL,  max_prefix = 0, prefix_weight = 0, nthread=NULL) {
   # Automatically convert character vector `by = c("COL1", "COL2")` into a named list
   if (is.character(by) && length(by) == 2) {
     by <- setNames(list(by[2]), by[1])
@@ -61,6 +61,8 @@ fozzie_join <- function(df1, df2, by, method='levenshtein', how='inner', max_dis
 		distance_col=distance_col,
 		q=q,
 		prefix_weight=prefix_weight,
-		max_prefix=max_prefix)
+		max_prefix=max_prefix,
+		nthread=nthread
+	)
 }
 

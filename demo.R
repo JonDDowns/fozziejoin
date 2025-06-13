@@ -1,6 +1,6 @@
 library(dplyr)
 
-refresh <- TRUE
+refresh <- FALSE
 if (refresh) {
 	devtools::install()
 }
@@ -29,14 +29,14 @@ timing_result <- microbenchmark::microbenchmark(
 			by = c(misspelling = "word"),
 			max_dist=max_dist,
 			method=method,
-	),
+		),
 	fozzie = fozzie <- fozzie_join(
 		sub_misspellings,
 		words,
 		by = list('misspelling' = 'word'),
 		max_distance=max_dist,
 		method = method,
-		how="left"
+		how="left",
 	),
 	times=3
 )

@@ -69,7 +69,7 @@ NULL
 #' - [`data_frame!`](https://extendr.github.io/) - Constructs an R-compatible data frame.
 #'
 #' @export
-fozzie_join_rs <- function(df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight) .Call(wrap__fozzie_join_rs, df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight)
+fozzie_join_rs <- function(df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight, nthread) .Call(wrap__fozzie_join_rs, df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight, nthread)
 
 
 # nolint end

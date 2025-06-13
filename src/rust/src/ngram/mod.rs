@@ -1,6 +1,7 @@
 use extendr_api::prelude::*;
 use itertools::iproduct;
 use rayon::prelude::*;
+use rayon::ThreadPoolBuilder;
 use std::collections::HashMap;
 pub mod cosine;
 pub mod jaccard;
@@ -17,7 +18,14 @@ pub trait QGramDistance: Send + Sync {
         max_distance: f64,
         q: usize,
         full: bool,
+        nthread: Option<usize>,
     ) -> Vec<(usize, usize, Option<f64>)> {
+        if let Some(nt) = nthread {
+            ThreadPoolBuilder::new()
+                .num_threads(nt)
+                .build()
+                .expect("Global pool already initialized");
+        };
         let idxs: Vec<(usize, usize, Option<f64>)> = map1
             .par_iter()
             .filter_map(|(k1, v1)| {

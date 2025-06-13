@@ -2,8 +2,10 @@
 
 - Anti join implemented
 - Full join implemented
-- Jaro-Winkler parameters `prefix_weight` and `max_prefix` are now live. These are similar to the `bt` and `p` parameters in the `stringdist` package, with some differences (`prefix_weight` is a set number of characters, not a proportion).
-- The `jaro` method is no longer supported. The default values for the `jw` and `jaro_winkler` methods simplify into the jaro case.
+- Multikey joins now allowed (e.g. joining on "Name" and "DOB").
+- Can control number of threads using the `nthread` parameter.
+- Jaro-Winkler parameters `prefix_weight` and `max_prefix` parameters added. These are similar to the `bt` and `p` parameters in the `stringdist` package, with some differences (`prefix_weight` is a set number of characters, not a proportion).
+- The `jaro` method is no longer supported. The default values for the `jw` and `jaro_winkler` methods simplify into the Jaro case.
 - Removed case insensitive matching as an immediate project goal.
 
 # fozziejoin 0.0.2
