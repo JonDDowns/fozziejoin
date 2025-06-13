@@ -8,7 +8,7 @@ pub mod ngram;
 pub mod normalized;
 pub mod utils;
 
-use edit::{DamerauLevenshtein, EditDistance, Hamming, Levenshtein, OSA};
+use edit::{DamerauLevenshtein, EditDistance, Hamming, LCSStr, Levenshtein, OSA};
 use merge::Merge;
 use ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
 use normalized::{jaro_winkler::JaroWinkler, NormalizedEditDistance};
@@ -114,7 +114,7 @@ pub fn fozzie_join_rs(
                 DamerauLevenshtein.fuzzy_indices(map1, map2, max_distance, full, nthread)
             }
             "hamming" => Hamming.fuzzy_indices(map1, map2, max_distance, full, nthread),
-            //"lcs" => LCSStr.fuzzy_indices(map1, map2, max_distance as usize),
+            "lcs" => LCSStr.fuzzy_indices(map1, map2, max_distance, full, nthread),
             "qgram" => {
                 if let Some(qz) = q {
                     QGram.fuzzy_indices(map1, map2, max_distance, qz as usize, full, nthread)
@@ -148,7 +148,7 @@ pub fn fozzie_join_rs(
                 let jw = JaroWinkler::new(prefix_weight, max_prefix);
                 jw.fuzzy_indices(map1, map2, max_distance, full, nthread)
             }
-            _ => panic!("The join method {how} is not available."),
+            _ => panic!("The join method {method} is not available."),
         };
 
         if z == 0 {

@@ -3,6 +3,7 @@
 - Anti join implemented
 - Full join implemented
 - Multikey joins now allowed (e.g. joining on "Name" and "DOB").
+- LCS string distance now available. This matches the original R `stringdist` behavior.
 - Can control number of threads using the `nthread` parameter.
 - Jaro-Winkler parameters `prefix_weight` and `max_prefix` parameters added. These are similar to the `bt` and `p` parameters in the `stringdist` package, with some differences (`prefix_weight` is a set number of characters, not a proportion).
 - The `jaro` method is no longer supported. The default values for the `jw` and `jaro_winkler` methods simplify into the Jaro case.

@@ -1,6 +1,6 @@
 # fozziejoin: Performant data frame joins with inexact matching
 
-[NOTE]: This project is in very early development. It currently depends on the Rust toolchain. APIs may change in the future.
+[NOTE]: This project is in early development. APIs may change in the future. It currently depends on the Rust toolchain to install.
 
 The `fozziejoin` package uses Rust to perform R dataframe joins based on string distance metrics.
 It is intended to be a high-performance alternative to `stringdist_inner_join` and similar functions from the [fuzzyjoin package](https://github.com/dgrtwo/fuzzyjoin).
@@ -152,11 +152,11 @@ print(paste(
     - [X] Right join
     - [X] Full join
     - [X] Anti join
-- [ ] Distance Calculations
+- [X] Distance Calculations
     - [X] Levenshtein
     - [X] Damerau-Levenshtein
     - [X] Hamming
-    - [ ] Longest common substring distance (LCS, current implementation incorrect and not user-accessible)
+    - [X] Longest common substring distance
     - [X] qgram
     - [X] cosine
     - [X] Jaccard
@@ -167,8 +167,8 @@ print(paste(
     - [X] Allow for multi-column joins
     - [X] Attach string distance output as column (similar to `distance_col` param in `fuzzyjoin`)
     - [X] Add parameter to toggle number of threads
-- [ ] Install from binary for Windows?
-- [ ] Benchmark all methods vs `fuzzyjoin`
+- [ ] Installable using `devtools::install_github()`? Even without Rust toolchain?
+- [X] Benchmark all methods vs `fuzzyjoin`
 - [ ] Proper attribution for all dependencies
 - [ ] CRAN distribution
 

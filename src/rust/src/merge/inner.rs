@@ -31,7 +31,6 @@ impl Merge {
         }
 
         let ndist = dist.len();
-
         if let Some(colname) = distance_col {
             dist.iter().zip(by.iter()).for_each(|(x, (y, z))| {
                 let cname = match ndist {

@@ -81,6 +81,7 @@ testthat::test_that('Inner join is correct for Hamming', {
 		logical_col.x = c(TRUE, FALSE),
 		Name.y = c("Emma", "Smelia")
 	))
+
 	actual <- fozzie_join(
 		baby_names,
 		whoops,
@@ -106,37 +107,40 @@ testthat::test_that('Inner join is correct for Hamming', {
 })
 
 # LCS
-#testthat::test_that('Inner join is correct for LCS', {
-#  expected <- data.frame(list(
-#    Name.x = c(
-#      "Oliver", "Oliver", "James", "William", "Olivia", "Olivia", "Emma",
-#      "Amelia", "Isabella", "Evelyn"
-#    ),
-#    rnk.x = c(3L, 3L, 5L, 10L, 1L, 1L, 2L, 3L, 7L, 8L),
-#    year.x = c(2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024), 
-#    Name.y = c("Olive", "Oliv HEE-YAH", "Jams", "Smelia", "Olive",
-#      "Oliv HEE-YAH", "Emma", "Smelia", "Isabellü", "Even"
-#    )
-# ))
+testthat::test_that('Inner join is correct for LCS', {
 
-#  actual <- fozzie_join(
-#    baby_names,
-#    whoops,
-#    by = list('Name' = 'Name'),
-#    method = 'lcs',
-#    max_distance=2
-#  )
-#
-#  hm = fuzzyjoin::stringdist_inner_join(
-#    baby_names, whoops, by=c('Name' = 'Name'), method='lcs', max_dist=2, distance_col='dist'
-#  )
-#
-#  if(!isTRUE(all.equal(actual, expected))) {
-#    print(actual)
-#  }
-#
-#  testthat::expect_true(all.equal(actual, expected))
-#})
+	expected <- data.frame(list(
+		Name.x = c("Oliver", "James", "Emma"),
+		int_col.x = c(3, 5, NA),
+		real_col.x = c(3, 5, 7),
+		logical_col.x = c(TRUE, NA, TRUE),
+		Name.y = c("Olive", "Jams", "Emma")
+	))
+
+	actual <- fozzie_join(
+		baby_names,
+		whoops,
+		by = list('Name' = 'Name'),
+		method = 'lcs',
+		max_distance=1,
+	)
+
+	testthat::expect_true(all.equal(actual, expected))
+
+	expected$mydist <- c(1, 1, 0)
+
+	actual <- fozzie_join(
+		baby_names,
+		whoops,
+		by = list('Name' = 'Name'),
+		method = 'lcs',
+		how='inner',
+		max_distance=1,
+		distance_col = "mydist"
+	)
+
+	testthat::expect_true(all.equal(actual, expected))
+})
 
 # qgram
 testthat::test_that('Inner join is correct for QGram', {

@@ -142,7 +142,21 @@ impl EditDistance for DamerauLevenshtein {
 pub struct LCSStr;
 impl EditDistance for LCSStr {
     fn compute(&self, s1: &str, s2: &str) -> usize {
-        lcsstr(s1, s2)
+        let m = s1.len();
+        let n = s2.len();
+        let mut dp = vec![vec![0; n + 1]; m + 1];
+
+        for (i, c1) in s1.chars().enumerate() {
+            for (j, c2) in s2.chars().enumerate() {
+                if c1 == c2 {
+                    dp[i + 1][j + 1] = dp[i][j] + 1;
+                } else {
+                    dp[i + 1][j + 1] = dp[i + 1][j].max(dp[i][j + 1]);
+                }
+            }
+        }
+
+        (m + n) - 2 * dp[m][n]
     }
 }
 
