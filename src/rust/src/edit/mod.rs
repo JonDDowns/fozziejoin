@@ -163,6 +163,48 @@ impl EditDistance for LCSStr {
 pub struct OSA;
 impl EditDistance for OSA {
     fn compute(&self, s1: &str, s2: &str) -> usize {
-        damerau_levenshtein_restricted(s1, s2)
+        //damerau_levenshtein_restricted(s1, s2)
+        let m = s1.len();
+        let n = s2.len();
+        let mut dp = vec![vec![0; n + 1]; m + 1];
+
+        // Initialize base cases
+        for i in 0..=m {
+            dp[i][0] = i;
+        }
+        for j in 0..=n {
+            dp[0][j] = j;
+        }
+
+        // Compute OSA distance using DP
+        for i in 1..=m {
+            for j in 1..=n {
+                let cost = if s1.chars().nth(i - 1) == s2.chars().nth(j - 1) {
+                    0
+                } else {
+                    1
+                };
+
+                dp[i][j] = *[
+                    dp[i - 1][j] + 1,        // Deletion
+                    dp[i][j - 1] + 1,        // Insertion
+                    dp[i - 1][j - 1] + cost, // Substitution
+                ]
+                .iter()
+                .min()
+                .unwrap();
+
+                // Handle transpositions
+                if i > 1
+                    && j > 1
+                    && s1.chars().nth(i - 1) == s2.chars().nth(j - 2)
+                    && s1.chars().nth(i - 2) == s2.chars().nth(j - 1)
+                {
+                    dp[i][j] = dp[i][j].min(dp[i - 2][j - 2] + cost);
+                }
+            }
+        }
+
+        dp[m][n] // Final OSA distance
     }
 }

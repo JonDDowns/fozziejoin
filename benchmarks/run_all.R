@@ -4,71 +4,87 @@ library(ggplot2)
 library(microbenchmark)
 library(fuzzyjoin)
 library(fozziejoin)
-
-params <- tibble::tibble(
-	method = c("osa", "lv", "dl", "hamming", "lcs", "qgram", "cosine", "jaccard", "jw"),
-	mode = "inner",
-	max_dist = c(1, 1, 1, 1, 1, 2, 0.9, 0.9, 0.9),
-	q = c(0, 0, 0, 0, 0, 2, 2, 2, 0)
-)
-
 data(misspellings)
+
+refresh <- FALSE
 
 library(qdapDictionaries)
 words <- tibble::as_tibble(DICTIONARY)
 
-# Collect timing results
-all <- data.frame()
-for (i in c(100, 1000, 2000)) {
+params <- list(
+	list(method = "osa", mode = "inner", max_dist = 1, q = 0),
+	#list(method = "lv", mode = "inner", max_dist = 1, q = 0),
+	list(method = "dl", mode = "inner", max_dist = 1, q = 0), 
+	#list(method = "hamming", mode = "inner", max_dist = 1, q = 0),
+	#list(method = "lcs", mode = "inner", max_dist = 1, q = 0), 
+	list(method = "qgram", mode = "inner", max_dist = 2, q = 2)#,
+	#list(method = "cosine", mode = "inner", max_dist = 0.9, q = 2),
+	#list(method = "jaccard", mode = "inner", max_dist = 0.9, q = 2),
+	#list(method = "jw", mode = "inner", max_dist = 0.9, q = 0)
+)
+
+run_bench <- function(method, mode, max_dist, q=NA, nsamp, seed=2016) {
 	# Get reproducible sample of records
-	set.seed(2016)
-	sub_misspellings <- misspellings %>% sample_n(i)
+	set.seed(seed)
+	sub_misspellings <- misspellings %>% sample_n(nsamp)
 
 	# Run our comparison function
-	timing_results <- params %>%
-		rowwise() %>%
-		mutate(
-			benchmark = list(microbenchmark(
-				fuzzy = sub_misspellings %>%
-					stringdist_join(
-						words,
-						by = c(misspelling = "word"),
-						method = method,
-						mode = mode,
-						max_dist = as.numeric(max_dist),
-						q = as.numeric(q)
-					),
-				fozzie = sub_misspellings %>%
-					fozzie_join(
-						words,
-						by = list('misspelling' = 'word'),
-						method = method,
-						how = mode,
-						max_distance = as.numeric(max_dist),
-						q = as.numeric(q)
-					),
-				times = 3
-			))
-		) %>%
-		unnest(benchmark) %>%
-		select(method, expr, time)
-
-	if (!all.equal(fozzie, data.frame(fuzzy))) {
-		stop("Results are not the same")
-	}
-
-	timing_results <- timing_results %>%
-		mutate(time_ms = time / 1e6, n = i)
-
-	all <- bind_rows(all, timing_results)
+	timing_results <- microbenchmark(
+		fuzzy = fuzzy <- stringdist_join(
+			sub_misspellings,
+			words,
+			by = c(misspelling = "word"),
+			method = method,
+			mode = mode,
+			max_dist = as.numeric(max_dist),
+			q = q
+		),
+		fozzie = fozzie <- sub_misspellings %>%
+			fozzie_join(
+				words,
+				by = list('misspelling' = 'word'),
+				method = method,
+				how = mode,
+				max_distance = as.numeric(max_dist),
+				q = q
+			),
+		times = 3
+	)
+	timing_results <- data.frame(timing_results)
+	timing_results$method <- method
+	timing_results$time_ms <- timing_results$time / 1e6
+	timing_results$n <- nsamp
+	
+	return(timing_results)
 }
 
-# Plot with ggplot2
-ggplot(all, aes(x=n, y = time_ms, fill = expr, color = expr)) +
+
+bench_file <- file.path("outputs/last_bench.RDS")
+if(!file.exists(bench_file) || refresh) {
+	results <- lapply(params, function(args) {
+		out <- data.frame()
+		for(i in c(100, 1000, 2000, 4000)) {
+			print(i)
+			args$nsamp <- i
+			tmp <- do.call(run_bench, args)
+			out <- bind_rows(out, tmp)
+		}
+		out
+	})
+	results <- do.call(rbind, results)
+	saveRDS(results, bench_file)
+} else {
+	results <- readRDS(bench_file)
+}
+
+img_file <- file.path("outputs/benchmark_plot.svg")
+svg(img_file, width = 8, height = 6)
+ggplot(results, aes(x=n, y = time_ms, fill = expr, color = expr)) +
 	geom_point() +
 	facet_wrap(~ method, scales='free') +
 	labs(title = "Benchmarking String Distance Methods",
 		x = "Method", y = "Execution Time (ms)") +
 	theme_minimal() +
 	geom_smooth(method='lm', se=F)
+dev.off()
 
