@@ -3,27 +3,30 @@ library(tidyr)
 library(ggplot2)
 library(microbenchmark)
 library(fuzzyjoin)
+devtools::install()
 library(fozziejoin)
-data(misspellings)
 
-refresh <- FALSE
-
-library(qdapDictionaries)
-words <- tibble::as_tibble(DICTIONARY)
+refresh <- TRUE
 
 params <- list(
 	list(method = "osa", mode = "inner", max_dist = 1, q = 0),
 	#list(method = "lv", mode = "inner", max_dist = 1, q = 0),
-	list(method = "dl", mode = "inner", max_dist = 1, q = 0), 
+	list(method = "dl", mode = "inner", max_dist = 1, q = 0)
 	#list(method = "hamming", mode = "inner", max_dist = 1, q = 0),
 	#list(method = "lcs", mode = "inner", max_dist = 1, q = 0), 
-	list(method = "qgram", mode = "inner", max_dist = 2, q = 2)#,
-	#list(method = "cosine", mode = "inner", max_dist = 0.9, q = 2),
+	#list(method = "qgram", mode = "inner", max_dist = 2, q = 2)#,
+	#list(method = "cosine", mode = "inner", max_dist = 0.9, q = 2)#,
 	#list(method = "jaccard", mode = "inner", max_dist = 0.9, q = 2),
 	#list(method = "jw", mode = "inner", max_dist = 0.9, q = 0)
 )
 
 run_bench <- function(method, mode, max_dist, q=NA, nsamp, seed=2016) {
+
+	data(misspellings)
+
+	library(qdapDictionaries)
+	words <- tibble::as_tibble(DICTIONARY)
+
 	# Get reproducible sample of records
 	set.seed(seed)
 	sub_misspellings <- misspellings %>% sample_n(nsamp)
@@ -61,16 +64,18 @@ run_bench <- function(method, mode, max_dist, q=NA, nsamp, seed=2016) {
 
 bench_file <- file.path("outputs/last_bench.RDS")
 if(!file.exists(bench_file) || refresh) {
-	results <- lapply(params, function(args) {
+	results <- lapply(params, function(args, data) {
+		cat(paste0("Function params:\n", paste0(args, collapse=", "), "\n"))
 		out <- data.frame()
-		for(i in c(100, 1000, 2000, 4000)) {
-			print(i)
+		samp_sizes <- c(100, 1000, 2000)
+		for(i in samp_sizes) {
+			cat(paste0("Sampling ", i, " records.\n"))
 			args$nsamp <- i
 			tmp <- do.call(run_bench, args)
 			out <- bind_rows(out, tmp)
 		}
 		out
-	})
+	}, data=misspellings)
 	results <- do.call(rbind, results)
 	saveRDS(results, bench_file)
 } else {

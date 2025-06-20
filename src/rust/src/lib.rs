@@ -100,21 +100,30 @@ pub fn fozzie_join_rs(
     let mut keep_idxs: HashMap<(usize, usize), Vec<Option<f64>>> = HashMap::new();
 
     for (z, (left_key, right_key)) in by.iter().enumerate() {
+        let rk = &right_key.as_str_vector().expect("lul")[0];
         // Convert the join key into a hashmap (string + vec occurrence indices)
         let map1 = robj_index_map(&df1, &left_key);
         let map2 = robj_index_map(&df2, &right_key.as_str_vector().expect("lul")[0]);
 
         // For metrics requiring qgrams, check whether a Q was supplied
         let matchdat = match method.as_str() {
-            "osa" => OSA.fuzzy_indices(map1, map2, max_distance, full, nthread),
+            "osa" => OSA.fuzzy_indices(&df1, &left_key, &df2, &rk, max_distance, full, nthread),
             "levenshtein" | "lv" => {
-                Levenshtein.fuzzy_indices(map1, map2, max_distance, full, nthread)
+                Levenshtein.fuzzy_indices(&df1, &left_key, &df2, &rk, max_distance, full, nthread)
             }
-            "damerau_levensthein" | "dl" => {
-                DamerauLevenshtein.fuzzy_indices(map1, map2, max_distance, full, nthread)
+            "damerau_levensthein" | "dl" => DamerauLevenshtein.fuzzy_indices(
+                &df1,
+                &left_key,
+                &df2,
+                &rk,
+                max_distance,
+                full,
+                nthread,
+            ),
+            "hamming" => {
+                Hamming.fuzzy_indices(&df1, &left_key, &df2, &rk, max_distance, full, nthread)
             }
-            "hamming" => Hamming.fuzzy_indices(map1, map2, max_distance, full, nthread),
-            "lcs" => LCSStr.fuzzy_indices(map1, map2, max_distance, full, nthread),
+            "lcs" => LCSStr.fuzzy_indices(&df1, &left_key, &df2, &rk, max_distance, full, nthread),
             "qgram" => {
                 if let Some(qz) = q {
                     QGram.fuzzy_indices(map1, map2, max_distance, qz as usize, full, nthread)

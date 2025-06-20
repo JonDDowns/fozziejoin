@@ -1,10 +1,11 @@
+use crate::utils::robj_index_map;
 use extendr_api::prelude::*;
 use itertools::iproduct;
 use rayon::iter::*;
-use rayon::ThreadPoolBuilder;
+use rayon::prelude::*;
 use std::collections::HashMap;
 use textdistance::str::{
-    damerau_levenshtein, damerau_levenshtein_restricted, hamming, lcsstr, levenshtein,
+    damerau_levenshtein, damerau_levenshtein_restricted, hamming, levenshtein,
 };
 
 // Define a trait for string distance calculations
@@ -13,20 +14,25 @@ pub trait EditDistance: Send + Sync {
 
     fn fuzzy_indices(
         &self,
-        map1: HashMap<&str, Vec<usize>>,
-        map2: HashMap<&str, Vec<usize>>,
+        left: &List,
+        left_key: &str,
+        right: &List,
+        right_key: &str,
         max_distance: f64,
         full: bool,
         nthread: Option<usize>,
     ) -> Vec<(usize, usize, Option<f64>)> {
-        if let Some(nt) = nthread {
-            ThreadPoolBuilder::new()
-                .num_threads(nt)
-                .build()
-                .expect("Global pool already initialized");
+        let num_groups: usize = match nthread {
+            Some(x) => x,
+            _ => rayon::current_num_threads(),
         };
 
         let md = max_distance as usize;
+
+        // Convert the join key into a hashmap (string + vec occurrence indices)
+        let map1 = robj_index_map(&left, &left_key);
+        let map2 = robj_index_map(&right, &right_key);
+
         // We don't need to check any strings where lengths differ by more than max
         // For RHS, keep a map of lengths of all strings
         // We use this later to subset the columns we compare in each set
@@ -38,74 +44,63 @@ pub trait EditDistance: Send + Sync {
         let min_key = length_hm.keys().min().expect("Problem?!");
         let max_key = length_hm.keys().max().expect("Problem?!");
 
-        // Begin generation of all matched indices
-        let idxs: Vec<(usize, usize, Option<f64>)> = map1
-            .par_iter()
-            .filter_map(|(k1, v1)| {
-                // Skip all comparisons if string is NA
-                if !full {
-                    if k1.is_na() {
-                        return None;
+        let map1_vec: Vec<_> = map1.iter().collect();
+        let chunk_size = map1_vec.len().div_ceil(num_groups);
+
+        let idxs: Vec<(usize, usize, Option<f64>)> = map1_vec
+            .par_chunks(chunk_size)
+            .flat_map(|chunk| {
+                let mut local_idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
+
+                for (k1, v1) in chunk {
+                    if !full && k1.is_na() {
+                        continue;
+                    }
+
+                    let k1_len = k1.len();
+                    let start_len = if full {
+                        *min_key
+                    } else {
+                        k1_len.saturating_sub(md)
+                    };
+                    let end_len = if full {
+                        *max_key + 1
+                    } else {
+                        k1_len.saturating_add(md + 1)
+                    };
+
+                    for i in start_len..end_len {
+                        if let Some(lookup) = length_hm.get(&i) {
+                            for k2 in lookup {
+                                let v2 = map2.get(k2).unwrap();
+
+                                if (k2.is_na() || k1.is_na()) && full {
+                                    iproduct!(*v1, v2).for_each(|(v1, v2)| {
+                                        local_idxs.push((*v1, *v2, NA_REAL));
+                                    });
+                                    continue;
+                                }
+
+                                if k1 == &k2 {
+                                    iproduct!(*v1, v2).for_each(|(v1, v2)| {
+                                        local_idxs.push((*v1, *v2, Some(0.)));
+                                    });
+                                    continue;
+                                }
+
+                                let dist = self.compute(k1, k2) as f64;
+                                if dist <= max_distance || full {
+                                    iproduct!(*v1, v2).for_each(|(v1, v2)| {
+                                        local_idxs.push((*v1, *v2, Some(dist)));
+                                    });
+                                }
+                            }
+                        }
                     }
                 }
 
-                // Get range of lengths within max distance of current
-                let k1_len = k1.len();
-                let start_len = match full {
-                    true => *min_key,
-                    false => k1_len.saturating_sub(md),
-                };
-                let end_len = match full {
-                    true => *max_key + 1,
-                    false => k1_len.saturating_add(md + 1),
-                };
-
-                // Start a list to collect results
-                let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
-
-                // Begin making string comparisons
-                for i in start_len..end_len {
-                    if let Some(lookup) = length_hm.get(&i) {
-                        lookup.iter().for_each(|k2| {
-                            let v2 = map2.get(k2).unwrap();
-
-                            // Skip this iter if RHS is NA
-                            if (k2.is_na() || k1.is_na()) && full {
-                                iproduct!(v1, v2).for_each(|(v1, v2)| {
-                                    idxs.push((*v1, *v2, NA_REAL));
-                                });
-                                return;
-                            }
-
-                            // No need to run distance functions if exactly the same
-                            if k1 == k2 {
-                                iproduct!(v1, v2).for_each(|(v1, v2)| {
-                                    idxs.push((*v1, *v2, Some(0.)));
-                                });
-                                return;
-                            }
-
-                            let dist = self.compute(&k1, &k2) as f64;
-
-                            // Check vs. threshold
-                            if dist <= max_distance || full {
-                                iproduct!(v1, v2).for_each(|(v1, v2)| {
-                                    idxs.push((*v1, *v2, Some(dist)));
-                                });
-                                return;
-                            }
-                        });
-                    }
-                }
-
-                // Return all matches, if any
-                if idxs.is_empty() {
-                    return None;
-                } else {
-                    return Some(idxs);
-                }
+                local_idxs
             })
-            .flatten()
             .collect();
         idxs
     }
@@ -163,48 +158,6 @@ impl EditDistance for LCSStr {
 pub struct OSA;
 impl EditDistance for OSA {
     fn compute(&self, s1: &str, s2: &str) -> usize {
-        //damerau_levenshtein_restricted(s1, s2)
-        let m = s1.len();
-        let n = s2.len();
-        let mut dp = vec![vec![0; n + 1]; m + 1];
-
-        // Initialize base cases
-        for i in 0..=m {
-            dp[i][0] = i;
-        }
-        for j in 0..=n {
-            dp[0][j] = j;
-        }
-
-        // Compute OSA distance using DP
-        for i in 1..=m {
-            for j in 1..=n {
-                let cost = if s1.chars().nth(i - 1) == s2.chars().nth(j - 1) {
-                    0
-                } else {
-                    1
-                };
-
-                dp[i][j] = *[
-                    dp[i - 1][j] + 1,        // Deletion
-                    dp[i][j - 1] + 1,        // Insertion
-                    dp[i - 1][j - 1] + cost, // Substitution
-                ]
-                .iter()
-                .min()
-                .unwrap();
-
-                // Handle transpositions
-                if i > 1
-                    && j > 1
-                    && s1.chars().nth(i - 1) == s2.chars().nth(j - 2)
-                    && s1.chars().nth(i - 2) == s2.chars().nth(j - 1)
-                {
-                    dp[i][j] = dp[i][j].min(dp[i - 2][j - 2] + cost);
-                }
-            }
-        }
-
-        dp[m][n] // Final OSA distance
+        damerau_levenshtein_restricted(s1, s2)
     }
 }
