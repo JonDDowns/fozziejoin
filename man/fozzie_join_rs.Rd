@@ -2,40 +2,60 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{fozzie_join_rs}
 \alias{fozzie_join_rs}
-\title{Performs a fuzzy join between two data frames based on approximate string matching.}
+\title{Performs a fuzzy join between two data frames using approximate string matching.}
 \usage{
-fozzie_join_rs(df1, df2, by, method, how, max_distance, distance_col, q, p, bt)
+fozzie_join_rs(
+  df1,
+  df2,
+  by,
+  method,
+  how,
+  max_distance,
+  distance_col,
+  q,
+  max_prefix,
+  prefix_weight,
+  nthread
+)
 }
 \description{
 This function matches records in \code{df1} and \code{df2} using specified column names, allowing
-matches within a given distance threshold using various fuzzy matching methods.
-It constructs index maps for efficient lookups and comparisons, ensuring minimal
-redundant calculations.
+matches within a given distance threshold. It supports various fuzzy matching methods and
+constructs index maps for efficient lookups while minimizing redundant calculations.
 }
 \section{Parameters}{
 \itemize{
-\item \code{df1} (\code{List}): The first data frame (R List format), containing named vectors.
+\item \code{df1} (\code{List}): The first data frame (R List format).
 \item \code{df2} (\code{List}): The second data frame.
-\item \code{by} (\verb{HashMap<String, String>}): A mapping of column names specifying join keys:
+\item \code{by} (\verb{HashMap<String, String>}): Specifies join keys:
 \itemize{
 \item The key represents the column name in \code{df1}.
 \item The value represents the corresponding column name in \code{df2}.
 }
-\item \code{method} (\code{String}): The fuzzy matching method to use. Supported methods:
+\item \code{method} (\code{String}): The fuzzy matching algorithm to use:
 \itemize{
+\item \code{"levenshtein"} | \code{"lv"} - Levenshtein edit distance.
 \item \code{"osa"} - Optimal string alignment distance.
-\item \code{"levenshtein"} or \code{"lv"} - Standard Levenshtein edit distance.
-\item \code{"damerau_levensthein"} or \code{"dl"} - Damerau-Levenshtein edit distance.
-\item \code{"hamming"} - Hamming distance (only works for equal-length strings).
-\item \code{"lcs"} - Longest common subsequence similarity.
-\item \code{"qgram"} - Q-gram comparison (requires \code{q} value).
-\item \code{"cosine"} - Cosine similarity (requires \code{q} value).
-\item \code{"jaccard"} - Jaccard similarity (requires \code{q} value).
-\item \code{"jaro_winkler"} or \code{"jw"} - Jaro-Winkler similarity.
-\item \code{"jaro"} - Standard Jaro similarity.
+\item \code{"damerau_levensthein"} | \code{"dl"} - Damerau-Levenshtein distance.
+\item \code{"hamming"} - Hamming distance (equal-length strings only).
+\item \code{"lcs"} - Longest common subsequence.
+\item \code{"qgram"} - Q-gram similarity (requires \code{q} parameter).
+\item \code{"cosine"} - Cosine similarity (requires \code{q} parameter).
+\item \code{"jaccard"} - Jaccard similarity (requires \code{q} parameter).
+\item \code{"jaro_winkler"} | \code{"jw"} - Jaro-Winkler similarity.
 }
-\item \code{q} (\verb{Option<i32>}): The \emph{q}-gram size (required for \code{"qgram"}, \code{"cosine"}, and \code{"jaccard"} methods).
-\item \code{max_distance} (\code{f64}): Maximum allowable distance for a match.
+\item \code{q} (\verb{Option<i32>}): \emph{q}-gram size (required for \code{"qgram"}, \code{"cosine"}, and \code{"jaccard"}).
+\item \code{max_distance} (\code{f64}): Maximum allowable edit distance.
+\item \code{how} (\code{String}): Specifies the join type (\code{"inner"}, \code{"left"}, \code{"right"}).
+\itemize{
+\item \code{"inner"} (default): Returns only matching records.
+\item \code{"left"}: Returns all records from \code{df1}, with fuzzy matches from \code{df2}.
+\item \code{"right"}: Returns all records from \code{df2}, with fuzzy matches from \code{df1}.
+}
+\item \code{distance_col} (\verb{Option<String>}): Column name to store computed distance values.
+If \code{None}, distances are not stored.
+\item \code{max_prefix} (\verb{Option<i32>}): A threshold parameter influencing similarity computations.
+\item \code{prefix_weight} (\verb{Option<f32>}): Used for fine-tuning certain similarity calculations.
 }
 }
 
@@ -43,16 +63,21 @@ redundant calculations.
 \itemize{
 \item \code{Robj}: A data frame containing matched records from \code{df1} and \code{df2},
 with column names suffixed as \code{.x} (from \code{df1}) and \code{.y} (from \code{df2}).
+If \code{distance_col} is provided, the computed distance values will be included.
 }
 }
 
 \section{Notes}{
 \itemize{
 \item Uses \strong{parallel iteration} (\code{par_iter()}) for efficient comparisons.
-\item Only evaluates string pairs where the difference in length is within \code{max_distance}.
 \item Minimizes redundant checks by using \strong{indexed maps} instead of naive pairwise comparisons.
-\item Ensures column alignment while supporting fuzzy matching.
+\item Supports multiple fuzzy matching techniques to enhance flexibility.
 }
+}
+
+\section{Example}{
+\if{html}{\out{<div class="sourceCode rust">}}\preformatted{let result = fozzie_join_rs(df1, df2, by, "levenshtein", "inner", 2.0, Some("dist"), None, None, None);
+}\if{html}{\out{</div>}}
 }
 
 \section{See Also}{

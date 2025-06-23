@@ -31,8 +31,8 @@
 #'   - `"anti"`: [Not implemented] Returns all rows from `df1` not in `df2`.
 #' @param distance_col Optional column name as a string to store the computed distance values in the output.
 #'   If `NULL`, distances will not be included in the output.
-#' @param p Numeric parameter used for certain distance calculations (default is `4`).
-#' @param bt Numeric threshold parameter that influences certain similarity calculations (default is `0.1`).
+#' @param max_prefix For Jaro-Winkler edit distance, the max prefix size in characters (default is `0`).
+#' @param prefix_weight For Jaro-Winkler edit distance, the adjustment factor for shared prefixes. The default must not be higher than the reciprocal of max_prefix (deafult is `0`).
 #'
 #' @return A data frame containing matched records from `df1` and `df2`,
 #'   with column names suffixed as `.x` (from `df1`) and `.y` (from `df2`).
@@ -45,7 +45,7 @@
 #' print(result)
 #'
 #' @export
-fozzie_join <- function(df1, df2, by, method='levenshtein', how='inner', max_distance=1, distance_col=NULL, q=NULL, p = 4, bt = 0.1) {
+fozzie_join <- function(df1, df2, by, method='levenshtein', how='inner', max_distance=1, distance_col=NULL, q=NULL,  max_prefix = 0, prefix_weight = 0, nthread=NULL) {
   # Automatically convert character vector `by = c("COL1", "COL2")` into a named list
   if (is.character(by) && length(by) == 2) {
     by <- setNames(list(by[2]), by[1])
@@ -59,6 +59,10 @@ fozzie_join <- function(df1, df2, by, method='levenshtein', how='inner', max_dis
 		how=how,
 		max_distance=max_distance,
 		distance_col=distance_col,
-		q=q, p=p, bt=bt)
+		q=q,
+		prefix_weight=prefix_weight,
+		max_prefix=max_prefix,
+		nthread=nthread
+	)
 }
 

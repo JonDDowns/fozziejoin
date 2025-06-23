@@ -10,45 +10,57 @@
 #' @useDynLib fozziejoin, .registration = TRUE
 NULL
 
-#' Performs a fuzzy join between two data frames based on approximate string matching.
+#' Performs a fuzzy join between two data frames using approximate string matching.
 #'
 #' This function matches records in `df1` and `df2` using specified column names, allowing
-#' matches within a given distance threshold using various fuzzy matching methods.
-#' It constructs index maps for efficient lookups and comparisons, ensuring minimal
-#' redundant calculations.
+#' matches within a given distance threshold. It supports various fuzzy matching methods and
+#' constructs index maps for efficient lookups while minimizing redundant calculations.
 #'
 #' # Parameters
 #'
-#' - `df1` (`List`): The first data frame (R List format), containing named vectors.
+#' - `df1` (`List`): The first data frame (R List format).
 #' - `df2` (`List`): The second data frame.
-#' - `by` (`HashMap<String, String>`): A mapping of column names specifying join keys:
+#' - `by` (`HashMap<String, String>`): Specifies join keys:
 #'   - The key represents the column name in `df1`.
 #'   - The value represents the corresponding column name in `df2`.
-#' - `method` (`String`): The fuzzy matching method to use. Supported methods:
+#' - `method` (`String`): The fuzzy matching algorithm to use:
+#'   - `"levenshtein"` | `"lv"` - Levenshtein edit distance.
 #'   - `"osa"` - Optimal string alignment distance.
-#'   - `"levenshtein"` or `"lv"` - Standard Levenshtein edit distance.
-#'   - `"damerau_levensthein"` or `"dl"` - Damerau-Levenshtein edit distance.
-#'   - `"hamming"` - Hamming distance (only works for equal-length strings).
-#'   - `"lcs"` - Longest common subsequence similarity.
-#'   - `"qgram"` - Q-gram comparison (requires `q` value).
-#'   - `"cosine"` - Cosine similarity (requires `q` value).
-#'   - `"jaccard"` - Jaccard similarity (requires `q` value).
-#'   - `"jaro_winkler"` or `"jw"` - Jaro-Winkler similarity.
-#'   - `"jaro"` - Standard Jaro similarity.
-#' - `q` (`Option<i32>`): The *q*-gram size (required for `"qgram"`, `"cosine"`, and `"jaccard"` methods).
-#' - `max_distance` (`f64`): Maximum allowable distance for a match.
+#'   - `"damerau_levensthein"` | `"dl"` - Damerau-Levenshtein distance.
+#'   - `"hamming"` - Hamming distance (equal-length strings only).
+#'   - `"lcs"` - Longest common subsequence.
+#'   - `"qgram"` - Q-gram similarity (requires `q` parameter).
+#'   - `"cosine"` - Cosine similarity (requires `q` parameter).
+#'   - `"jaccard"` - Jaccard similarity (requires `q` parameter).
+#'   - `"jaro_winkler"` | `"jw"` - Jaro-Winkler similarity.
+#' - `q` (`Option<i32>`): *q*-gram size (required for `"qgram"`, `"cosine"`, and `"jaccard"`).
+#' - `max_distance` (`f64`): Maximum allowable edit distance.
+#' - `how` (`String`): Specifies the join type (`"inner"`, `"left"`, `"right"`).
+#'   - `"inner"` (default): Returns only matching records.
+#'   - `"left"`: Returns all records from `df1`, with fuzzy matches from `df2`.
+#'   - `"right"`: Returns all records from `df2`, with fuzzy matches from `df1`.
+#' - `distance_col` (`Option<String>`): Column name to store computed distance values.
+#'   If `None`, distances are not stored.
+#' - `max_prefix` (`Option<i32>`): A threshold parameter influencing similarity computations.
+#' - `prefix_weight` (`Option<f32>`): Used for fine-tuning certain similarity calculations.
 #'
 #' # Returns
 #'
 #' - `Robj`: A data frame containing matched records from `df1` and `df2`,
 #'   with column names suffixed as `.x` (from `df1`) and `.y` (from `df2`).
+#'   If `distance_col` is provided, the computed distance values will be included.
 #'
 #' # Notes
 #'
 #' - Uses **parallel iteration** (`par_iter()`) for efficient comparisons.
-#' - Only evaluates string pairs where the difference in length is within `max_distance`.
 #' - Minimizes redundant checks by using **indexed maps** instead of naive pairwise comparisons.
-#' - Ensures column alignment while supporting fuzzy matching.
+#' - Supports multiple fuzzy matching techniques to enhance flexibility.
+#'
+#' # Example
+#'
+#' ```rust
+#' let result = fozzie_join_rs(df1, df2, by, "levenshtein", "inner", 2.0, Some("dist"), None, None, None);
+#' ```
 #'
 #' # See Also
 #'
@@ -57,7 +69,7 @@ NULL
 #' - [`data_frame!`](https://extendr.github.io/) - Constructs an R-compatible data frame.
 #'
 #' @export
-fozzie_join_rs <- function(df1, df2, by, method, how, max_distance, distance_col, q, p, bt) .Call(wrap__fozzie_join_rs, df1, df2, by, method, how, max_distance, distance_col, q, p, bt)
+fozzie_join_rs <- function(df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight, nthread) .Call(wrap__fozzie_join_rs, df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight, nthread)
 
 
 # nolint end

@@ -81,3 +81,38 @@ testthat::test_that('Right join is correct for Hamming', {
 
 	testthat::expect_true(all.equal(actual, expected))
 })
+
+
+# Multi columns
+testthat::test_that('Right multi column joins work', {
+
+	left <- data.frame(
+		Name = c("Oliver", "James", "Emma", "Amelia"),
+		Pet = c("Sparky", "Spike", "Fido", "Bingo")
+	)
+	right <- data.frame(
+		Name = c("Olive", "Jams", "Emma", "Smelia"),
+		Pet = c("Sparky", "Spike", "Fuselage", "Bongo")
+	)
+
+	expected <- data.frame(list(
+		Name.x = c("Oliver", "James", "Amelia", NA), 
+		Pet.x = c("Sparky", "Spike", "Bingo", NA),
+		Name.y = c("Olive", "Jams", "Smelia", "Emma"),
+		Pet.y = c("Sparky", "Spike", "Bongo", "Fuselage"),
+		mydist_Name_Name = c(1, 1, 1, NA),
+		mydist_Pet_Pet = c(0, 0, 1, NA)
+	))
+
+	actual <- fozzie_join(
+		left,
+		right,
+		by = list('Name' = 'Name', "Pet" = "Pet"),
+		method = 'lv',
+		how='right',
+		max_distance=1,
+		distance_col="mydist"
+	)
+
+	testthat::expect_true(all.equal(actual, expected))
+})
