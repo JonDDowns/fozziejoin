@@ -92,7 +92,7 @@ fozzie <- fozzie_join(
 ## Benchmarks
 
 To date, `fozziejoin` has been benchmarked on Windows and Linux.
-`fozziejoin` beats the equivalent `fuzzyjoin` benchmark in all cases except one: OSA joins on the Windows operating system with large dataframes.
+`fozziejoin` beats the equivalent `fuzzyjoin` benchmark in all cases except one: OSA and DL joins on the Windows operating system with large dataframes.
 That being said, performance gains seem to be highest on Linux systems.
 
 [![Linux benchmark results](./benchmarks/benchmark_plot_Linux.svg)](./benchmarks/benchmark_plot_Linux.svg)
