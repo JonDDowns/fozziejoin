@@ -1,19 +1,17 @@
-use crate::ngram::{get_qgrams, QGramDistance};
+use crate::ngram::QGramDistance;
+use std::collections::HashMap;
 
 // Cosine Distance Implementation
 pub struct Cosine;
 
 impl QGramDistance for Cosine {
-    fn compute(&self, s1: &str, s2: &str, q: usize) -> f64 {
-        let qgrams_s1 = get_qgrams(s1, q);
-        let qgrams_s2 = get_qgrams(s2, q);
-
+    fn compute(&self, qgrams_s1: &HashMap<&str, usize>, qgrams_s2: &HashMap<&str, usize>) -> f64 {
         let mut dot_product = 0;
         let mut norm_s1 = 0;
         let mut norm_s2 = 0;
 
         // Compute dot product and vector norms
-        for (qgram, &count1) in &qgrams_s1 {
+        for (qgram, &count1) in qgrams_s1 {
             if let Some(&count2) = qgrams_s2.get(qgram) {
                 dot_product += count1 * count2;
             }

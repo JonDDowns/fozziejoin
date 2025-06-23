@@ -1,3 +1,4 @@
+use core::f64;
 use extendr_api::prelude::*;
 use std::collections::HashMap;
 
@@ -7,11 +8,11 @@ pub mod ngram;
 pub mod normalized;
 pub mod utils;
 
-use edit::{DamerauLevenshtein, EditDistance, Hamming, Levenshtein, OSA};
+use edit::{DamerauLevenshtein, EditDistance, Hamming, LCSStr, Levenshtein, OSA};
 use merge::Merge;
 use ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
-use normalized::{Jaro, JaroWinkler, NormalizedEditDistance};
-use utils::robj_index_map;
+use normalized::{jaro_winkler::JaroWinkler, NormalizedEditDistance};
+use utils::{robj_index_map, transpose_map};
 
 /// Performs a fuzzy join between two data frames using approximate string matching.
 ///
@@ -36,7 +37,6 @@ use utils::robj_index_map;
 ///   - `"cosine"` - Cosine similarity (requires `q` parameter).
 ///   - `"jaccard"` - Jaccard similarity (requires `q` parameter).
 ///   - `"jaro_winkler"` | `"jw"` - Jaro-Winkler similarity.
-///   - `"jaro"` - Jaro similarity.
 /// - `q` (`Option<i32>`): *q*-gram size (required for `"qgram"`, `"cosine"`, and `"jaccard"`).
 /// - `max_distance` (`f64`): Maximum allowable edit distance.
 /// - `how` (`String`): Specifies the join type (`"inner"`, `"left"`, `"right"`).
@@ -45,8 +45,8 @@ use utils::robj_index_map;
 ///   - `"right"`: Returns all records from `df2`, with fuzzy matches from `df1`.
 /// - `distance_col` (`Option<String>`): Column name to store computed distance values.
 ///   If `None`, distances are not stored.
-/// - `p` (`Option<i32>`): Used for fine-tuning certain similarity calculations.
-/// - `bt` (`Option<f32>`): A threshold parameter influencing similarity computations.
+/// - `max_prefix` (`Option<i32>`): A threshold parameter influencing similarity computations.
+/// - `prefix_weight` (`Option<f32>`): Used for fine-tuning certain similarity calculations.
 ///
 /// # Returns
 ///
@@ -77,68 +77,148 @@ use utils::robj_index_map;
 pub fn fozzie_join_rs(
     df1: List,
     df2: List,
-    by: HashMap<String, String>,
+    by: List,
     method: String,
     how: String,
     max_distance: f64,
     distance_col: Option<String>,
     q: Option<i32>,
-    p: Option<i32>,
-    bt: Option<f32>,
+    max_prefix: Option<i32>,
+    prefix_weight: Option<f64>,
+    nthread: Option<usize>,
 ) -> Robj {
     // Check for type of join requested
-    match how.as_str() {
-        "inner" => (),
-        "left" => (),
-        "right" => (),
+    let full = match how.as_str() {
+        "inner" => false,
+        "left" => false,
+        "right" => false,
+        "anti" => false,
+        "full" => true,
         _ => panic!("{how} is not currently a supported join type."),
-    }
-
-    // It's not uncommon to have the same string listed many times
-    // Keep a list of indices for each string so comps only happen once
-    let keys: Vec<(&str, &str)> = by.iter().map(|(a, b)| (a.as_str(), b.as_str())).collect();
-
-    // Convert the join key into a hashmap (string + vec occurrence indices)
-    let map1 = robj_index_map(&df1, &keys[0].0);
-    let map2 = robj_index_map(&df2, &keys[0].1);
-
-    // For metrics requiring qgrams, check whether a Q was supplied
-    let (idx1, idx2, dist) = match method.as_str() {
-        "osa" => OSA.fuzzy_indices(map1, map2, max_distance),
-        "levenshtein" | "lv" => Levenshtein.fuzzy_indices(map1, map2, max_distance),
-        "damerau_levensthein" | "dl" => DamerauLevenshtein.fuzzy_indices(map1, map2, max_distance),
-        "hamming" => Hamming.fuzzy_indices(map1, map2, max_distance),
-        //"lcs" => LCSStr.fuzzy_indices(map1, map2, max_distance as usize),
-        "qgram" => {
-            if let Some(qz) = q {
-                QGram.fuzzy_indices(map1, map2, max_distance, qz as usize)
-            } else {
-                panic!("Must provide q for method {}", method);
-            }
-        }
-        "cosine" => {
-            if let Some(qz) = q {
-                Cosine.fuzzy_indices(map1, map2, max_distance, qz as usize)
-            } else {
-                panic!("Must provide q for method {}", method);
-            }
-        }
-        "jaccard" => {
-            if let Some(qz) = q {
-                Jaccard.fuzzy_indices(map1, map2, max_distance, qz as usize)
-            } else {
-                panic!("Must provide q for method {}", method);
-            }
-        }
-        "jaro_winkler" | "jw" => JaroWinkler.fuzzy_indices(map1, map2, max_distance),
-        "jaro" => Jaro.fuzzy_indices(map1, map2, max_distance),
-        _ => panic!("The join method {how} is not available."),
     };
 
+    let mut keep_idxs: HashMap<(usize, usize), Vec<Option<f64>>> = HashMap::new();
+
+    for (z, (left_key, right_key)) in by.iter().enumerate() {
+        let rk = &right_key.as_str_vector().expect("lul")[0];
+
+        // Convert the join key into a hashmap (string + vec occurrence indices)
+
+        // For metrics requiring qgrams, check whether a Q was supplied
+        let matchdat = match method.as_str() {
+            "osa" => {
+                let map1 = robj_index_map(&df1, &left_key);
+                let map2 = robj_index_map(&df2, rk);
+                OSA.fuzzy_indices(map1, map2, max_distance, full, nthread)
+            }
+            "levenshtein" | "lv" => {
+                let map1 = robj_index_map(&df1, &left_key);
+                let map2 = robj_index_map(&df2, rk);
+                Levenshtein.fuzzy_indices(map1, map2, max_distance, full, nthread)
+            }
+            "damerau_levensthein" | "dl" => {
+                let map1 = robj_index_map(&df1, &left_key);
+                let map2 = robj_index_map(&df2, rk);
+                DamerauLevenshtein.fuzzy_indices(map1, map2, max_distance, full, nthread)
+            }
+            "hamming" => {
+                let map1 = robj_index_map(&df1, &left_key);
+                let map2 = robj_index_map(&df2, rk);
+                Hamming.fuzzy_indices(map1, map2, max_distance, full, nthread)
+            }
+            "lcs" => {
+                let map1 = robj_index_map(&df1, &left_key);
+                let map2 = robj_index_map(&df2, rk);
+                LCSStr.fuzzy_indices(map1, map2, max_distance, full, nthread)
+            }
+            "qgram" => {
+                if let Some(qz) = q {
+                    QGram.fuzzy_indices(
+                        &df1,
+                        left_key,
+                        &df2,
+                        rk,
+                        max_distance,
+                        qz as usize,
+                        full,
+                        nthread,
+                    )
+                } else {
+                    panic!("Must provide q for method {}", method);
+                }
+            }
+            "cosine" => {
+                if let Some(qz) = q {
+                    Cosine.fuzzy_indices(
+                        &df1,
+                        left_key,
+                        &df2,
+                        rk,
+                        max_distance,
+                        qz as usize,
+                        full,
+                        nthread,
+                    )
+                } else {
+                    panic!("Must provide q for method {}", method);
+                }
+            }
+            "jaccard" => {
+                if let Some(qz) = q {
+                    Jaccard.fuzzy_indices(
+                        &df1,
+                        left_key,
+                        &df2,
+                        rk,
+                        max_distance,
+                        qz as usize,
+                        full,
+                        nthread,
+                    )
+                } else {
+                    panic!("Must provide q for method {}", method);
+                }
+            }
+            "jaro_winkler" | "jw" => {
+                let map1 = robj_index_map(&df1, &left_key);
+                let map2 = robj_index_map(&df2, rk);
+                let max_prefix: usize = match max_prefix {
+                    Some(x) => x as usize,
+                    _ => panic!("Parameter max_prefix not provided"),
+                };
+                let prefix_weight: f64 = match prefix_weight {
+                    Some(x) => x,
+                    _ => panic!("Parameter prefix_weight not provided"),
+                };
+                let jw = JaroWinkler::new(prefix_weight, max_prefix);
+                jw.fuzzy_indices(map1, map2, max_distance, full, nthread)
+            }
+            _ => panic!("The join method {method} is not available."),
+        };
+
+        if z == 0 {
+            keep_idxs = matchdat
+                .iter()
+                .map(|(a, b, c)| ((a.clone(), b.clone()), vec![c.clone()]))
+                .collect();
+        } else {
+            let idxs: Vec<(usize, usize)> = matchdat.iter().map(|(a, b, _)| (*a, *b)).collect();
+            keep_idxs.retain(|key, _| idxs.contains(key));
+            for (id1, id2, dist) in matchdat {
+                if keep_idxs.contains_key(&(id1, id2)) {
+                    keep_idxs.get_mut(&(id1, id2)).expect("hm").push(dist);
+                }
+            }
+        }
+    }
+
+    let (idxs1, idxs2, dists) = transpose_map(keep_idxs);
+
     let out = match how.as_str() {
-        "inner" => Merge::inner(&df1, &df2, idx1, idx2, distance_col, &dist),
-        "left" => Merge::left(&df1, &df2, idx1, idx2, distance_col, &dist),
-        "right" => Merge::right(&df1, &df2, idx1, idx2, distance_col, &dist),
+        "inner" | "full" => Merge::inner(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+        "left" => Merge::left(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+        "right" => Merge::right(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+        "anti" => Merge::anti(&df1, idxs1),
         _ => panic!("Join type not supported"),
     };
     return out;

@@ -1,6 +1,6 @@
 # fozziejoin: Performant data frame joins with inexact matching
 
-[NOTE]: This project is in very early development. It currently depends on the Rust toolchain. APIs may change in the future.
+[NOTE]: This project is in early development. APIs may change in the future. It currently depends on the Rust toolchain to install.
 
 The `fozziejoin` package uses Rust to perform R dataframe joins based on string distance metrics.
 It is intended to be a high-performance alternative to `stringdist_inner_join` and similar functions from the [fuzzyjoin package](https://github.com/dgrtwo/fuzzyjoin).
@@ -52,7 +52,7 @@ devtools::install()
 
 Alternatively, use `devtools::load_all()` to load the package in development mode.
 
-### Run benchmarks vs. `fuzzyjoin`
+### Usage
 
 Code herein is adapted from the motivating example used in the `fuzzyjoin` package.
 First, we take a list of common misspellings (and their corrected alternatives) from Wikipedia.
@@ -60,7 +60,6 @@ To run in a a reasonable amount of time, we take a random sample of 1000.
 
 ```{r}
 library(dplyr)
-library(fuzzyjoin)
 library(fozziejoin)
 
 # Load misspelling data
@@ -81,60 +80,30 @@ library(qdapDictionaries)
 words <- tibble::as_tibble(DICTIONARY)
 ```
 
-Then, we use microbenchmark to compare the average clock time of each respective function.
+Then, we run our join function.
 
 ```{r}
 # Run each function multiple times and compare results
-timing_result <- microbenchmark::microbenchmark(
-	fuzzyjoin = joined <- sub_misspellings %>%
-		stringdist_inner_join(
-			words, by = c(misspelling = "word"), max_dist = 2, method='lv'
-		),
-	fozziejoin = fozzie <- fozzie_join(
-		sub_misspellings, words, by = c('misspelling', 'word'), max_distance=2
-	),
-	times=5
+fozzie <- fozzie_join(
+    sub_misspellings, words, method='lv', by = c('misspelling', 'word'), max_distance=2
 )
-print(timing_result)
-
-#> Unit: milliseconds
-#>    expr        min         lq      mean     median        uq       max neval
-#>   fuzzy 2151.74391 2165.40659 2348.9678 2268.66249 2369.7904 2789.2356     5
-#>  fozzie   96.99412   97.38295   99.3314   99.36834  100.7067  102.2049     5
 ```
 
-And we confirm the results are the same:
+## Benchmarks
 
-```{r}
-# Check for fuzzyjoin records not in fozziejoin
-comp_cols <- c(
-	'misspelling' = 'misspelling.x',
-	'correct' = 'correct.x',
-	'word' = 'word.y',
-	'syllables' = 'syllables.y'
-)
-not_in_fuzzy <- dplyr::anti_join(joined, fozzie, by=comp_cols)
-print(paste(
-	"Number of records in fuzzyjoin but not in fozziejoin:",
-	nrow(not_in_fuzzy)
-))
-#> [1] "Number of records in fuzzyjoin but not in fozziejoin: 0"
+To date, `fozziejoin` has been benchmarked on Windows and Linux.
+`fozziejoin` beats the equivalent `fuzzyjoin` benchmark in all cases except one: OSA joins on the Windows operating system with large dataframes.
+That being said, performance gains seem to be highest on Linux systems.
 
-# Check for fozziejoin records not in fuzzyjoin
-# Swap names and values
-swapped_cols <- setNames(names(comp_cols), comp_cols)
-not_in_fozzie <- dplyr::anti_join(fozzie, joined, by=swapped_cols)
-print(paste(
-	"Number of records in fozziejoin but not in fuzzyjoin:",
-	nrow(not_in_fozzie)
-))
-#> [1] "Number of records in fozziejoin but not in fuzzyjoin: 0"
-```
+[![Linux benchmark results](./benchmarks/benchmark_plot_Linux.svg)](./benchmarks/benchmark_plot_Linux.svg)
+
+[![Windows benchmark results](./benchmarks/benchmark_plot_Windows.svg)](./benchmarks/benchmark_plot_Windows.svg)
 
 ## Known behvavior changes to `fuzzyjoin`
 
 - Matching on columns with `NA` values would throw an error in `fuzzyjoin` but simply do not match in `fozziejoin`. This allows for NA values to persist in left, right, and full joins without matching all NA values to one another.
-- The boost threshold (`bt`) and prefix (`p`) parameters are not yet functional for Jaro-Winkler. Currently, all Jaro-Winkler calculations will use default values of 0.1 and 4, respectively. Note the `jw` method defaults in the `stringdist` (and, subsequently, `fuzzyjoin`) package effectively turn these parameters off. See the `jaro` method to replicate this behavior.
+- Jaro-Winkler distance
+    - The prefix scaling factor (`max_prefix`) is an integer representing a fixed number of characters. The analagous `stringdist` parameter, `bt`, was a proportion of string length.
 - `fozziejoin` always assigns the suffix ".x" to columns from the LHS and ".y" to columns from the RHS. `fuzzyjoin` only does this when both LHS and RHS contain the same column name. `fozziejoin` may conform to the `fuzzyjoin` behavior in the future.
 
 ## Acknowledgements
@@ -145,30 +114,29 @@ print(paste(
 
 ## TODO
 
-- [ ] Join Types
+- [X] Join Types
     - [X] Inner join
     - [X] Left join
     - [X] Right join
-    - [ ] Full join
-    - [ ] Anti join
-- [ ] Distance Calculations
+    - [X] Full join
+    - [X] Anti join
+- [X] Distance Calculations
     - [X] Levenshtein
     - [X] Damerau-Levenshtein
     - [X] Hamming
-    - [ ] Longest common substring distance (LCS, current implementation incorrect and not user-accessible)
+    - [X] Longest common substring distance
     - [X] qgram
     - [X] cosine
     - [X] Jaccard
-    - [ ] Jaro-Winkler [partial: need to add toggles for p and bt]
+    - [X] Jaro-Winkler
     - [X] Jaro
     - [X] OSA
-- [ ] Quality of life
-    - [ ] Allow for multi-column joins
+- [X] Quality of life
+    - [X] Allow for multi-column joins
     - [X] Attach string distance output as column (similar to `distance_col` param in `fuzzyjoin`)
-    - [ ] Ignore case for strings
-    - [ ] Add parameter to toggle number of threads
-- [ ] Install from binary for Windows?
-- [ ] Benchmark all methods vs `fuzzyjoin`
+    - [X] Add parameter to toggle number of threads
+- [ ] Installable using `devtools::install_github()`? Even without Rust toolchain?
+- [X] Benchmark all methods vs `fuzzyjoin`
 - [ ] Proper attribution for all dependencies
 - [ ] CRAN distribution
 

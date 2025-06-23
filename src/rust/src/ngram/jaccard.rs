@@ -3,30 +3,28 @@ use crate::ngram::QGramDistance;
 // Cosine Distance Implementation
 pub struct Jaccard;
 
-use std::collections::HashSet;
-
-/// Generate *n*-grams from a string
-fn get_qgrams_set(s: &str, n: usize) -> HashSet<String> {
-    s.chars()
-        .collect::<Vec<_>>()
-        .windows(n)
-        .map(|window| window.iter().collect())
-        .collect()
-}
+use std::collections::{HashMap, HashSet};
 
 impl QGramDistance for Jaccard {
-    /// Compute Jaccard distance for *n*-grams
-    fn compute(&self, s1: &str, s2: &str, q: usize) -> f64 {
-        let ngrams1 = get_qgrams_set(s1, q);
-        let ngrams2 = get_qgrams_set(s2, q);
+    fn compute(&self, qgrams_s1: &HashMap<&str, usize>, qgrams_s2: &HashMap<&str, usize>) -> f64 {
+        let mut intersection = 0;
+        let mut union = 0;
 
-        let intersection_size = ngrams1.intersection(&ngrams2).count();
-        let union_size = ngrams1.union(&ngrams2).count();
+        let mut all_keys: HashSet<_> = qgrams_s1.keys().cloned().collect();
+        all_keys.extend(qgrams_s2.keys().cloned());
 
-        if union_size == 0 {
-            return 1.0; // Max distance when no shared elements
+        for key in all_keys {
+            let count1 = qgrams_s1.get(&key).copied().unwrap_or(0);
+            let count2 = qgrams_s2.get(&key).copied().unwrap_or(0);
+
+            intersection += count1.min(count2);
+            union += count1.max(count2);
         }
 
-        1.0 - (intersection_size as f64 / union_size as f64)
+        if union == 0 {
+            1.0
+        } else {
+            1.0 - (intersection as f64 / union as f64)
+        }
     }
 }
