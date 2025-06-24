@@ -8,69 +8,68 @@ pub mod ngram;
 pub mod normalized;
 pub mod utils;
 
-use edit::{DamerauLevenshtein, EditDistance, Hamming, LCSStr, Levenshtein, OSA};
+use edit::{
+    damerau_levenshtein::DamerauLevenshtein, osa::OSA, EditDistance, Hamming, LCSStr, Levenshtein,
+};
 use merge::Merge;
 use ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
 use normalized::{jaro_winkler::JaroWinkler, NormalizedEditDistance};
 use utils::{robj_index_map, transpose_map};
 
-/// Performs a fuzzy join between two data frames using approximate string matching.
+/// Perform a fuzzy join between two R data frames using approximate string similarity.
 ///
-/// This function matches records in `df1` and `df2` using specified column names, allowing
-/// matches within a given distance threshold. It supports various fuzzy matching methods and
-/// constructs index maps for efficient lookups while minimizing redundant calculations.
+/// This function performs record linkage between `df1` and `df2`, allowing approximate
+/// matches based on the specified join keys and string similarity metrics. The algorithm
+/// efficiently computes pairwise distances using parallel iteration and indexed maps.
 ///
 /// # Parameters
 ///
-/// - `df1` (`List`): The first data frame (R List format).
-/// - `df2` (`List`): The second data frame.
-/// - `by` (`HashMap<String, String>`): Specifies join keys:
-///   - The key represents the column name in `df1`.
-///   - The value represents the corresponding column name in `df2`.
-/// - `method` (`String`): The fuzzy matching algorithm to use:
-///   - `"levenshtein"` | `"lv"` - Levenshtein edit distance.
-///   - `"osa"` - Optimal string alignment distance.
-///   - `"damerau_levensthein"` | `"dl"` - Damerau-Levenshtein distance.
-///   - `"hamming"` - Hamming distance (equal-length strings only).
-///   - `"lcs"` - Longest common subsequence.
-///   - `"qgram"` - Q-gram similarity (requires `q` parameter).
-///   - `"cosine"` - Cosine similarity (requires `q` parameter).
-///   - `"jaccard"` - Jaccard similarity (requires `q` parameter).
-///   - `"jaro_winkler"` | `"jw"` - Jaro-Winkler similarity.
-/// - `q` (`Option<i32>`): *q*-gram size (required for `"qgram"`, `"cosine"`, and `"jaccard"`).
-/// - `max_distance` (`f64`): Maximum allowable edit distance.
-/// - `how` (`String`): Specifies the join type (`"inner"`, `"left"`, `"right"`).
-///   - `"inner"` (default): Returns only matching records.
-///   - `"left"`: Returns all records from `df1`, with fuzzy matches from `df2`.
-///   - `"right"`: Returns all records from `df2`, with fuzzy matches from `df1`.
-/// - `distance_col` (`Option<String>`): Column name to store computed distance values.
-///   If `None`, distances are not stored.
-/// - `max_prefix` (`Option<i32>`): A threshold parameter influencing similarity computations.
-/// - `prefix_weight` (`Option<f32>`): Used for fine-tuning certain similarity calculations.
+/// - `df1` (`List`): The first data frame (as an R list).
+/// - `df2` (`List`): The second data frame (as an R list).
+/// - `by` (`List`): Named list of matching columns. Each name-value pair maps a column
+///   in `df1` to a corresponding column in `df2`.
+/// - `method` (`String`): The similarity metric to use:
+///   - `"levenshtein"`, `"lv"` – Levenshtein edit distance
+///   - `"osa"` – Optimal string alignment
+///   - `"damerau_levensthein"`, `"dl"` – Damerau-Levenshtein distance
+///   - `"hamming"` – Hamming distance (requires equal-length strings)
+///   - `"lcs"` – Longest common subsequence
+///   - `"qgram"`, `"cosine"`, `"jaccard"` – Token-based methods (requires `q`)
+///   - `"jaro_winkler"`, `"jw"` – Jaro-Winkler similarity (requires `max_prefix` & `prefix_weight`)
+/// - `how` (`String`): Type of join:
+///   - `"inner"` – Only matching rows from both inputs (default)
+///   - `"left"` – All rows from `df1`, matched to `df2`
+///   - `"right"` – All rows from `df2`, matched to `df1`
+///   - `"anti"` – Only unmatched rows from `df1`
+///   - `"full"` – All matches across both inputs
+/// - `max_distance` (`f64`): Maximum similarity threshold. Depending on the method,
+///   this acts as either a maximum distance or minimum similarity.
+/// - `distance_col` (`Option<String>`): Optional name of a column to include per-match
+///   distance or similarity score.
+/// - `q` (`Option<i32>`): Gram size for `qgram`, `cosine`, and `jaccard`.
+/// - `max_prefix` (`Option<i32>`): Required by `jaro_winkler`; controls prefix match scope.
+/// - `prefix_weight` (`Option<f64>`): Required by `jaro_winkler`; adjusts prefix weight.
+/// - `nthread` (`Option<usize>`): Number of threads to use (optional, defaults to all cores).
 ///
 /// # Returns
 ///
-/// - `Robj`: A data frame containing matched records from `df1` and `df2`,
-///   with column names suffixed as `.x` (from `df1`) and `.y` (from `df2`).
-///   If `distance_col` is provided, the computed distance values will be included.
+/// An R-compatible data frame (`Robj`) containing the join result. Column names are suffixed:
+/// - `.x` for values from `df1`
+/// - `.y` for values from `df2`
 ///
-/// # Notes
+/// If `distance_col` is specified, a numeric column is appended containing the calculated
+/// similarity or distance for each match.
 ///
-/// - Uses **parallel iteration** (`par_iter()`) for efficient comparisons.
-/// - Minimizes redundant checks by using **indexed maps** instead of naive pairwise comparisons.
-/// - Supports multiple fuzzy matching techniques to enhance flexibility.
+/// # Implementation Notes
 ///
-/// # Example
+/// - Internally uses indexed lookup tables to avoid full pairwise string comparisons.
+/// - Supports multi-column matching and filters progressively across keys.
+/// - Distance results are transposed and aligned across join keys using `transpose_map`.
 ///
-/// ```rust
-/// let result = fozzie_join_rs(df1, df2, by, "levenshtein", "inner", 2.0, Some("dist"), None, None, None);
-/// ```
+/// # Dependencies
 ///
-/// # See Also
-///
-/// - [`levenshtein`](https://docs.rs/levenshtein/latest/levenshtein/) - Computes edit distances.
-/// - [`extendr`](https://extendr.github.io/) - Enables Rust interoperability with R.
-/// - [`data_frame!`](https://extendr.github.io/) - Constructs an R-compatible data frame.
+/// Relies on the `extendr` framework for R interop and uses an internal fuzzy matching trait
+/// that differs by distance metric: qgrams, edit distance, or normalized edit distance.
 ///
 /// @export
 #[extendr]
@@ -97,40 +96,34 @@ pub fn fozzie_join_rs(
         _ => panic!("{how} is not currently a supported join type."),
     };
 
+    // Running list of all IDXs that have survived
     let mut keep_idxs: HashMap<(usize, usize), Vec<Option<f64>>> = HashMap::new();
 
-    for (z, (left_key, right_key)) in by.iter().enumerate() {
-        let rk = &right_key.as_str_vector().expect("lul")[0];
+    // Begin looping through each supplied set of match keys
+    for (match_iter, (left_key, right_key)) in by.iter().enumerate() {
+        let rk = &right_key
+            .as_str_vector()
+            .expect(&format!("Error converting {:?} to string.", right_key))[0];
 
-        // Convert the join key into a hashmap (string + vec occurrence indices)
-
-        // For metrics requiring qgrams, check whether a Q was supplied
+        // Get indices of all matching pairs using user-defined params.
         let matchdat = match method.as_str() {
-            "osa" => {
-                let map1 = robj_index_map(&df1, &left_key);
-                let map2 = robj_index_map(&df2, rk);
-                OSA.fuzzy_indices(map1, map2, max_distance, full, nthread)
-            }
+            "osa" => OSA.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, nthread),
             "levenshtein" | "lv" => {
-                let map1 = robj_index_map(&df1, &left_key);
-                let map2 = robj_index_map(&df2, rk);
-                Levenshtein.fuzzy_indices(map1, map2, max_distance, full, nthread)
+                Levenshtein.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, nthread)
             }
-            "damerau_levensthein" | "dl" => {
-                let map1 = robj_index_map(&df1, &left_key);
-                let map2 = robj_index_map(&df2, rk);
-                DamerauLevenshtein.fuzzy_indices(map1, map2, max_distance, full, nthread)
-            }
+            "damerau_levensthein" | "dl" => DamerauLevenshtein.fuzzy_indices(
+                &df1,
+                left_key,
+                &df2,
+                rk,
+                max_distance,
+                full,
+                nthread,
+            ),
             "hamming" => {
-                let map1 = robj_index_map(&df1, &left_key);
-                let map2 = robj_index_map(&df2, rk);
-                Hamming.fuzzy_indices(map1, map2, max_distance, full, nthread)
+                Hamming.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, nthread)
             }
-            "lcs" => {
-                let map1 = robj_index_map(&df1, &left_key);
-                let map2 = robj_index_map(&df2, rk);
-                LCSStr.fuzzy_indices(map1, map2, max_distance, full, nthread)
-            }
+            "lcs" => LCSStr.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, nthread),
             "qgram" => {
                 if let Some(qz) = q {
                     QGram.fuzzy_indices(
@@ -180,30 +173,45 @@ pub fn fozzie_join_rs(
                 }
             }
             "jaro_winkler" | "jw" => {
+                // Get hash map of unique words/indices of all occurrences
                 let map1 = robj_index_map(&df1, &left_key);
                 let map2 = robj_index_map(&df2, rk);
+
+                // Extract max prefix size from args
                 let max_prefix: usize = match max_prefix {
                     Some(x) => x as usize,
                     _ => panic!("Parameter max_prefix not provided"),
                 };
+
+                // Extract max prefix weight from args
                 let prefix_weight: f64 = match prefix_weight {
                     Some(x) => x,
                     _ => panic!("Parameter prefix_weight not provided"),
                 };
+
+                // Define algorithm, run distance function
                 let jw = JaroWinkler::new(prefix_weight, max_prefix);
                 jw.fuzzy_indices(map1, map2, max_distance, full, nthread)
             }
             _ => panic!("The join method {method} is not available."),
         };
 
-        if z == 0 {
+        if match_iter == 0 {
+            // On the first iteration, we initialize the idx's to keep
             keep_idxs = matchdat
                 .iter()
                 .map(|(a, b, c)| ((a.clone(), b.clone()), vec![c.clone()]))
                 .collect();
         } else {
+            // For everything else: only keep those surviving this and all prior rounds
+
+            // Extract indices from current run
             let idxs: Vec<(usize, usize)> = matchdat.iter().map(|(a, b, _)| (*a, *b)).collect();
+
+            // Anything that did not survive this iteration should be removed from contention
             keep_idxs.retain(|key, _| idxs.contains(key));
+
+            // Add stringdistance result for survivors
             for (id1, id2, dist) in matchdat {
                 if keep_idxs.contains_key(&(id1, id2)) {
                     keep_idxs.get_mut(&(id1, id2)).expect("hm").push(dist);
@@ -212,8 +220,10 @@ pub fn fozzie_join_rs(
         }
     }
 
+    // Reshape output to enable final DF creation
     let (idxs1, idxs2, dists) = transpose_map(keep_idxs);
 
+    // Create the DF
     let out = match how.as_str() {
         "inner" | "full" => Merge::inner(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
         "left" => Merge::left(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
@@ -221,6 +231,8 @@ pub fn fozzie_join_rs(
         "anti" => Merge::anti(&df1, idxs1),
         _ => panic!("Join type not supported"),
     };
+
+    // Final result
     return out;
 }
 

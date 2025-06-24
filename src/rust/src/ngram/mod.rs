@@ -1,4 +1,4 @@
-use crate::utils::robj_index_map;
+use crate::utils::{get_qgrams, robj_index_map, strvec_to_qgram_map};
 use extendr_api::prelude::*;
 use itertools::iproduct;
 use rayon::prelude::*;
@@ -12,7 +12,37 @@ pub mod qgram;
 pub trait QGramDistance: Send + Sync {
     fn compute(&self, s1: &HashMap<&str, usize>, s2: &HashMap<&str, usize>) -> f64;
 
-    #[cfg(not(target_os = "windows"))]
+    /// Perform q-gram–based approximate string matching between two R data frame columns.
+    ///
+    /// This function compares tokens from the `left` data frame to q-gram–indexed values
+    /// in the `right` data frame using a token similarity metric (e.g., cosine, jaccard).
+    /// It computes distances for string pairs whose q-gram overlap exceeds a threshold,
+    /// returning matched row indices and similarity scores.
+    ///
+    /// # Parameters
+    ///
+    /// - `left`: The first R data frame (as `extendr_api::List`).
+    /// - `left_key`: Name of the column in `left` used for matching.
+    /// - `right`: The second R data frame (as `extendr_api::List`).
+    /// - `right_key`: Name of the column in `right` used for matching.
+    /// - `max_distance`: Maximum allowable dissimilarity (e.g., `1 - similarity score`).
+    /// - `q`: Q-gram size used for tokenization (e.g., 2 for bigrams).
+    /// - `full`: Whether to include matches with no overlap (`true` for `"full"` join mode).
+    /// - `nthread`: Optional number of threads to use for parallel matching.
+    ///
+    /// # Returns
+    ///
+    /// A `Vec` of tuples containing:
+    /// - `left_idx`: Row index from the `left` data frame
+    /// - `right_idx`: Row index from the `right` data frame
+    /// - `Option<f64>`: The computed similarity or distance score for the matched pair
+    ///
+    /// # Notes
+    ///
+    /// - Q-gram comparison is optimized by precomputing a q-gram frequency index for `right_key`.
+    /// - Matching is parallelized using Rayon for scalability across large data sets.
+    /// - Uses a user-defined scoring function via `self.compare_string_to_qgram_map` to compute distances.
+    /// - This version assumes the similarity algorithm (e.g. cosine, jaccard) is defined on the type that implements this method.
     fn fuzzy_indices(
         &self,
         left: &List,
@@ -43,50 +73,6 @@ pub trait QGramDistance: Send + Sync {
                 let out =
                     self.compare_string_to_qgram_map(full, k1, v1, &map2_qgrams, q, max_distance);
                 out
-            })
-            .flatten()
-            .collect();
-        idxs
-    }
-
-    #[cfg(target_os = "windows")]
-    fn fuzzy_indices(
-        &self,
-        left: &List,
-        left_key: &str,
-        right: &List,
-        right_key: &str,
-        max_distance: f64,
-        q: usize,
-        full: bool,
-        nthread: Option<usize>,
-    ) -> Vec<(usize, usize, Option<f64>)> {
-        let nt = if let Some(nt) = nthread {
-            ThreadPoolBuilder::new()
-                .num_threads(nt)
-                .build()
-                .expect("Global pool already initialized");
-            nt
-        } else {
-            rayon::current_num_threads()
-        };
-
-        let map1 = robj_index_map(&left, &left_key);
-
-        let batch_size = map1.len().div_ceil(nt);
-
-        // This map uses qgrams as keys and keeps track of both frequencies
-        // and the number of occurrences of each qgram
-        let map2_qgrams = strvec_to_qgram_map(right, right_key, q);
-
-        let idxs: Vec<(usize, usize, Option<f64>)> = map1
-            .iter()
-            .collect::<Vec<(&&str, &Vec<usize>)>>()
-            .par_chunks(batch_size)
-            .flat_map_iter(|chunk| {
-                chunk.iter().filter_map(|(k1, v1)| {
-                    self.compare_string_to_qgram_map(full, k1, v1, &map2_qgrams, q, max_distance)
-                })
             })
             .flatten()
             .collect();
@@ -137,47 +123,4 @@ pub trait QGramDistance: Send + Sync {
             Some(idxs)
         }
     }
-}
-
-fn get_qgrams(s: &str, q: usize) -> HashMap<&str, usize> {
-    let mut qgram_map = HashMap::new();
-
-    if s.len() < q {
-        return qgram_map;
-    }
-
-    let mut char_indices = s.char_indices().collect::<Vec<_>>();
-    char_indices.push((s.len(), '\0')); // Sentinel to get the final slice
-
-    for i in 0..=char_indices.len().saturating_sub(q + 1) {
-        let start = char_indices[i].0;
-        let end = char_indices[i + q].0;
-        let qgram = &s[start..end];
-        *qgram_map.entry(qgram).or_insert(0) += 1;
-    }
-
-    qgram_map
-}
-
-pub fn strvec_to_qgram_map<'a>(
-    df: &'a List,
-    key: &'a str,
-    q: usize,
-) -> HashMap<&'a str, (HashMap<&'a str, usize>, Vec<usize>)> {
-    let mut qgram_map: HashMap<&'a str, (HashMap<&'a str, usize>, Vec<usize>)> = HashMap::new();
-
-    df.dollar(key)
-        .expect(&format!("Column {key} does not exist or is not string."))
-        .as_str_iter()
-        .expect(&format!("Column {key} does not exist or is not string."))
-        .enumerate()
-        .for_each(|(index, val)| {
-            let hm: HashMap<&str, usize> = get_qgrams(val, q);
-            qgram_map
-                .entry(val)
-                .and_modify(|v| v.1.push(index + 1))
-                .or_insert((hm, vec![index + 1]));
-        });
-
-    qgram_map
 }

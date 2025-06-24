@@ -7,18 +7,18 @@ library(fuzzyjoin)
 devtools::install()
 library(fozziejoin)
 
-refresh <- FALSE
+refresh <- TRUE
 
 params <- list(
-      list(method = "osa", mode = "inner", max_dist = 1, q = 0),
-      list(method = "lv", mode = "inner", max_dist = 1, q = 0),
-      list(method = "dl", mode = "inner", max_dist = 1, q = 0),
-      list(method = "hamming", mode = "inner", max_dist = 1, q = 0),
-      list(method = "lcs", mode = "inner", max_dist = 1, q = 0),
-      list(method = "qgram", mode = "inner", max_dist = 2, q = 2),
-      list(method = "cosine", mode = "inner", max_dist = 0.9, q = 2),
-      list(method = "jaccard", mode = "inner", max_dist = 0.9, q = 2),
-      list(method = "jw", mode = "inner", max_dist = 0.9, q = 0)
+#      list(method = "osa", mode = "inner", max_dist = 1, q = 0),
+      #list(method = "lv", mode = "inner", max_dist = 1, q = 0),
+      list(method = "dl", mode = "inner", max_dist = 1, q = 0)
+      #list(method = "hamming", mode = "inner", max_dist = 1, q = 0),
+      #list(method = "lcs", mode = "inner", max_dist = 1, q = 0),
+      #list(method = "qgram", mode = "inner", max_dist = 2, q = 2),
+      #list(method = "cosine", mode = "inner", max_dist = 0.9, q = 2),
+      #list(method = "jaccard", mode = "inner", max_dist = 0.9, q = 2),
+      #list(method = "jw", mode = "inner", max_dist = 0.9, q = 0)
 )
 
 run_bench <- function(method, mode, max_dist, q=NA, nsamp, seed=2016) {
@@ -68,7 +68,7 @@ if(!file.exists(bench_file) || refresh) {
       results <- lapply(params, function(args, data) {
             cat(paste0("Function params:\n", paste0(args, collapse=", "), "\n"))
             out <- data.frame()
-            samp_sizes <- c(100, 1000, 2000)
+            samp_sizes <- c(100, 2000)
             for(i in samp_sizes) {
                   cat(paste0("Sampling ", i, " records.\n"))
                   args$nsamp <- i
@@ -103,3 +103,6 @@ ggplot(results, aes(x=n, y = time_ms, fill = expr, color = expr)) +
       scale_y_continuous(labels = scales::comma) +
       scale_x_continuous(labels = scales::comma)
 dev.off()
+
+#library(tidyverse)
+#print(results %>% group_by(expr, method, n) %>% summarize(time_ms = median(time_ms))

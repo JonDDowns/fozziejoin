@@ -61,6 +61,7 @@ To run in a a reasonable amount of time, we take a random sample of 1000.
 ```{r}
 library(dplyr)
 library(fozziejoin)
+library(fuzzyjoin) # For misspellings dataset
 
 # Load misspelling data
 data(misspellings)
@@ -139,4 +140,5 @@ That being said, performance gains seem to be highest on Linux systems.
 - [X] Benchmark all methods vs `fuzzyjoin`
 - [ ] Proper attribution for all dependencies
 - [ ] CRAN distribution
+- [ ] Consider factors?
 

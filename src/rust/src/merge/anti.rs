@@ -31,7 +31,6 @@ impl Merge {
                     vals.into_iter().collect_robj()
                 }
                 Strings => {
-                    // Everything else
                     let vals: Vec<Option<String>> = col1
                         .slice(&lhs_complement)
                         .expect(&errmsg)
@@ -70,4 +69,3 @@ impl Merge {
         data_frame!(out)
     }
 }
-
