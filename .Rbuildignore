@@ -3,3 +3,7 @@
 ^src/rust/target$
 ^src/Makevars$
 ^src/Makevars\.win$
+^cran-comments\.md$
+^LICENSE\.md$
+^benchmarks$
+^outputs$

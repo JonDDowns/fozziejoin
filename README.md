@@ -5,13 +5,13 @@
 The `fozziejoin` package uses Rust to perform R dataframe joins based on string distance metrics.
 It is intended to be a high-performance alternative to `stringdist_inner_join` and similar functions from the [fuzzyjoin package](https://github.com/dgrtwo/fuzzyjoin).
 
-Performance gains come from tailoring string distance calculation to the use case of fuzzy joins in order to eliminate unnecessary steps.
 The `fuzzyjoin` package depends on the [`stringdist` package](https://github.com/markvanderloo/stringdist) for string distance-based joins.
 While the `stringdist` package is very performant and multithreaded, it is not tailored to this use case.
-Thus, `fozziejoin` makes the following changes to improve performance:
+In `fozziejoin`, everything is adapted to the case of fuzzy joins to eliminate unnecessary steps and memory copying.
+Some examples:
 
 - No duplicate string distance calculations are performed. You only need compare "Jon" and "John" once.
-- No intermediate R objects, such as a matrix of string distance lengths, are created. All calculations are done in Rust, and data are exchanged between R and Rust using the [`extendr` Rust crate](https://github.com/extendr/extendr).
+- No intermediate R objects, such as a matrix of string distance lengths, are created. All calculations are done in Rust and returned to R via the [`extendr` Rust crate](https://github.com/extendr/extendr).
 
 The name itself is a bit of wordplay: the common term for this task is 'fuzzy join', which is similar to [Fozzie Bear](https://en.wikipedia.org/wiki/Fozzie_Bear) from the Muppets. 
 A picture of Fozzie will be in the repo once a stronger legal team is in place.
@@ -28,7 +28,7 @@ All builds to date are done using Rust 1.65.
 - The rust toolchain (`rustup`) and package manager (`cargo`)
 - The `rextendr` R package
 - The `devtools` R package
-- The following R packages are required to run examples:
+- The following R packages are required to run examples and benchmark scripts:
     - `dplyr`
     - `fuzzyjoin`
     - `qdapDictionaries`
@@ -93,8 +93,8 @@ fozzie <- fozzie_join(
 ## Benchmarks
 
 To date, `fozziejoin` has been benchmarked on Windows and Linux.
-`fozziejoin` beats the equivalent `fuzzyjoin` benchmark in all cases except one: OSA joins on the Windows operating system with large dataframes.
-That being said, performance gains seem to be highest on Linux systems.
+`fozziejoin` beats the equivalent `fuzzyjoin` benchmark in all cases except one: Damerau-Levenshtein (method `dl`) distance joins on Windows with large dataframes.
+The highest observed performance gains come from Linux systems, presumably due to the relative efficiency of parallelization via `rayon`.
 
 [![Linux benchmark results](./benchmarks/benchmark_plot_Linux.svg)](./benchmarks/benchmark_plot_Linux.svg)
 
@@ -112,33 +112,3 @@ That being said, performance gains seem to be highest on Linux systems.
 - The `textdistance` crate for most string distance implementations. Currently, this crate is still used for some string distances. Others are based on `textdistance` implementations but with some performance tweaking for this use case.
 - The `fuzzyjoin` and `stringdist` packages in R. Much of the project is meant to replicate their APIs and special cases handling.
 - The `extendr` team. This project would not be possible without their great project.
-
-## TODO
-
-- [X] Join Types
-    - [X] Inner join
-    - [X] Left join
-    - [X] Right join
-    - [X] Full join
-    - [X] Anti join
-- [X] Distance Calculations
-    - [X] Levenshtein
-    - [X] Damerau-Levenshtein
-    - [X] Hamming
-    - [X] Longest common substring distance
-    - [X] qgram
-    - [X] cosine
-    - [X] Jaccard
-    - [X] Jaro-Winkler
-    - [X] Jaro
-    - [X] OSA
-- [X] Quality of life
-    - [X] Allow for multi-column joins
-    - [X] Attach string distance output as column (similar to `distance_col` param in `fuzzyjoin`)
-    - [X] Add parameter to toggle number of threads
-- [ ] Installable using `devtools::install_github()`? Even without Rust toolchain?
-- [X] Benchmark all methods vs `fuzzyjoin`
-- [ ] Proper attribution for all dependencies
-- [ ] CRAN distribution
-- [ ] Consider factors?
-

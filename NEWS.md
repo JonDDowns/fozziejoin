@@ -1,8 +1,12 @@
 # fozziejoin 0.0.5
 
-- [TODO] Factor support now included
+- Joins now properly handle dates and factors
+- Added convenience function for all directional variants of joins (`fozzie_left_join()`, `fozzie_inner_join()`, ...).
 - Reverted a change from v0.0.4 wherein speed distance calculation methods differ by operating system (Windows vs. everything else). The supposed speed gains were actually flaws in the evaluation. Reverted back to a single method for all OS's.
-- README documentation was updated to fix an error in the example usage code. `fuzzyjoin` was a required import for the `misspellings` dataset.
+- Speedup in OSA algorithm due to more efficient memory handling 
+- README updates:
+    - Removed Todo section. Will use GitHub issues for this sort of thing moving forward.
+    - Documentation had error in example usage code. `fuzzyjoin` was a required import for the `misspellings` dataset.
 
 
 # fozziejoin 0.0.4
