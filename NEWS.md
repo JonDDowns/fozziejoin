@@ -7,7 +7,7 @@
 - README updates:
     - Removed Todo section. Will use GitHub issues for this sort of thing moving forward.
     - Documentation had error in example usage code. `fuzzyjoin` was a required import for the `misspellings` dataset.
-
+- Documentation updated to pass all `devtools::check()` and `R CMD check` checks for the first time.
 
 # fozziejoin 0.0.4
 
