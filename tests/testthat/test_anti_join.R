@@ -1,5 +1,3 @@
-context('fozzie_anti_join')
-
 baby_names <- data.frame(
 	Name = c(
 		'Liam',

@@ -1,5 +1,3 @@
-context('fozzie_inner_join')
-
 baby_names <- data.frame(
 	Name = c(
 		'Liam',
@@ -361,5 +359,3 @@ testthat::test_that('Multi column joins work', {
 	testthat::expect_true(all.equal(actual, expected))
 
 })
-
-

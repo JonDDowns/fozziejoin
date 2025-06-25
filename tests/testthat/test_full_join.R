@@ -1,5 +1,3 @@
-context('fozzie_full_join')
-
 baby_names <- data.frame(
 	Name = c('Liam', 'Noah', 'Oliver'),
 	int_col = c(1, 2, 3),

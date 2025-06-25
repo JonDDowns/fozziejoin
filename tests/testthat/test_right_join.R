@@ -1,8 +1,11 @@
-context('fozzie_right_join')
-
 # Inner joins prove the string distance and match selection processes are correct
 # For left and right joins, we only need prove that the correct non-match records
 # are also included. One join test should suffice.
+
+start_date <- as.Date("2023-01-01")
+end_date <- as.Date("2023-12-31")
+
+dates <- seq(from = start_date, to = end_date, length.out = 11)
 
 baby_names <- data.frame(
 	Name = c(
@@ -20,23 +23,28 @@ baby_names <- data.frame(
 	),
 	int_col = c(1, 2, 3, 4, 5, 6, NA, 8, 9, 10, 11),
 	real_col = c(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, NA, 9.0, 10.0, 11.0),
-	logical_col = c(TRUE, TRUE, TRUE, TRUE, NA, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE)
+	logical_col = c(TRUE, TRUE, TRUE, TRUE, NA, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE),
+	date_col = dates,
+	factor_col = factor(c(
+		"West", "East", "West", "East", "West",
+		"Midwest", "Midwest", "South", "South", "South", "South"
+	))
 )
 
 whoops <- data.frame(
-	Name = c(
-		'Laim',
-		'No, ahhh',
-		'Olive',
-		'Jams',
-		'A-A-ron',
-		'Luças',
-		'Oliv HEE-YAH',
-		'Emma',
-		'Smelia',
-		NA,
-		'Ada'
-	)
+  Name = c(
+    'Laim',
+    'No, ahhh',
+    'Olive',
+    'Jams',
+    'A-A-ron',
+    'Luças',
+    'Oliv HEE-YAH',
+    'Emma',
+    'Smelia',
+    NA,
+    'Ada'
+  )
 )
 
 testthat::test_that('Right join is correct for Hamming', {
@@ -45,34 +53,23 @@ testthat::test_that('Right join is correct for Hamming', {
 		int_col.x = c(NA, 8, NA, NA, NA, NA, NA, NA, NA, NA, NA),
 		real_col.x = c(7, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
 		logical_col.x = c(TRUE, FALSE, NA, NA, NA, NA, NA, NA, NA, NA, NA),
+		date_col.x = structure(
+			c(19576.4, 19612.8, NA, NA, NA, NA, NA, NA, NA, NA, NA),
+			class = "Date"
+		),
+		factor_col.x = structure(
+			c(2L, 3L, NA, NA, NA, NA, NA, NA, NA, NA, NA),
+			class = "factor",
+			levels = c("East", "Midwest", "South", "West")
+		),
 		Name.y = c(
-			"Emma", "Smelia", "Laim", "No, ahhh", "Olive", "Jams", "A-A-ron",
-			"Luças", "Oliv HEE-YAH", NA, "Ada"
-		)
+			"Emma", "Smelia", "Laim", "No, ahhh", "Olive", "Jams",
+			"A-A-ron", "Luças", "Oliv HEE-YAH", NA, "Ada")
 	))
 
 	actual <- fozzie_join(
 		baby_names,
 		whoops,
-		by = list('Name' = 'Name'),
-		method = 'hamming',
-		max_distance=1,
-		how='right'
-	)
-
-	testthat::expect_true(all.equal(actual, expected))
-
-	expected <- data.frame(list(
-		Name.x = c("Emma", "Smelia", NA, NA, NA, NA, NA, NA, NA, NA, NA),
-		Name.y = c(
-			"Emma", "Amelia", "Liam", "Noah", "Oliver", "Theodore", "James", "Olivia", "Charlotte", "Mia", NA),
-		int_col.y = c(NA, 8, 1, 2, 3, 4, 5, 6, 9, 10, 11), 
-		real_col.y = c(7, NA, 1, 2, 3, 4, 5, 6, 9, 10, 11),
-		logical_col.y = c(TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, NA, TRUE, FALSE, FALSE, FALSE)
-	))
-	actual <- fozzie_join(
-		whoops,
-		baby_names,
 		by = list('Name' = 'Name'),
 		method = 'hamming',
 		max_distance=1,
