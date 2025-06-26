@@ -3,6 +3,8 @@ src/Makevars
 src/Makevars.win
 
 /outputs/*
+!/outputs/benchmark_plot_Linux.svg
+!/outputs/benchmark_plot_Windows.svg
 
 # History files
 .Rhistory
