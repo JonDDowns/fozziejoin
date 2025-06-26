@@ -9,7 +9,35 @@ use std::collections::HashMap;
 pub trait NormalizedEditDistance: Send + Sync {
     fn compute(&self, s1: &str, s2: &str) -> f64;
 
-    #[cfg(not(target_os = "windows"))]
+    /// Compute approximate matches between two pre-indexed string maps using a fuzzy distance algorithm.
+    ///
+    /// This method compares the keys in `map1` to those in `map2` using a configurable fuzzy matching
+    /// strategy. Each key maps to one or more row indices, and matches are returned as all index pairs
+    /// whose keys meet a similarity threshold. Comparisons are parallelized for performance.
+    ///
+    /// # Parameters
+    ///
+    /// - `map1`: A `HashMap` of unique string tokens to row indices (e.g., from the left data frame).
+    /// - `map2`: A second `HashMap` of string tokens to row indices (e.g., from the right data frame).
+    /// - `max_distance`: The maximum acceptable distance score for two strings to be considered a match.
+    /// - `full`: If `true`, includes all combinations regardless of overlap, used for `"full"` joins.
+    /// - `nthread`: Optional number of threads to use for parallel execution. Defaults to Rayon’s global pool if `None`.
+    ///
+    /// # Returns
+    ///
+    /// A `Vec` of match tuples:
+    /// - `(left_idx, right_idx, distance)` where
+    ///   - `left_idx` is a row index from `map1`
+    ///   - `right_idx` is a row index from `map2`
+    ///   - `distance` is the computed similarity metric (or `None` for exact matches or skipped metrics)
+    ///
+    /// # Notes
+    ///
+    /// - Matching is implemented in `word_map_lookup_and_compare`, which is responsible for the
+    ///   actual distance logic and result formatting.
+    /// - Comparisons are run in parallel using Rayon’s `par_iter`.
+    /// - Index maps should be precomputed to avoid repeated token parsing.
+    ///
     fn fuzzy_indices(
         &self,
         map1: HashMap<&str, Vec<usize>>,
@@ -18,6 +46,7 @@ pub trait NormalizedEditDistance: Send + Sync {
         full: bool,
         nthread: Option<usize>,
     ) -> Vec<(usize, usize, Option<f64>)> {
+        // If user specified a number of threads, build a custom pool
         if let Some(nt) = nthread {
             ThreadPoolBuilder::new()
                 .num_threads(nt)
@@ -29,41 +58,6 @@ pub trait NormalizedEditDistance: Send + Sync {
             .par_iter()
             .filter_map(|(k1, v1)| {
                 self.word_map_lookup_and_compare(k1, v1, &map2, full, max_distance)
-            })
-            .flatten()
-            .collect();
-        idxs
-    }
-
-    #[cfg(target_os = "windows")]
-    fn fuzzy_indices(
-        &self,
-        map1: HashMap<&str, Vec<usize>>,
-        map2: HashMap<&str, Vec<usize>>,
-        max_distance: f64,
-        full: bool,
-        nthread: Option<usize>,
-    ) -> Vec<(usize, usize, Option<f64>)> {
-        let nt = if let Some(nt) = nthread {
-            ThreadPoolBuilder::new()
-                .num_threads(nt)
-                .build()
-                .expect("Global pool already initialized");
-            nt
-        } else {
-            rayon::current_num_threads()
-        };
-
-        let batch_size = map1.len().div_ceil(nt);
-
-        let idxs: Vec<(usize, usize, Option<f64>)> = map1
-            .iter()
-            .collect::<Vec<(&&str, &Vec<usize>)>>()
-            .par_chunks(batch_size)
-            .flat_map_iter(|chunk| {
-                chunk.iter().filter_map(|(k1, v1)| {
-                    self.word_map_lookup_and_compare(k1, v1, &map2, full, max_distance)
-                })
             })
             .flatten()
             .collect();

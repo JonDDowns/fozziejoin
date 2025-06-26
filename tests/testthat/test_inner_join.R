@@ -1,5 +1,3 @@
-context('fozzie_inner_join')
-
 baby_names <- data.frame(
 	Name = c(
 		'Liam',
@@ -51,6 +49,7 @@ testthat::test_that('Inner join is correct for Levenshtein', {
 		method = 'lv',
 		how='inner',
 		max_distance=1,
+		nthread=2
 	)
 
 	testthat::expect_true(all.equal(actual, expected))
@@ -64,7 +63,8 @@ testthat::test_that('Inner join is correct for Levenshtein', {
 		method = 'lv',
 		how='inner',
 		max_distance=1,
-		distance_col = "mydist"
+		distance_col = "mydist",
+		nthread = 2
 	)
 	testthat::expect_true(all.equal(actual, expected))
 
@@ -88,6 +88,7 @@ testthat::test_that('Inner join is correct for Hamming', {
 		by = list('Name' = 'Name'),
 		method = 'hamming',
 		max_distance=1,
+		nthread = 2
 	)
 
 	testthat::expect_true(all.equal(actual, expected))
@@ -101,7 +102,9 @@ testthat::test_that('Inner join is correct for Hamming', {
 		method = 'hamming',
 		how='inner',
 		max_distance=1,
-		distance_col = "mydist"
+		distance_col = "mydist",
+		nthread = 2
+
 	)
 	testthat::expect_true(all.equal(actual, expected))
 })
@@ -123,6 +126,8 @@ testthat::test_that('Inner join is correct for LCS', {
 		by = list('Name' = 'Name'),
 		method = 'lcs',
 		max_distance=1,
+		nthread = 2
+
 	)
 
 	testthat::expect_true(all.equal(actual, expected))
@@ -136,7 +141,9 @@ testthat::test_that('Inner join is correct for LCS', {
 		method = 'lcs',
 		how='inner',
 		max_distance=1,
-		distance_col = "mydist"
+		distance_col = "mydist",
+		nthread = 2
+
 	)
 
 	testthat::expect_true(all.equal(actual, expected))
@@ -158,7 +165,9 @@ testthat::test_that('Inner join is correct for QGram', {
 		by = list('Name' = 'Name'),
 		method = 'qgram',
 		max_distance=1,
-		q=2
+		q=2,
+		nthread = 2
+
 	)
 
 	testthat::expect_true(all.equal(actual, expected))
@@ -173,7 +182,9 @@ testthat::test_that('Inner join is correct for QGram', {
 		how='inner',
 		max_distance=1,
 		q=2,
-		distance_col = "mydist"
+		distance_col = "mydist",
+		nthread = 2
+
 	)
 	testthat::expect_true(all.equal(actual, expected))
 
@@ -195,7 +206,9 @@ testthat::test_that('Inner join is correct for Cosine', {
 		by = list('Name' = 'Name'),
 		method = 'cosine',
 		max_distance=0.9,
-		q=3
+		q=3,
+		nthread = 2
+
 	)
 	testthat::expect_true(all.equal(actual, expected))
 
@@ -215,7 +228,9 @@ testthat::test_that('Inner join is correct for Cosine', {
 		method = 'cosine',
 		max_distance=0.9,
 		q=3,
-		distance_col = 'mydist'
+		distance_col = 'mydist',
+		nthread = 2
+
 	)
 	testthat::expect_true(all.equal(actual, expected))
 })
@@ -236,7 +251,9 @@ testthat::test_that('Inner join is correct for Jaccard', {
 		by = list('Name' = 'Name'),
 		method = 'jaccard',
 		max_distance=0.9,
-		q=3
+		q=3,
+		nthread = 2
+
 	)
 
 	testthat::expect_true(all.equal(actual, expected))
@@ -249,7 +266,9 @@ testthat::test_that('Inner join is correct for Jaccard', {
 		method = 'jaccard',
 		max_distance=0.9,
 		q=3,
-		distance_col="mydist"
+		distance_col="mydist",
+		nthread = 2
+
 	)
 	testthat::expect_true(all.equal(actual, expected))
 })
@@ -270,6 +289,8 @@ testthat::test_that('Inner join is correct for Jaro-Winkler', {
 		by = list('Name' = 'Name'),
 		method = 'jw',
 		max_distance=0.2,
+		nthread = 2
+
 	)
 
 	testthat::expect_true(all.equal(actual, expected))
@@ -290,7 +311,8 @@ testthat::test_that('Inner join is correct for OSA', {
 		whoops,
 		by = list('Name' = 'Name'),
 		method = 'osa',
-		max_distance=1
+		max_distance=1,
+		nthread=2
 	)
 
 	testthat::expect_true(all.equal(actual, expected))
@@ -302,7 +324,8 @@ testthat::test_that('Inner join is correct for OSA', {
 		by = list('Name' = 'Name'),
 		method = 'osa',
 		max_distance=1,
-		distance_col='mydist'
+		distance_col='mydist',
+		nthread=2
 	)
 
 	testthat::expect_true(all.equal(actual, expected))
@@ -313,7 +336,7 @@ testthat::test_that('Non-strings throw an error', {
 	testthat::expect_error(
 		fozzie_join(
 			baby_names, whoops, by=list('year' = 'Name'), method='hamming',
-			max_distance=1, q=3
+			max_distance=1, q=3, nthread=2
 		)
 	)
 })
@@ -322,7 +345,7 @@ testthat::test_that('Invalid columns throw error', {
 	testthat::expect_error(
 		fozzie_join(
 			baby_names, whoops, by=list('DoesNotExist' = 'Name'), method='hamming',
-			max_distance=1, q=3
+			max_distance=1, q=3, nthread=2
 		)
 	)
 })
@@ -355,11 +378,10 @@ testthat::test_that('Multi column joins work', {
 		method = 'lv',
 		how='inner',
 		max_distance=1,
-		distance_col='mydist'
+		distance_col='mydist',
+		nthread=2
 	)
 
 	testthat::expect_true(all.equal(actual, expected))
 
 })
-
-

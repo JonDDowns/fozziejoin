@@ -1,5 +1,3 @@
-context('fozzie_anti_join')
-
 baby_names <- data.frame(
 	Name = c(
 		'Liam',
@@ -49,6 +47,7 @@ testthat::test_that('Anti join is correct for Levenshtein', {
 		method = 'lv',
 		how='anti',
 		max_distance=1,
+		nthread=2
 	)
 
 	testthat::expect_true(all.equal(actual, expected))

@@ -1,68 +1,106 @@
 #' Perform a fuzzy join between two data frames using approximate string matching.
 #'
-#' This function matches records in `df1` and `df2` based on a specified column,
-#' allowing fuzzy matches within a given distance threshold. It supports various
-#' approximate matching methods including Levenshtein, Damerau-Levenshtein, Jaro-Winkler, and more.
+#' `fozzie_join()` and its directional variants (`fozzie_inner_join()`, `fozzie_left_join()`, `fozzie_right_join()`, `fozzie_anti_join()`, `fozzie_full_join()`)
+#' enable approximate matching of string fields in two data frames. These joins support multiple string distance
+#' and similarity algorithms including Levenshtein, Jaro-Winkler, q-gram similarity, and others.
 #'
-#' @param df1 A data frame containing the first dataset.
-#' @param df2 A data frame containing the second dataset.
-#' @param by A named vector specifying the columns to join on.
-#'   - `names(by)[1]`: Column name in `df1`.
-#'   - `names(by)[2]`: Corresponding column name in `df2`.
-#' @param method String specifying the fuzzy matching algorithm to use. Options include:
-#'   - `"levenshtein"` (default) - Standard Levenshtein edit distance.
-#'   - `"osa"` - Optimal string alignment distance.
-#'   - `"damerau_levensthein"` or `"dl"` - Damerau-Levenshtein edit distance.
-#'   - `"hamming"` - Hamming distance (only works for equal-length strings).
-#'   - `"lcs"` - Longest common subsequence.
-#'   - `"qgram"` - Q-gram similarity (requires `q` parameter).
-#'   - `"cosine"` - Cosine similarity (requires `q` parameter).
-#'   - `"jaccard"` - Jaccard similarity (requires `q` parameter).
-#'   - `"jaro_winkler"` or `"jw"` - Jaro-Winkler similarity.
-#'   - `"jaro"` - Standard Jaro similarity.
-#' @param q Integer specifying the *q*-gram size (only required for `"qgram"`, `"cosine"`, and `"jaccard"` methods).
-#'   If `NULL`, an error will be raised for these methods.
-#' @param max_distance Numeric value specifying the maximum allowable edit distance for a match.
-#' @param how A string specifying the type of join to perform (`"inner"`, `"left"`, `"right"`, or `"full"`).
-#'   - `"inner"` (default): Returns only matches.
-#'   - `"left"`: Returns all rows from `df1`, with matches from `df2`.
-#'   - `"right"`: Returns all rows from `df2`, with matches from `df1`.
-#'   - `"full"`: [Not implemented] Returns all rows from both `df1` and `df2`, matching where possible.
-#'   - `"anti"`: [Not implemented] Returns all rows from `df1` not in `df2`.
-#' @param distance_col Optional column name as a string to store the computed distance values in the output.
-#'   If `NULL`, distances will not be included in the output.
-#' @param max_prefix For Jaro-Winkler edit distance, the max prefix size in characters (default is `0`).
-#' @param prefix_weight For Jaro-Winkler edit distance, the adjustment factor for shared prefixes. The default must not be higher than the reciprocal of max_prefix (deafult is `0`).
+#' @param df1 A data frame to join from (left table).
+#' @param df2 A data frame to join to (right table).
+#' @param by A named list or character vector indicating the matching columns. Can be a character vector of length 2, e.g. `c("col1", "col2")`,
+#'   or a named list like `list(col1 = "col2")`.
+#' @param method A string indicating the fuzzy matching method. Supported methods:
+#'   - `"levenshtein"`: Levenshtein edit distance (default).
+#'   - `"osa"`: Optimal string alignment.
+#'   - `"damerau_levensthein"` or `"dl"`: Damerau-Levenshtein distance.
+#'   - `"hamming"`: Hamming distance (equal-length strings only).
+#'   - `"lcs"`: Longest common subsequence.
+#'   - `"qgram"`: Q-gram similarity (requires `q`).
+#'   - `"cosine"`: Cosine similarity (requires `q`).
+#'   - `"jaccard"`: Jaccard similarity (requires `q`).
+#'   - `"jaro"`: Jaro similarity.
+#'   - `"jaro_winkler"` or `"jw"`: Jaro-Winkler similarity.
+#' @param how A string specifying the join mode. One of:
+#'   - `"inner"`: matched pairs only.
+#'   - `"left"`: all rows from `df1`, unmatched rows filled with NAs.
+#'   - `"right"`: all rows from `df2`, unmatched rows filled with NAs.
+#'   - `"full"`: all rows from both `df1` and `df2`.
+#'   - `"anti"`: rows from `df1` not matched in `df2`.
+#' @param q Integer. Size of q-grams for `"qgram"`, `"cosine"`, or `"jaccard"` methods.
+#' @param max_distance A numeric threshold for allowable string distance or dissimilarity (lower is stricter).
+#' @param distance_col Optional name of column to store computed string distances.
+#' @param max_prefix Integer (for Jaro-Winkler) specifying the prefix length influencing similarity boost.
+#' @param prefix_weight Numeric (for Jaro-Winkler) specifying the prefix weighting factor.
+#' @param nthread Optional integer to specify number of threads for parallelization.
 #'
-#' @return A data frame containing matched records from `df1` and `df2`,
-#'   with column names suffixed as `.x` (from `df1`) and `.y` (from `df2`).
-#'   If `distance_col` is provided, the computed distance values will be included.
+#' @return A data frame with fuzzy-matched rows depending on the join type. See individual functions like `fozzie_inner_join()` for examples.
+#'   If `distance_col` is specified, an additional numeric column is included.
 #'
 #' @examples
-#' df1 <- data.frame(Name = c("Alice", "Bob", "Charlie"))
-#' df2 <- data.frame(Name = c("Alicia", "Robert", "Charles"))
-#' result <- fozzie_join(df1, df2, by = list(Name = "Name"), method = "levenshtein", max_distance = 2, how = "inner", distance_col = "dist")
-#' print(result)
+#' df1 <- data.frame(name = c("Alice", "Bob", "Charlie"))
+#' df2 <- data.frame(name = c("Alicia", "Robert", "Charles"))
 #'
+#' fozzie_inner_join(df1, df2, by = c("name", "name"), method = "levenshtein", max_distance = 2)
+#' fozzie_left_join(df1, df2, by = c("name", "name"), method = "jw", max_distance = 0.2)
+#' fozzie_right_join(df1, df2, by = c("name", "name"), method = "cosine", q = 2, max_distance = 0.1)
+#'
+#' @name fozzie_join_family
 #' @export
-fozzie_join <- function(df1, df2, by, method='levenshtein', how='inner', max_distance=1, distance_col=NULL, q=NULL,  max_prefix = 0, prefix_weight = 0, nthread=NULL) {
-  # Automatically convert character vector `by = c("COL1", "COL2")` into a named list
-  if (is.character(by) && length(by) == 2) {
-    by <- setNames(list(by[2]), by[1])
-  }
+fozzie_join <- function(df1, df2, by, method = "levenshtein", how = "inner", max_distance = 1,
+			distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
 
-  fozzie_join_rs(
-		df1=df1,
-		df2=df2,
-		by=by,
-		method=method,
-		how=how,
-		max_distance=max_distance,
-		distance_col=distance_col,
-		q=q,
-		prefix_weight=prefix_weight,
-		max_prefix=max_prefix,
-		nthread=nthread
+	# If char vec provided, convert to list.
+	if (is.character(by) && length(by) == 2) {
+		by <- setNames(list(by[2]), by[1])
+	}
+
+	# Run Rust function and return
+	fozzie_join_rs(
+		df1, df2, by, method, how,
+		max_distance, distance_col, q, max_prefix, prefix_weight, nthread
 	)
 }
 
+#' @rdname fozzie_join_family
+#' @return See [fozzie_join()]
+#' @export
+fozzie_inner_join <- function(df1, df2, by, method = "levenshtein", max_distance = 1,
+			      distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
+	fozzie_join(df1, df2, by, method, max_distance,
+		distance_col, q, max_prefix, prefix_weight, nthread, how = "inner")
+}
+
+#' @rdname fozzie_join_family
+#' @return See [fozzie_join()]
+#' @export
+fozzie_left_join <- function(df1, df2, by, method = "levenshtein", max_distance = 1,
+			     distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
+	fozzie_join(df1, df2, by, method, max_distance,
+		distance_col, q, max_prefix, prefix_weight, nthread, how = "left")
+}
+
+#' @rdname fozzie_join_family
+#' @return See [fozzie_join()]
+#' @export
+fozzie_right_join <- function(df1, df2, by, method = "levenshtein", max_distance = 1,
+			      distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
+	fozzie_join(df1, df2, by, method, max_distance,
+		distance_col, q, max_prefix, prefix_weight, nthread, how = "right")
+}
+
+#' @rdname fozzie_join_family
+#' @return See [fozzie_join()]
+#' @export
+fozzie_anti_join <- function(df1, df2, by, method = "levenshtein", max_distance = 1,
+			     distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
+	fozzie_join(df1, df2, by, method, max_distance,
+		distance_col, q, max_prefix, prefix_weight, nthread, how = "anti")
+}
+
+#' @rdname fozzie_join_family
+#' @return See [fozzie_join()]
+#' @export
+fozzie_full_join <- function(df1, df2, by, method = "levenshtein", max_distance = 1,
+			     distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
+	fozzie_join(df1, df2, by, method, max_distance,
+		distance_col, q, max_prefix, prefix_weight, nthread, how = "full")
+}

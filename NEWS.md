@@ -1,3 +1,25 @@
+# fozziejoin 0.0.5
+
+## Functionality and performance updates
+
+- Joins now properly handle dates and factors
+- Added convenience function for all directional variants of joins (`fozzie_left_join()`, `fozzie_inner_join()`, ...).
+- Reverted a change from v0.0.4 wherein speed distance calculation methods differ by operating system (Windows vs. everything else). The supposed speed gains were actually flaws in the evaluation. Reverted back to a single method for all OS's.
+- Speedup in OSA algorithm due to more efficient memory handling.
+
+## Documentation
+
+- README updates:
+    - Removed Todo section. Will use GitHub issues for this sort of thing moving forward.
+    - Documentation had error in example usage code. `fuzzyjoin` was a required import for the `misspellings` dataset.
+- Documentation updated to pass all `devtools::check()` and `R CMD check` checks for the first time.
+- There are a few examples where code is only lightly adapted from the `textdistance` crate implementation. Those scripts now have a header comment acknowledging the original author. 
+
+## Preparation for CRAN release
+
+- This version is the last before attempting CRAN distribution. A GitHub "release" has been created with the package build for all operating systems. CRAN acceptance may require multiple versions.
+- All tests now force `nthread=2` for compliance with CRAN policies.
+
 # fozziejoin 0.0.4
 
 - Performance improvements:
