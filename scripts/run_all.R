@@ -73,7 +73,8 @@ run_bench <- function(method, mode, max_dist, q=NA, nsamp, seed=2016) {
 
 
 # Run the function for all desired benchmarks and save the result to file.
-bench_file <- file.path(sprintf("outputs/last_bench_%s.RDS", format(Sys.time(), "%Y%m%d_%H%M%S")))
+tnow <- format(Sys.time(), "%Y%m%d_%H%M%S"))
+bench_file <- file.path(sprintf("outputs/last_bench_%s.RDS", tnow)
 results <- lapply(
 	params,
 	function(args, data) {
@@ -96,7 +97,7 @@ saveRDS(results, bench_file)
 
 # Determine operating system, set chart title and plot name
 os <- Sys.info()['sysname']
-img_file <- file.path(sprintf("outputs/benchmark_plot_%s.svg", os))
+img_file <- file.path(sprintf("outputs/benchmark_plot_%s_%s.svg", os, tnow))
 chart_title <- sprintf("Benchmark times of fuzzyjoin vs. fozziejoin inner join methods (%s)", os)
 
 # Generate plot
@@ -120,4 +121,3 @@ dev.off()
 
 # Done!
 q(status = 0, save = "no")
-

@@ -1,3 +1,8 @@
+// All text distance algorithms either directly use or import the
+// the `textdistance` crate by orsinium.
+// Source: https://docs.rs/textdistance/latest/textdistance/
+// License: MIT
+
 use crate::utils::robj_index_map;
 use extendr_api::prelude::*;
 use itertools::iproduct;
@@ -217,8 +222,7 @@ impl EditDistance for Levenshtein {
 pub struct Hamming;
 impl EditDistance for Hamming {
     fn compute(&self, s1: &str, s2: &str) -> usize {
-        // Change default TD behavior: unequal strings sizes
-        // should auto-fail
+        // Change default TD behavior: unequal strings sizes should auto-fail
         if s1.chars().count() != s2.chars().count() {
             return usize::MAX;
         }

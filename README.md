@@ -96,9 +96,9 @@ To date, `fozziejoin` has been benchmarked on Windows and Linux.
 `fozziejoin` beats the equivalent `fuzzyjoin` benchmark in all cases except one: Damerau-Levenshtein (method `dl`) distance joins on Windows with large dataframes.
 The highest observed performance gains come from Linux systems, presumably due to the relative efficiency of parallelization via `rayon`.
 
-[![Linux benchmark results](./benchmarks/benchmark_plot_Linux.svg)](./benchmarks/benchmark_plot_Linux.svg)
+[![Linux benchmark results](./outputs/benchmark_plot_Linux.svg)](./benchmarks/benchmark_plot_Linux.svg)
 
-[![Windows benchmark results](./benchmarks/benchmark_plot_Windows.svg)](./benchmarks/benchmark_plot_Windows.svg)
+[![Windows benchmark results](./outputs/benchmark_plot_Windows.svg)](./benchmarks/benchmark_plot_Windows.svg)
 
 ## Known behavior changes relative to `fuzzyjoin`
 
@@ -109,6 +109,7 @@ The highest observed performance gains come from Linux systems, presumably due t
 
 ## Acknowledgements
 
-- The `textdistance` crate for most string distance implementations. Currently, this crate is still used for some string distances. Others are based on `textdistance` implementations but with some performance tweaking for this use case.
 - The `fuzzyjoin` and `stringdist` packages in R. Much of the project is meant to replicate their APIs and special cases handling.
 - The `extendr` team. This project would not be possible without their great project.
+- The `textdistance` Rust crate was referenced or is still directly used for most string distances. Currently, this crate is still used for some string distances. Others are based on `textdistance` implementations but with some performance tweaking for this use case.
+- The `rayon` Rust crate, which enables efficient parallel data processing.

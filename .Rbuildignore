@@ -5,7 +5,8 @@
 ^src/Makevars\.win$
 ^cran-comments\.md$
 ^LICENSE\.md$
-^benchmarks$
+^scripts$
 ^outputs$
 ^revdep$
 ^\.github$
+^img

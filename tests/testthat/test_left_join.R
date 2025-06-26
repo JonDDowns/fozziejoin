@@ -71,7 +71,8 @@ testthat::test_that('Left join is correct for Hamming', {
 		by = list('Name' = 'Name'),
 		method = 'hamming',
 		max_distance=1,
-		how='left'
+		how='left',
+		nthread=2
 	)
 
 	testthat::expect_true(all.equal(actual, expected))
@@ -107,7 +108,8 @@ testthat::test_that('Left multi column joins work', {
 		method = 'lv',
 		how='left',
 		max_distance=1,
-		distance_col="mydist"
+		distance_col="mydist",
+		nthread=2
 	)
 
 	testthat::expect_true(all.equal(actual, expected))

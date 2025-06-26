@@ -30,7 +30,8 @@ testthat::test_that('Full join is correct for Levenshtein', {
 		whoops,
 		by = list('Name' = 'Name'),
 		method = 'lv',
-		how='full'
+		how='full',
+		nthread=2
 	)
 
 	testthat::expect_true(all.equal(actual, expected))
@@ -62,6 +63,7 @@ testthat::test_that('Full join is correct for Cosine', {
 		method = 'cosine',
 		how='full',
 		q=2,
+		nthread=2
 	)
 
 	testthat::expect_true(all.equal(actual, expected))
@@ -92,6 +94,7 @@ testthat::test_that('Full join is correct for JW', {
 		by = list('Name' = 'Name'),
 		method = 'jw',
 		how='full',
+		nthread=2
 	)
 
 	testthat::expect_true(all.equal(actual, expected))

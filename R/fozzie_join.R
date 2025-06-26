@@ -46,54 +46,66 @@
 #' @name fozzie_join_family
 #' @export
 fozzie_join <- function(df1, df2, by, method = "levenshtein", how = "inner", max_distance = 1,
-                        distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
-  if (is.character(by) && length(by) == 2) {
-    by <- setNames(list(by[2]), by[1])
-  }
-  fozzie_join_rs(df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight, nthread)
+			distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
+
+	# If char vec provided, convert to list.
+	if (is.character(by) && length(by) == 2) {
+		by <- setNames(list(by[2]), by[1])
+	}
+
+	# If no threads provided, use logical cores - 1
+	if (is.null(nthread)) {
+		nthread <- parallel::detectCores(logical = TRUE) - 1
+	}
+
+	# Run Rust function and return
+	fozzie_join_rs(
+		df1, df2, by, method, how,
+		max_distance, distance_col, q, max_prefix, prefix_weight, nthread
+	)
 }
 
 #' @rdname fozzie_join_family
 #' @return See [fozzie_join()]
 #' @export
 fozzie_inner_join <- function(df1, df2, by, method = "levenshtein", max_distance = 1,
-                        distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
-  fozzie_join(df1, df2, by, method, max_distance,
-                        distance_col, q, max_prefix, prefix_weight, nthread, how = "inner")
+			      distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
+	fozzie_join(df1, df2, by, method, max_distance,
+		distance_col, q, max_prefix, prefix_weight, nthread, how = "inner")
 }
 
 #' @rdname fozzie_join_family
 #' @return See [fozzie_join()]
 #' @export
 fozzie_left_join <- function(df1, df2, by, method = "levenshtein", max_distance = 1,
-                        distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
-  fozzie_join(df1, df2, by, method, max_distance,
-                        distance_col, q, max_prefix, prefix_weight, nthread, how = "left")
+			     distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
+	fozzie_join(df1, df2, by, method, max_distance,
+		distance_col, q, max_prefix, prefix_weight, nthread, how = "left")
 }
 
 #' @rdname fozzie_join_family
 #' @return See [fozzie_join()]
 #' @export
 fozzie_right_join <- function(df1, df2, by, method = "levenshtein", max_distance = 1,
-                        distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
-  fozzie_join(df1, df2, by, method, max_distance,
-                        distance_col, q, max_prefix, prefix_weight, nthread, how = "right")
+			      distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
+	fozzie_join(df1, df2, by, method, max_distance,
+		distance_col, q, max_prefix, prefix_weight, nthread, how = "right")
 }
 
 #' @rdname fozzie_join_family
 #' @return See [fozzie_join()]
 #' @export
 fozzie_anti_join <- function(df1, df2, by, method = "levenshtein", max_distance = 1,
-                        distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
-  fozzie_join(df1, df2, by, method, max_distance,
-                        distance_col, q, max_prefix, prefix_weight, nthread, how = "anti")
+			     distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
+	fozzie_join(df1, df2, by, method, max_distance,
+		distance_col, q, max_prefix, prefix_weight, nthread, how = "anti")
 }
 
 #' @rdname fozzie_join_family
 #' @return See [fozzie_join()]
 #' @export
 fozzie_full_join <- function(df1, df2, by, method = "levenshtein", max_distance = 1,
-                        distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
-  fozzie_join(df1, df2, by, method, max_distance,
-                        distance_col, q, max_prefix, prefix_weight, nthread, how = "full")
+			     distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
+	fozzie_join(df1, df2, by, method, max_distance,
+		distance_col, q, max_prefix, prefix_weight, nthread, how = "full")
 }

@@ -1,3 +1,8 @@
+// All text distance algorithms either directly use or import the
+// the `textdistance` crate by orsinium.
+// Source: https://docs.rs/textdistance/latest/textdistance/
+// License: MIT
+
 use crate::edit::EditDistance;
 use crate::utils::robj_index_map;
 use extendr_api::prelude::*;
