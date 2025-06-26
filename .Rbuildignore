@@ -7,3 +7,5 @@
 ^LICENSE\.md$
 ^benchmarks$
 ^outputs$
+^revdep$
+^\.github$

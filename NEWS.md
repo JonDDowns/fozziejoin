@@ -1,5 +1,6 @@
 # fozziejoin 0.0.5
 
+- This version is the last before attempting CRAN distribution in the next version. A GitHub "release" has been created with the package build for all operating systems.
 - Joins now properly handle dates and factors
 - Added convenience function for all directional variants of joins (`fozzie_left_join()`, `fozzie_inner_join()`, ...).
 - Reverted a change from v0.0.4 wherein speed distance calculation methods differ by operating system (Windows vs. everything else). The supposed speed gains were actually flaws in the evaluation. Reverted back to a single method for all OS's.

@@ -22,7 +22,7 @@ Wocka wocka!
 Code has been written on a combination of Windows (R 4.3.2, x86_64-w64-mingw32/64) and Linux (R 4.5.0, x86-64-pc-linux-gnu platform).
 All builds to date are done using Rust 1.65. 
 
-### Pre-requisites
+### Prerequisites
 
 - R (version 4.5.0 preferred)
 - The rust toolchain (`rustup`) and package manager (`cargo`)
@@ -100,7 +100,7 @@ The highest observed performance gains come from Linux systems, presumably due t
 
 [![Windows benchmark results](./benchmarks/benchmark_plot_Windows.svg)](./benchmarks/benchmark_plot_Windows.svg)
 
-## Known behvavior changes to `fuzzyjoin`
+## Known behavior changes relative to `fuzzyjoin`
 
 - Matching on columns with `NA` values would throw an error in `fuzzyjoin` but simply do not match in `fozziejoin`. This allows for NA values to persist in left, right, and full joins without matching all NA values to one another.
 - Jaro-Winkler distance
