@@ -10,3 +10,4 @@
 ^revdep$
 ^\.github$
 ^img
+^dev$

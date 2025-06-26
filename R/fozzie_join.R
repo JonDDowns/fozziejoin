@@ -53,11 +53,6 @@ fozzie_join <- function(df1, df2, by, method = "levenshtein", how = "inner", max
 		by <- setNames(list(by[2]), by[1])
 	}
 
-	# If no threads provided, use logical cores - 1
-	if (is.null(nthread)) {
-		nthread <- parallel::detectCores(logical = TRUE) - 1
-	}
-
 	# Run Rust function and return
 	fozzie_join_rs(
 		df1, df2, by, method, how,
