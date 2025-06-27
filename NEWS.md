@@ -10,6 +10,8 @@
 ## Documentation
 
 - README updates:
+    - Installation steps reflect current procedures and reference the GitHub release for `v0.0.5`.
+    - Requirements updated as there is now an install from binary option for Windows which has fewer system requirements.
     - Removed Todo section. Will use GitHub issues for this sort of thing moving forward.
     - Documentation had error in example usage code. `fuzzyjoin` was a required import for the `misspellings` dataset.
 - Documentation updated to pass all `devtools::check()` and `R CMD check` checks for the first time.

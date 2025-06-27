@@ -73,8 +73,8 @@ run_bench <- function(method, mode, max_dist, q=NA, nsamp, seed=2016) {
 
 
 # Run the function for all desired benchmarks and save the result to file.
-tnow <- format(Sys.time(), "%Y%m%d_%H%M%S"))
-bench_file <- file.path(sprintf("outputs/last_bench_%s.RDS", tnow)
+tnow <- format(Sys.time(), "%Y%m%d_%H%M%S")
+bench_file <- file.path(sprintf("outputs/last_bench_%s.RDS", tnow))
 results <- lapply(
 	params,
 	function(args, data) {
@@ -93,7 +93,6 @@ results <- lapply(
 )
 results <- do.call(rbind, results)
 saveRDS(results, bench_file)
-
 
 # Determine operating system, set chart title and plot name
 os <- Sys.info()['sysname']

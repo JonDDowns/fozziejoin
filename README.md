@@ -22,35 +22,41 @@ Wocka wocka!
 Code has been written on a combination of Windows (R 4.3.2, x86_64-w64-mingw32/64) and Linux (R 4.5.0, x86-64-pc-linux-gnu platform).
 All builds to date are done using Rust 1.65. 
 
-### Prerequisites
+### Requirements
 
-- R (version 4.5.0 preferred)
-- The rust toolchain (`rustup`) and package manager (`cargo`)
-- The `rextendr` R package
-- The `devtools` R package
-- The following R packages are required to run examples and benchmark scripts:
-    - `dplyr`
-    - `fuzzyjoin`
-    - `qdapDictionaries`
-    - `microbenchmark`
+R 4.2 or greater is required for all installations. R 4.5.0 is preferred.
+
+On Linux or to build from source, you will need these additional dependencies:
+
+- Cargo, the Rust package manager
+- Rustc
+- xz
+
+And to run the examples in the README or benchmarking scripts, the following are required:
+
+- `dplyr`
+- `fuzzyjoin`
+- `qdapDictionaries`
+- `microbenchmark`
 
 ### Installation
 
-First, clone the repo:
+Installing from binary is the easiest method on Windows, as it skips the need for a Rust install.
+Installing from source is the only officially supported option on Linux systems.
 
-```{sh}
-git clone https://github.com/JonDDowns/fozziejoin
-cd ./fozziejoin
+#### From binary (Windows only)
+
+```
+install.packages('https://github.com/JonDDowns/fozziejoin/releases/download/v0.0.5/fozziejoin_0.0.5.zip', type='win.binary')
 ```
 
-Then, use `devtools` to install the package.
-Note that this requires the Rust toolchain and `cargo` to run properly.
+#### From source
 
-```{R}
-devtools::install()
 ```
-
-Alternatively, use `devtools::load_all()` to load the package in development mode.
+install.packages('https://github.com/JonDDowns/fozziejoin/archive/refs/tags/v0.0.5.tar.gz', type='source')
+# Alternative: use devtools
+# devtools::install_github('https://github.com/JonDDowns/fozziejoin')
+```
 
 ### Usage
 
@@ -84,7 +90,6 @@ words <- tibble::as_tibble(DICTIONARY)
 Then, we run our join function.
 
 ```{r}
-# Run each function multiple times and compare results
 fozzie <- fozzie_join(
     sub_misspellings, words, method='lv', by = c('misspelling', 'word'), max_distance=2
 )
@@ -96,9 +101,10 @@ To date, `fozziejoin` has been benchmarked on Windows and Linux.
 `fozziejoin` beats the equivalent `fuzzyjoin` benchmark in all cases except one: Damerau-Levenshtein (method `dl`) distance joins on Windows with large dataframes.
 The highest observed performance gains come from Linux systems, presumably due to the relative efficiency of parallelization via `rayon`.
 
-[![Linux benchmark results](./outputs/benchmark_plot_Linux.svg)](./benchmarks/benchmark_plot_Linux.svg)
+[![Linux benchmark results](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Linux.svg)](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Linux.svg)
 
-[![Windows benchmark results](./outputs/benchmark_plot_Windows.svg)](./benchmarks/benchmark_plot_Windows.svg)
+
+[![Windows benchmark results](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Windows.svg)](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Windows.svg)
 
 ## Known behavior changes relative to `fuzzyjoin`
 
