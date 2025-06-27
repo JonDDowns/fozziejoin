@@ -1,4 +1,4 @@
-// All text distance algorithms either directly use or import the
+// All text distance algorithms either directly use or adapt the
 // the `textdistance` crate by orsinium.
 // Source: https://docs.rs/textdistance/latest/textdistance/
 // License: MIT
