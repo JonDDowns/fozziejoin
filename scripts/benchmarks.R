@@ -60,12 +60,30 @@ run_bench <- function(method, mode, max_dist, q=NA, nsamp, seed=2016) {
 		times = 2
 	)
 
+	# Get fuzzy df in same format as fozzie to do a direct comparison
+	colnames(fuzzy) <- colnames(fozzie)
+	fuzzy <- data.frame(fuzzy)
+
+	# Confirm all results are the same
+	if(!isTRUE(all.equal(fuzzy, fozzie))) {
+		print("Not all observations equal! differences")
+		print(all.equal(fuzzy, fozzie))
+	}
+
 	# Customize output
 	timing_results <- data.frame(timing_results)
 	timing_results$method <- method
 	timing_results$time_ms <- timing_results$time / 1e6
-	timing_results$n <- round((nrow(sub_misspellings) * nrow(words) / 2) / 1e6)
+	timing_results$mill_comps <- round((nrow(sub_misspellings) * nrow(words) / 2) / 1e6)
 	timing_results$os <- Sys.info()['sysname']
+
+	# Get mean run time by group
+	timing_summary <- aggregate(time_ms ~ expr + mill_comps + method, data=timing_results, FUN=mean)
+	timing_summary <- timing_summary[order(timing_summary$expr), ]
+	timing_summary$ratio <- timing_summary$time_ms / timing_summary$time_ms[[2]]
+
+	print("Timing results:")
+	print(timing_summary)
 
 	# Return
 	return(timing_results)
@@ -80,7 +98,7 @@ results <- lapply(
 	function(args, data) {
 		cat(paste0("Function params:\n", paste0(args, collapse=", "), "\n"))
 		out <- data.frame()
-		samp_sizes <- c(100, 2000)
+		samp_sizes <- c(100, 500, 1000, 2000, 3000, 4000)
 		for(i in samp_sizes) {
 			cat(paste0("Sampling ", i, " records.\n"))
 			args$nsamp <- i
@@ -101,7 +119,7 @@ chart_title <- sprintf("Benchmark times of fuzzyjoin vs. fozziejoin inner join m
 
 # Generate plot
 svg(img_file, width = 12, height = 6)
-ggplot(results, aes(x=n, y = time_ms, fill = expr, color = expr)) +
+ggplot(results, aes(x=mill_comps, y = time_ms, fill = expr, color = expr)) +
 	      geom_point() +
 	      facet_wrap(~ method, scales='free') +
 	      labs(

@@ -98,10 +98,6 @@ pub trait QGramDistance: Send + Sync {
         let qg1 = get_qgrams(k1, q);
 
         for (k2, (qg2, v2)) in map2_qgrams.iter() {
-            if k2.len() < q && !full {
-                continue;
-            }
-
             if &k1 == k2 {
                 iproduct!(v1, v2).for_each(|(v1, v2)| {
                     idxs.push((*v1, *v2, Some(0.)));
@@ -110,7 +106,7 @@ pub trait QGramDistance: Send + Sync {
             }
 
             let dist = self.compute(&qg1, &qg2) as f64;
-            if dist as f64 <= max_distance || full {
+            if dist <= max_distance || full {
                 iproduct!(v1, v2).for_each(|(a, b)| {
                     idxs.push((*a, *b, Some(dist)));
                 });
