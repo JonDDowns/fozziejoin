@@ -47,13 +47,13 @@ Installing from source is the only officially supported option on Linux systems.
 #### From binary (Windows only)
 
 ```
-install.packages('https://github.com/JonDDowns/fozziejoin/releases/download/v0.0.5/fozziejoin_0.0.5.zip', type='win.binary')
+install.packages('https://github.com/JonDDowns/fozziejoin/releases/download/v0.0.6/fozziejoin_0.0.6.zip', type='win.binary')
 ```
 
 #### From source
 
 ```
-install.packages('https://github.com/JonDDowns/fozziejoin/archive/refs/tags/v0.0.5.tar.gz', type='source')
+install.packages('https://github.com/JonDDowns/fozziejoin/archive/refs/tags/v0.0.6.tar.gz', type='source')
 # Alternative: use devtools
 # devtools::install_github('https://github.com/JonDDowns/fozziejoin')
 ```
