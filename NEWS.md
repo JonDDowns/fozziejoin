@@ -1,3 +1,7 @@
+# fozziejoin 0.0.6 (WORKING)
+
+- Fixed issue with Jaccard and OSA distance (see [issue #3](https://github.com/JonDDowns/fozziejoin/issues/3))
+
 # fozziejoin 0.0.5
 
 ## Functionality and performance updates
