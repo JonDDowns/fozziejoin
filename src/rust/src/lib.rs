@@ -1,3 +1,4 @@
+use crate::edit::EditDistance;
 use core::f64;
 use extendr_api::prelude::*;
 use std::collections::HashMap;
@@ -8,13 +9,16 @@ pub mod ngram;
 pub mod normalized;
 pub mod utils;
 
-use edit::{
-    damerau_levenshtein::DamerauLevenshtein, osa::OSA, EditDistance, Hamming, LCSStr, Levenshtein,
+use crate::edit::{
+    damerau_levenshtein::DamerauLevenshtein, hamming::Hamming, lcs::LCSStr,
+    levenshtein::Levenshtein, osa::OSA,
 };
+use crate::ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
+use crate::normalized::{jaro_winkler::JaroWinkler, NormalizedEditDistance};
+use crate::utils::robj_index_map;
+
 use merge::Merge;
-use ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
-use normalized::{jaro_winkler::JaroWinkler, NormalizedEditDistance};
-use utils::{robj_index_map, transpose_map};
+use utils::transpose_map;
 
 /// Perform a fuzzy join between two R data frames using approximate string similarity.
 ///
@@ -190,8 +194,16 @@ pub fn fozzie_join_rs(
                 };
 
                 // Define algorithm, run distance function
-                let jw = JaroWinkler::new(prefix_weight, max_prefix);
-                jw.fuzzy_indices(map1, map2, max_distance, full, nthread)
+                let jw = JaroWinkler {};
+                jw.fuzzy_indices(
+                    map1,
+                    map2,
+                    max_distance,
+                    full,
+                    nthread,
+                    prefix_weight,
+                    max_prefix,
+                )
             }
             _ => panic!("The join method {method} is not available."),
         };

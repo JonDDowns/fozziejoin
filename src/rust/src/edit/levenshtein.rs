@@ -1,11 +1,11 @@
 use crate::EditDistance;
 use extendr_api::prelude::*;
 use itertools::iproduct;
-use rapidfuzz::distance::osa as osa_rf;
+use rapidfuzz::distance::levenshtein as lv_rf;
 use std::collections::HashMap;
 
-pub struct OSA;
-impl EditDistance for OSA {
+pub struct Levenshtein;
+impl EditDistance for Levenshtein {
     fn compare_one_to_many(
         &self,
         k1: &str,
@@ -24,8 +24,8 @@ impl EditDistance for OSA {
             }
         }
 
-        let scorer = osa_rf::BatchComparator::new(k1.chars());
-        let args = osa_rf::Args::default().score_cutoff(*max_distance as usize);
+        let scorer = lv_rf::BatchComparator::new(k1.chars());
+        let args = lv_rf::Args::default().score_cutoff(*max_distance as usize);
 
         // Get range of lengths within max distance of current
         let k1_len = k1.len();
@@ -78,7 +78,14 @@ impl EditDistance for OSA {
                                 return;
                             }
                         }
-                        None => (),
+                        None => {
+                            if *full {
+                                let v2 = idx_map.get(k2).unwrap();
+                                iproduct!(v1, v2).for_each(|(a, b)| {
+                                    idxs.push((*a, *b, None));
+                                });
+                            }
+                        }
                     }
                 });
             }

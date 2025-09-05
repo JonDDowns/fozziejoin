@@ -1,11 +1,30 @@
 use crate::EditDistance;
 use extendr_api::prelude::*;
 use itertools::iproduct;
-use rapidfuzz::distance::osa as osa_rf;
 use std::collections::HashMap;
 
-pub struct OSA;
-impl EditDistance for OSA {
+pub struct LCSStr;
+
+impl LCSStr {
+    fn compute(&self, s1: &str, s2: &str) -> usize {
+        let m = s1.len();
+        let n = s2.len();
+        let mut dp = vec![vec![0; n + 1]; m + 1];
+
+        for (i, c1) in s1.chars().enumerate() {
+            for (j, c2) in s2.chars().enumerate() {
+                if c1 == c2 {
+                    dp[i + 1][j + 1] = dp[i][j] + 1;
+                } else {
+                    dp[i + 1][j + 1] = dp[i + 1][j].max(dp[i][j + 1]);
+                }
+            }
+        }
+
+        (m + n) - 2 * dp[m][n]
+    }
+}
+impl EditDistance for LCSStr {
     fn compare_one_to_many(
         &self,
         k1: &str,
@@ -23,9 +42,6 @@ impl EditDistance for OSA {
                 return None;
             }
         }
-
-        let scorer = osa_rf::BatchComparator::new(k1.chars());
-        let args = osa_rf::Args::default().score_cutoff(*max_distance as usize);
 
         // Get range of lengths within max distance of current
         let k1_len = k1.len();
@@ -64,21 +80,15 @@ impl EditDistance for OSA {
                     }
 
                     // Run distance calculation
-                    let dist = scorer.distance_with_args(k2.chars(), &args);
+                    let dist = self.compute(&k1, &k2) as f64;
 
-                    match dist {
-                        Some(x) => {
-                            let x = x as f64;
-                            // Check vs. threshold
-                            if x <= *max_distance || *full {
-                                let v2 = idx_map.get(k2).unwrap();
-                                iproduct!(v1, v2).for_each(|(v1, v2)| {
-                                    idxs.push((*v1, *v2, Some(x as f64)));
-                                });
-                                return;
-                            }
-                        }
-                        None => (),
+                    // Check vs. threshold
+                    if dist <= *max_distance || *full {
+                        let v2 = idx_map.get(k2).unwrap();
+                        iproduct!(v1, v2).for_each(|(v1, v2)| {
+                            idxs.push((*v1, *v2, Some(dist)));
+                        });
+                        return;
                     }
                 });
             }
