@@ -4,7 +4,7 @@
 - README updates
 - .gitignore updated to remove vendored packages, as is convention.
 
-# fozziejoin 0.0.6 (WORKING)
+# fozziejoin 0.0.6
 
 - Fixed issue with Jaccard and qgram distance (see [issue #3](https://github.com/JonDDowns/fozziejoin/issues/3)).
 - Comparative benchmark vs. fozziejoin updated to check for identical output (after some light conversions for consistency in column naming/output object classes).
