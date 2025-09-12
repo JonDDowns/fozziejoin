@@ -1,6 +1,6 @@
 Package: fozziejoin
 Title: Performant Data Frame Joins with Inexact String Matching
-Version: 0.0.6
+Version: 0.0.7
 Authors@R: 
     person("Jon", "Downs", , "jon@jondowns.net", role = c("aut", "cre"))
 Description: Dataframes can be joined based on inexact matching using

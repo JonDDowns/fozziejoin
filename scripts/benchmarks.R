@@ -1,3 +1,6 @@
+# Uncomment to re-install during development
+devtools::install()
+
 library(dplyr)
 library(tidyr)
 library(ggplot2)

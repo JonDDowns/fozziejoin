@@ -289,8 +289,7 @@ testthat::test_that('Inner join is correct for Jaro-Winkler', {
 		by = list('Name' = 'Name'),
 		method = 'jw',
 		max_distance=0.2,
-		nthread = 2
-
+		nthread = 2,
 	)
 
 	testthat::expect_true(all.equal(actual, expected))

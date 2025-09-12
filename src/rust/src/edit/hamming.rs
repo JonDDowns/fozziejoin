@@ -1,11 +1,11 @@
 use crate::EditDistance;
 use extendr_api::prelude::*;
 use itertools::iproduct;
-use rapidfuzz::distance::osa as osa_rf;
+use rapidfuzz::distance::hamming as ham_rf;
 use std::collections::HashMap;
 
-pub struct OSA;
-impl EditDistance for OSA {
+pub struct Hamming;
+impl EditDistance for Hamming {
     fn compare_one_to_many(
         &self,
         k1: &str,
@@ -24,8 +24,8 @@ impl EditDistance for OSA {
             }
         }
 
-        let scorer = osa_rf::BatchComparator::new(k1.chars());
-        let args = osa_rf::Args::default().score_cutoff(*max_distance as usize);
+        let scorer = ham_rf::BatchComparator::new(k1.chars());
+        let args = ham_rf::Args::default().score_cutoff(*max_distance as usize);
 
         // Get range of lengths within max distance of current
         let k1_len = k1.len();
@@ -66,6 +66,11 @@ impl EditDistance for OSA {
                     // Run distance calculation
                     let dist = scorer.distance_with_args(k2.chars(), &args);
 
+                    let dist = match dist {
+                        Ok(x) => x,
+                        Err(_) => None,
+                    };
+
                     match dist {
                         Some(x) => {
                             let x = x as f64;
@@ -78,7 +83,15 @@ impl EditDistance for OSA {
                                 return;
                             }
                         }
-                        None => (),
+                        None => {
+                            if *full {
+                                let v2 = idx_map.get(k2).unwrap();
+                                iproduct!(v1, v2).for_each(|(a, b)| {
+                                    idxs.push((*a, *b, None));
+                                });
+                                return;
+                            }
+                        }
                     }
                 });
             }

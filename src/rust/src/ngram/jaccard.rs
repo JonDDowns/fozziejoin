@@ -1,9 +1,7 @@
-// All text distance algorithms either directly use or import the
-// the `textdistance` crate by orsinium.
+// This text distance is adapted from the `textdistance` crate by orsinium.
 // Source: https://docs.rs/textdistance/latest/textdistance/
 // License: MIT
-//
-//
+
 use extendr_api::prelude::*;
 use itertools::iproduct;
 use rayon::prelude::*;

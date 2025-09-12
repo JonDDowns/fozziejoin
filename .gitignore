@@ -1,6 +1,7 @@
 src/rust/vendor
 src/Makevars
 src/Makevars.win
+src/vendor/
 
 /outputs/*
 !/outputs/benchmark_plot_Linux.svg

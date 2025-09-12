@@ -1,14 +1,10 @@
 pub mod jaro_winkler;
 
-use extendr_api::prelude::*;
-use itertools::iproduct;
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
 use std::collections::HashMap;
 
 pub trait NormalizedEditDistance: Send + Sync {
-    fn compute(&self, s1: &str, s2: &str) -> f64;
-
     /// Compute approximate matches between two pre-indexed string maps using a fuzzy distance algorithm.
     ///
     /// This method compares the keys in `map1` to those in `map2` using a configurable fuzzy matching
@@ -45,6 +41,8 @@ pub trait NormalizedEditDistance: Send + Sync {
         max_distance: f64,
         full: bool,
         nthread: Option<usize>,
+        prefix_weight: f64,
+        max_prefix: usize,
     ) -> Vec<(usize, usize, Option<f64>)> {
         // If user specified a number of threads, build a custom pool
         if let Some(nt) = nthread {
@@ -57,53 +55,29 @@ pub trait NormalizedEditDistance: Send + Sync {
         let idxs: Vec<(usize, usize, Option<f64>)> = map1
             .par_iter()
             .filter_map(|(k1, v1)| {
-                self.word_map_lookup_and_compare(k1, v1, &map2, full, max_distance)
+                self.compare_one_to_many(
+                    k1,
+                    v1,
+                    &map2,
+                    full,
+                    max_distance,
+                    prefix_weight,
+                    max_prefix,
+                )
             })
             .flatten()
             .collect();
         idxs
     }
 
-    fn word_map_lookup_and_compare(
+    fn compare_one_to_many(
         &self,
         k1: &str,
         v1: &Vec<usize>,
         idx_map: &HashMap<&str, Vec<usize>>,
         full: bool,
         max_distance: f64,
-    ) -> Option<Vec<(usize, usize, Option<f64>)>> {
-        // If NA value, can skip all further checks
-        if k1.is_na() && !full {
-            return None;
-        }
-        let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
-
-        for (k2, v2) in idx_map.iter() {
-            // If comparison is NA string, skip
-            if k2.is_na() && !full {
-                continue;
-            }
-            if &k1 == k2 {
-                iproduct!(v1, v2).for_each(|(v1, v2)| {
-                    idxs.push((*v1, *v2, Some(0.)));
-                });
-                continue;
-            }
-
-            let dist = self.compute(&k1, &k2);
-
-            if dist <= max_distance || full {
-                iproduct!(v1, v2).for_each(|(a, b)| {
-                    idxs.push((*a, *b, Some(dist)));
-                });
-                continue;
-            }
-        }
-
-        if idxs.is_empty() {
-            None
-        } else {
-            Some(idxs)
-        }
-    }
+        prefix_weight: f64,
+        max_prefix: usize,
+    ) -> Option<Vec<(usize, usize, Option<f64>)>>;
 }

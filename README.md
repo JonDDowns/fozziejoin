@@ -1,26 +1,22 @@
-# fozziejoin: Performant data frame joins with inexact matching
+# fozziejoin 🧸
 
-[NOTE]: This project is in early development. APIs may change in the future. It currently depends on the Rust toolchain to install.
+> ⚠️ **Note**: This project is in early development.
+> APIs may change, and installing from source requires the Rust toolchain.
 
-The `fozziejoin` package uses Rust to perform R dataframe joins based on string distance metrics.
-It is intended to be a high-performance alternative to `stringdist_inner_join` and similar functions from the [fuzzyjoin package](https://github.com/dgrtwo/fuzzyjoin).
+`fozziejoin` is an R package that uses Rust to perform high-performance dataframe joins based on string distance metrics.
+It’s designed as a fast alternative to functions like `stringdist_inner_join()` from the [fuzzyjoin package](https://github.com/dgrtwo/fuzzyjoin).
 
-The `fuzzyjoin` package depends on the [`stringdist` package](https://github.com/markvanderloo/stringdist) for string distance-based joins.
-While the `stringdist` package is very performant and multithreaded, it is not tailored to this use case.
-In `fozziejoin`, everything is adapted to the case of fuzzy joins to eliminate unnecessary steps and memory copying.
-Some examples:
+Unlike the [`stringdist` package](https://github.com/markvanderloo/stringdist), which computes all pairwise distances before filtering, `fozziejoin` implements string distance algorithms optimized for threshold-based filtering.
+This avoids unnecessary computation, improves memory efficiency, and speeds up performance in real-world applications.
 
-- No duplicate string distance calculations are performed. You only need compare "Jon" and "John" once.
-- No intermediate R objects, such as a matrix of string distance lengths, are created. All calculations are done in Rust and returned to R via the [`extendr` Rust crate](https://github.com/extendr/extendr).
-
-The name itself is a bit of wordplay: the common term for this task is 'fuzzy join', which is similar to [Fozzie Bear](https://en.wikipedia.org/wiki/Fozzie_Bear) from the Muppets. 
-A picture of Fozzie will be in the repo once a stronger legal team is in place.
-Wocka wocka!
+The name is a playful nod to “fuzzy join” — reminiscent of [Fozzie Bear](https://en.wikipedia.org/wiki/Fozzie_Bear) from the Muppets.
+A picture of Fozzie will appear in the repo once the legal team gets braver.
+**Wocka wocka!**
 
 ## Getting started
 
 Code has been written on a combination of Windows (R 4.3.2, x86_64-w64-mingw32/64) and Linux (R 4.5.0, x86-64-pc-linux-gnu platform).
-All builds to date are done using Rust 1.65. 
+All builds to date are done using Rust 1.65.
 
 ### Requirements
 
@@ -41,19 +37,19 @@ And to run the examples in the README or benchmarking scripts, the following are
 
 ### Installation
 
-Installing from binary is the easiest method on Windows, as it skips the need for a Rust install.
-Installing from source is the only officially supported option on Linux systems.
+Installing from binary is the easiest method on Windows, as it skips the need for the Rust toolchain.
+Installing from source is the only officially supported option on Linux systems currently.
 
 #### From binary (Windows only)
 
 ```
-install.packages('https://github.com/JonDDowns/fozziejoin/releases/download/v0.0.6/fozziejoin_0.0.6.zip', type='win.binary')
+install.packages('https://github.com/JonDDowns/fozziejoin/releases/download/v0.0.7/fozziejoin_0.0.7.zip', type='win.binary')
 ```
 
 #### From source
 
 ```
-install.packages('https://github.com/JonDDowns/fozziejoin/archive/refs/tags/v0.0.6.tar.gz', type='source')
+install.packages('https://github.com/JonDDowns/fozziejoin/archive/refs/tags/v0.0.7.tar.gz', type='source')
 # Alternative: use devtools
 # devtools::install_github('https://github.com/JonDDowns/fozziejoin')
 ```
@@ -98,7 +94,8 @@ fozzie <- fozzie_join(
 ## Benchmarks
 
 To date, `fozziejoin` has been benchmarked on Windows and Linux.
-`fozziejoin` beats the equivalent `fuzzyjoin` benchmark in all cases except one: Damerau-Levenshtein (method `dl`) distance joins on Windows with large dataframes.
+Currently all algorithms except for `soundex` joins have been implemented.
+As of v0.0.7, `fozziejoin` beats the equivalent `fuzzyjoin` benchmark in every instance while producing identical results.
 The highest observed performance gains come from Linux systems, presumably due to the relative efficiency of parallelization via `rayon`.
 
 [![Linux benchmark results](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Linux.svg)](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Linux.svg)
@@ -108,14 +105,21 @@ The highest observed performance gains come from Linux systems, presumably due t
 
 ## Known behavior changes relative to `fuzzyjoin`
 
-- Matching on columns with `NA` values would throw an error in `fuzzyjoin` but simply do not match in `fozziejoin`. This allows for NA values to persist in left, right, and full joins without matching all NA values to one another.
+Items beginning with an exclamation (!) are very likely to be updated for better alignment with `fuzzyjoin` in future releases.
+
+- Matching on columns with `NA` values throw an error in `fuzzyjoin` but simply do not match in `fozziejoin`. 
+This allows for NA values to persist in left, right, anti, semi, and full joins without matching all `NA` values to one another.
+`NA` will not be considered a matching value in any join type.
+
 - Jaro-Winkler distance
     - The prefix scaling factor (`max_prefix`) is an integer representing a fixed number of characters. The analagous `stringdist` parameter, `bt`, was a proportion of string length.
-- `fozziejoin` always assigns the suffix ".x" to columns from the LHS and ".y" to columns from the RHS. `fuzzyjoin` only does this when both LHS and RHS contain the same column name. `fozziejoin` may conform to the `fuzzyjoin` behavior in the future.
+- ! `fozziejoin` always assigns the suffix ".x" to columns from the LHS and ".y" to columns from the RHS. `fuzzyjoin` only does this when both LHS and RHS contain the same column name. `fozziejoin` may conform to the `fuzzyjoin` behavior in the future.
+- ! `fuzzyjoin` returns a `tibble`, while `fozziejoin` currently returns a base `data.frame`. In future releases, `fozziejoin` will add some support for returning `tibble`. I'd like to explore ways to make `tibble` an optional import rather than a required dependency.
 
 ## Acknowledgements
 
-- The `fuzzyjoin` and `stringdist` packages in R. Much of the project is meant to replicate their APIs and special cases handling.
 - The `extendr` team. This project would not be possible without their great project.
-- The `textdistance` Rust crate was referenced or is still directly used for most string distances. Currently, this crate is still used for some string distances. Others are based on `textdistance` implementations but with some performance tweaking for this use case.
+- The `fuzzyjoin` and `stringdist` packages in R. Much of the project is meant to replicate their APIs and special cases handling. `stringdist` is insanely performant.
+- The `textdistance` Rust crate `textdistance` is used in many algorithms, and their implementation was referenced to adapt custom string distance algorithms for this project. I have added header comments in all such cases where I adapted the `textdistance` crate without importing it.
+- The `rapidfuzz` Rust crate. They do not have all the necessary algorithms implemented, but the ones that they have implemented are very performant.
 - The `rayon` Rust crate, which enables efficient parallel data processing.

@@ -70,8 +70,7 @@ pub trait QGramDistance: Send + Sync {
         let idxs: Vec<(usize, usize, Option<f64>)> = map1
             .par_iter()
             .filter_map(|(k1, v1)| {
-                let out =
-                    self.compare_string_to_qgram_map(full, k1, v1, &map2_qgrams, q, max_distance);
+                let out = self.compare_one_to_many(full, k1, v1, &map2_qgrams, q, max_distance);
                 out
             })
             .flatten()
@@ -79,7 +78,7 @@ pub trait QGramDistance: Send + Sync {
         idxs
     }
 
-    fn compare_string_to_qgram_map(
+    fn compare_one_to_many(
         &self,
         full: bool,
         k1: &str,
