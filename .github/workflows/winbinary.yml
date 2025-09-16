@@ -32,12 +32,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          Rscript -e "install.packages(c('devtools', 'remotes'))"
-          Rscript -e "remotes::install_deps(dependencies = TRUE)"
+          Rscript.exe -e "install.packages(c('devtools', 'remotes'))"
+          Rscript.exe -e "remotes::install_deps(dependencies = TRUE)"
 
       - name: Build Windows binary
         run: |
-          R CMD INSTALL --build .
+          R.exe CMD INSTALL --build .
 
       - name: Upload binary to release
         uses: softprops/action-gh-release@v1
