@@ -43,12 +43,12 @@ Installing from source is the only officially supported option on Linux systems 
 #### From binary (Windows only)
 
 Binaries are found in the [releases](https://github.com/JonDDowns/fozziejoin/releases) section.
-Currently, binaries are built for the current and prior R releases (4.4.3 and 4.5.1 as of writing).
-Find the release version closest to your build and install.
-For example, if you were on R 4.3.2, your closest install would be:
+Currently, binaries are built for R 4.4.3. This binary is confirmed to work on R 4.3.1.
+We will not be actively supporting other R versions at this time, as our primary target is an eventual CRAN release.
+Please consider installing from source.
 
 ```
-install.packages('https://github.com/JonDDowns/fozziejoin/releases/download/v0.0.7/fozziejoin_0.0.7_R4.4.3.zip', type='win.binary')
+install.packages('https://github.com/JonDDowns/fozziejoin/releases/download/v0.0.7/fozziejoin_0.0.7', type='win.binary')
 ```
 
 #### From source
