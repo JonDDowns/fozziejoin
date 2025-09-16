@@ -3,6 +3,7 @@ name: Build Windows Binaries for R 4.2–4.5
 on:
   release:
     types: [created]
+  workflow_dispatch:
 
 jobs:
   build-windows:
