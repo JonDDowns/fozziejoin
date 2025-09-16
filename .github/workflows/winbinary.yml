@@ -9,6 +9,9 @@ on:
         description: 'R version to build (e.g., 4.2, 4.3, 4.4, 4.5)'
         required: true
         default: '4.3'
+      tag_name:
+        description: 'Tag to attach release assets to'
+        required: true
 
 jobs:
   build-windows:
