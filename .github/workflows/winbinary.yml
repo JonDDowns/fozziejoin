@@ -1,31 +1,28 @@
-name: Build Windows Binaries for R 4.2–4.5
+name: Build Windows Binary for Specified R Version
 
 on:
   release:
     types: [created]
   workflow_dispatch:
-     inputs:
-      r_version:
-        description: 'R version to build'
-        required: false
+    inputs:
+      r-version:
+        description: 'R version to build (e.g., 4.2, 4.3, 4.4, 4.5)'
+        required: true
         default: '4.3'
 
 jobs:
   build-windows:
     runs-on: windows-latest
-    strategy:
-      matrix:
-        r-version: [4.2, 4.3, 4.4, 4.5]
+    name: Build on R ${{ inputs.r-version }}
 
-    name: Build on R ${{ matrix.r-version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up R ${{ matrix.r-version }}
+      - name: Set up R ${{ inputs.r-version }}
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: ${{ matrix.r-version }}
+          r-version: ${{ inputs.r-version }}
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
