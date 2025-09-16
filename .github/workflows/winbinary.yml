@@ -30,10 +30,6 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Install Rtools
-        run: |
-          choco install rtools --version=4.0.0.20220206
-
       - name: Install dependencies
         run: |
           Rscript -e "install.packages(c('devtools', 'remotes'))"
