@@ -25,3 +25,4 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 SystemRequirements: Cargo (Rust's package manager), rustc, xz
 LazyData: true
+Config/CodeOfConduct: https://github.com/JonDDowns/fozziejoin/blob/main/CODE_OF_CONDUCT.md

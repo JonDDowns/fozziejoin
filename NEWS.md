@@ -1,4 +1,9 @@
-# fozziejoin 0.0.7 (WORKING)
+# fozziejoin 0.0.8
+
+- Arbitrary vector attributes, such as factor levels and POSIX dates, should now be supported. See: [Issue #6](https://github.com/JonDDowns/fozziejoin/issues/6). Testing utilities updated to validate this change.
+- Contributor code of conduct added
+
+# fozziejoin 0.0.7
 
 - Switched to `rapidfuzz` crate for supported algorithms, as they perform better than prior implementations.
 - README updates

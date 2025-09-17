@@ -111,16 +111,19 @@ Benchmark scripts are located [here](./scripts/benchmarks.R).
 
 ## Known behavior changes relative to `fuzzyjoin`
 
-Items beginning with an exclamation (!) are very likely to be updated for better alignment with `fuzzyjoin` in future releases.
+While `fozziejoin` is heavily inspired by `fuzzyjoin`, it does not seek to
+replicate it's behavior entirely. A list of planned changes to better align
+with `fuzzyjoin` behavior are listed in [this GH issue](https://github.com/JonDDowns/fozziejoin/issues/5).
+Below are some behavior changes that we do not currently plan to address.
+Please submit a GitHub issue if you think these should change!
 
-- Matching on columns with `NA` values throw an error in `fuzzyjoin` but simply do not match in `fozziejoin`. 
-This allows for NA values to persist in left, right, anti, semi, and full joins without matching all `NA` values to one another.
-`NA` will not be considered a matching value in any join type.
+- Matching on columns with `NA` values throw an error in `fuzzyjoin` but simply do not match in `fozziejoin`. This allows for `NA` values to persist in left, right, anti, semi, and full joins without matching all `NA` values to one another. `NA` will not be considered a matching value in any join type.
 
-- Jaro-Winkler distance
-    - The prefix scaling factor (`max_prefix`) is an integer representing a fixed number of characters. The analagous `stringdist` parameter, `bt`, was a proportion of string length.
-- ! `fozziejoin` always assigns the suffix ".x" to columns from the LHS and ".y" to columns from the RHS. `fuzzyjoin` only does this when both LHS and RHS contain the same column name. `fozziejoin` may conform to the `fuzzyjoin` behavior in the future.
-- ! `fuzzyjoin` returns a `tibble`, while `fozziejoin` currently returns a base `data.frame`. In future releases, `fozziejoin` will add some support for returning `tibble`. I'd like to explore ways to make `tibble` an optional import rather than a required dependency.
+- The prefix scaling factor for Jaro-Winkler distance (`max_prefix`) is an integer representing a fixed number of characters. The analagous `stringdist` parameter, `bt`, was a proportion of string length.
+
+- Some `stringdist` arguments are not supported. Implementation is challenging, but not impossible. We could prioritize their inclusion if user demand were sufficient:
+    - `useBytes`
+    - `weight`
 
 ## Acknowledgements
 
@@ -129,3 +132,11 @@ This allows for NA values to persist in left, right, anti, semi, and full joins 
 - The `textdistance` Rust crate `textdistance` is used in many algorithms, and their implementation was referenced to adapt custom string distance algorithms for this project. I have added header comments in all such cases where I adapted the `textdistance` crate without importing it.
 - The `rapidfuzz` Rust crate. They do not have all the necessary algorithms implemented, but the ones that they have implemented are very performant.
 - The `rayon` Rust crate, which enables efficient parallel data processing.
+
+## Contributions Welcome
+
+We welcome contributions of all kinds- whether it's improving documentation, reporting issues, or submitting pull requests. Your input helps make this project better for everyone.
+
+This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md). By participating, you agree to uphold its standards of respectful and inclusive behavior.
+
+If you experience or witness any problematic behavior, please [contact me via GitHub](https://github.com/JonDDowns) or open a private issue if appropriate.
