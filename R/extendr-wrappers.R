@@ -10,50 +10,63 @@
 #' @useDynLib fozziejoin, .registration = TRUE
 NULL
 
-#' Fuzzy Record Linkage via String Similarity Matching
+#' Perform a fuzzy join between two R data frames using approximate string similarity.
 #'
-#' Performs approximate joins between two R data frames (lists) using fuzzy string matching.
-#' This function computes pairwise string distances between join keys using edit distance or
-#' similarity metrics, supporting parallel execution and key-wise filtering.
+#' This function performs record linkage between `df1` and `df2`, allowing approximate
+#' matches based on the specified join keys and string similarity metrics. The algorithm
+#' efficiently computes pairwise distances using parallel iteration and indexed maps.
 #'
-#' @param df1 A data frame (`List`) representing the left input.
-#' @param df2 A data frame (`List`) representing the right input.
-#' @param by A named list mapping columns from `df1` to corresponding columns in `df2`.
-#' @param method A string specifying the string similarity or distance metric to use. Options include:
-#'   - `"levenshtein"`, `"lv"`: Levenshtein edit distance
-#'   - `"osa"`: Optimal string alignment
-#'   - `"damerau_levensthein"`, `"dl"`: Damerau-Levenshtein edit distance
-#'   - `"hamming"`: Hamming distance (requires equal-length strings)
-#'   - `"lcs"`: Longest common subsequence
-#'   - `"qgram"`, `"cosine"`, `"jaccard"`: Q-gram-based similarity (requires `q`)
-#'   - `"jaro_winkler"`, `"jw"`: Jaro-Winkler similarity (uses `max_prefix` and `prefix_weight`)
-#' @param how Type of join to perform. Options are:
-#'   - `"inner"` (default): Matches only
-#'   - `"left"`: All rows from `df1` with matches in `df2`
-#'   - `"right"`: All rows from `df2` with matches in `df1`
-#'   - `"anti"`: Unmatched rows from `df1`
-#'   - `"full"`: All matches from both sides
-#' @param max_distance A numeric threshold for allowable distance or dissimilarity.
-#' @param distance_col Optional string specifying the name of a column to include distance/similarity values.
-#' @param q Optional integer specifying q-gram size (required for `"qgram"`, `"cosine"`, and `"jaccard"`).
-#' @param max_prefix Optional integer for Jaro-Winkler: maximum prefix length for boosting.
-#' @param prefix_weight Optional numeric for Jaro-Winkler: weight multiplier for shared prefix boost.
-#' @param nthread Optional number of threads to use (defaults to all available cores if `NULL`).
+#' # Parameters
 #'
-#' @return A data frame (`Robj`) containing joined rows with `.x` and `.y` suffixes from `df1` and `df2`, respectively.
-#'   If `distance_col` is specified, an additional numeric column stores the computed similarity or distance.
+#' - `df1` (`List`): The first data frame (as an R list).
+#' - `df2` (`List`): The second data frame (as an R list).
+#' - `by` (`List`): Named list of matching columns. Each name-value pair maps a column
+#'   in `df1` to a corresponding column in `df2`.
+#' - `method` (`String`): The similarity metric to use:
+#'   - `"levenshtein"`, `"lv"` – Levenshtein edit distance
+#'   - `"osa"` – Optimal string alignment
+#'   - `"damerau_levensthein"`, `"dl"` – Damerau-Levenshtein distance
+#'   - `"hamming"` – Hamming distance (requires equal-length strings)
+#'   - `"lcs"` – Longest common subsequence
+#'   - `"qgram"`, `"cosine"`, `"jaccard"` – Token-based methods (requires `q`)
+#'   - `"jaro_winkler"`, `"jw"` – Jaro-Winkler similarity (requires `max_prefix` & `prefix_weight`)
+#' - `how` (`String`): Type of join:
+#'   - `"inner"` – Only matching rows from both inputs (default)
+#'   - `"left"` – All rows from `df1`, matched to `df2`
+#'   - `"right"` – All rows from `df2`, matched to `df1`
+#'   - `"anti"` – Only unmatched rows from `df1`
+#'   - `"full"` – All matches across both inputs
+#' - `max_distance` (`f64`): Maximum similarity threshold. Depending on the method,
+#'   this acts as either a maximum distance or minimum similarity.
+#' - `distance_col` (`Option<String>`): Optional name of a column to include per-match
+#'   distance or similarity score.
+#' - `q` (`Option<i32>`): Gram size for `qgram`, `cosine`, and `jaccard`.
+#' - `max_prefix` (`Option<i32>`): Required by `jaro_winkler`; controls prefix match scope.
+#' - `prefix_weight` (`Option<f64>`): Required by `jaro_winkler`; adjusts prefix weight.
+#' - `nthread` (`Option<usize>`): Number of threads to use (optional, defaults to all cores).
 #'
-#' @details
-#' Internally, string distances are computed using efficient hash maps and parallel search over character vectors.
-#' The function supports multi-column joins by filtering progressively across keys and computing distances at each level.
+#' # Returns
 #'
-#' This is an internal low-level wrapper used by high-level join interfaces such as `fozzie_join()`.
+#' An R-compatible data frame (`Robj`) containing the join result. Column names are suffixed:
+#' - `.x` for values from `df1`
+#' - `.y` for values from `df2`
 #'
-#' @seealso [fozzie_join()], [fozzie_inner_join()], [fozzie_left_join()]
+#' If `distance_col` is specified, a numeric column is appended containing the calculated
+#' similarity or distance for each match.
+#'
+#' # Implementation Notes
+#'
+#' - Internally uses indexed lookup tables to avoid full pairwise string comparisons.
+#' - Supports multi-column matching and filters progressively across keys.
+#' - Distance results are transposed and aligned across join keys using `transpose_map`.
+#'
+#' # Dependencies
+#'
+#' Relies on the `extendr` framework for R interop and uses an internal fuzzy matching trait
+#' that differs by distance metric: qgrams, edit distance, or normalized edit distance.
 #'
 #' @export
-fozzie_join_rs <- function(df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight, nthread) {
-  .Call(wrap__fozzie_join_rs, df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight, nthread)
-}
+fozzie_join_rs <- function(df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight, nthread) .Call(wrap__fozzie_join_rs, df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight, nthread)
+
 
 # nolint end
