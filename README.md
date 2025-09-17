@@ -102,6 +102,7 @@ To date, `fozziejoin` has been benchmarked on Windows and Linux.
 Currently all algorithms except for `soundex` joins have been implemented.
 As of v0.0.7, `fozziejoin` beats the equivalent `fuzzyjoin` benchmark in every instance while producing identical results.
 The highest observed performance gains come from Linux systems, presumably due to the relative efficiency of parallelization via `rayon`.
+Benchmark scripts are located [here](./scripts/benchmarks.R)
 
 [![Linux benchmark results](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Linux.svg)](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Linux.svg)
 
