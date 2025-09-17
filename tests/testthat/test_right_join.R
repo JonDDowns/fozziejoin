@@ -1,36 +1,6 @@
 # Inner joins prove the string distance and match selection processes are correct
 # For left and right joins, we only need prove that the correct non-match records
 # are also included. One join test should suffice.
-
-start_date <- as.Date("2023-01-01")
-end_date <- as.Date("2023-12-31")
-
-dates <- seq(from = start_date, to = end_date, length.out = 11)
-
-baby_names <- data.frame(
-	Name = c(
-		'Liam',
-		'Noah',
-		'Oliver',
-		'Theodore',
-		'James',
-		'Olivia',
-		'Emma',
-		'Amelia',
-		'Charlotte',
-		'Mia',
-		NA
-	),
-	int_col = c(1, 2, 3, 4, 5, 6, NA, 8, 9, 10, 11),
-	real_col = c(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, NA, 9.0, 10.0, 11.0),
-	logical_col = c(TRUE, TRUE, TRUE, TRUE, NA, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE),
-	date_col = dates,
-	factor_col = factor(c(
-		"West", "East", "West", "East", "West",
-		"Midwest", "Midwest", "South", "South", "South", "South"
-	))
-)
-
 whoops <- data.frame(
   Name = c(
     'Laim',
@@ -49,26 +19,29 @@ whoops <- data.frame(
 
 testthat::test_that('Right join is correct for Hamming', {
 	expected <- data.frame(list(
-		Name.x = c("Emma", "Amelia", NA, NA, NA, NA, NA, NA, NA, NA, NA),
-		int_col.x = c(NA, 8, NA, NA, NA, NA, NA, NA, NA, NA, NA),
-		real_col.x = c(7, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
-		logical_col.x = c(TRUE, FALSE, NA, NA, NA, NA, NA, NA, NA, NA, NA),
+		Name.x = c("Emma", "Amelia", rep(NA, 9)),
+		int_col.x = c(NA, 8, rep(NA, 9)),
+		real_col.x = c(7, rep(NA, 10)), 
+		logical_col.x = c(TRUE, FALSE, rep(NA, 9)),
 		date_col.x = structure(
-			c(19576.4, 19612.8, NA, NA, NA, NA, NA, NA, NA, NA, NA),
-			class = "Date"
+			c(18268, 18269, rep(NA, 9)), class = "Date"
 		),
-		factor_col.x = structure(
-			c(2L, 3L, NA, NA, NA, NA, NA, NA, NA, NA, NA),
-			class = "factor",
-			levels = c("East", "Midwest", "South", "West")
+		posixct_col.x = structure(
+			c(1577930400, 1577934000, rep(NA, 9))
+			, class = c("POSIXct", "POSIXt")
 		),
+		posixlt_col.x = structure(
+			c(1577930400, 1577934000, rep(NA, 9)),
+			class = c("POSIXct", "POSIXt")
+		),
+		factor_col.x = c(4L, 4L, rep(NA, 9)),
 		Name.y = c(
-			"Emma", "Smelia", "Laim", "No, ahhh", "Olive", "Jams",
-			"A-A-ron", "Luças", "Oliv HEE-YAH", NA, "Ada")
+			"Emma", "Smelia", "Laim", "No, ahhh", "Olive",
+			"Jams", "A-A-ron", "Luças", "Oliv HEE-YAH", NA, "Ada"
+		)
 	))
-
 	actual <- fozzie_join(
-		baby_names,
+		test_df,
 		whoops,
 		by = list('Name' = 'Name'),
 		method = 'hamming',
