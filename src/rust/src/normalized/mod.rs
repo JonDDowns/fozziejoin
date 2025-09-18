@@ -1,7 +1,7 @@
 pub mod jaro_winkler;
 
 use rayon::prelude::*;
-use rayon::ThreadPoolBuilder;
+use rayon::ThreadPool;
 use std::collections::HashMap;
 
 pub trait NormalizedEditDistance: Send + Sync {
@@ -40,33 +40,26 @@ pub trait NormalizedEditDistance: Send + Sync {
         map2: HashMap<&str, Vec<usize>>,
         max_distance: f64,
         full: bool,
-        nthread: Option<usize>,
         prefix_weight: f64,
         max_prefix: usize,
+        pool: &ThreadPool,
     ) -> Vec<(usize, usize, Option<f64>)> {
-        // If user specified a number of threads, build a custom pool
-        if let Some(nt) = nthread {
-            ThreadPoolBuilder::new()
-                .num_threads(nt)
-                .build()
-                .expect("Global pool already initialized");
-        };
-
-        let idxs: Vec<(usize, usize, Option<f64>)> = map1
-            .par_iter()
-            .filter_map(|(k1, v1)| {
-                self.compare_one_to_many(
-                    k1,
-                    v1,
-                    &map2,
-                    full,
-                    max_distance,
-                    prefix_weight,
-                    max_prefix,
-                )
-            })
-            .flatten()
-            .collect();
+        let idxs: Vec<(usize, usize, Option<f64>)> = pool.install(|| {
+            map1.par_iter()
+                .filter_map(|(k1, v1)| {
+                    self.compare_one_to_many(
+                        k1,
+                        v1,
+                        &map2,
+                        full,
+                        max_distance,
+                        prefix_weight,
+                        max_prefix,
+                    )
+                })
+                .flatten()
+                .collect()
+        });
         idxs
     }
 

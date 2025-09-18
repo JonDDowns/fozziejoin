@@ -5,7 +5,7 @@
 use extendr_api::prelude::*;
 use itertools::iproduct;
 use rayon::prelude::*;
-use rayon::ThreadPoolBuilder;
+use rayon::ThreadPool;
 
 use crate::ngram::QGramDistance;
 
@@ -59,15 +59,8 @@ impl QGramDistance for Jaccard {
         max_distance: f64,
         q: usize,
         full: bool,
-        nthread: Option<usize>,
+        pool: &ThreadPool,
     ) -> Vec<(usize, usize, Option<f64>)> {
-        if let Some(nt) = nthread {
-            ThreadPoolBuilder::new()
-                .num_threads(nt)
-                .build()
-                .expect("Global pool already initialized");
-        };
-
         let mut left_meta: HashMap<&str, (Vec<usize>, HashSet<&str>)> = HashMap::new();
         left.dollar(&left_key)
             .expect(&format!(
@@ -143,35 +136,37 @@ impl QGramDistance for Jaccard {
                 }
             });
 
-        let idxs: Vec<(usize, usize, Option<f64>)> = left_meta
-            .par_iter()
-            .filter_map(|(_, (v1, hs1))| {
-                let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
+        let idxs: Vec<(usize, usize, Option<f64>)> = pool.install(|| {
+            left_meta
+                .par_iter()
+                .filter_map(|(_, (v1, hs1))| {
+                    let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
 
-                for (_, (v2, hs2)) in right_meta.iter() {
-                    let dist = if hs1.is_empty() && hs2.is_empty() {
-                        0.0
-                    } else {
-                        let intersection_size = hs1.intersection(hs2).count();
-                        let union_size = hs1.union(hs2).count();
-                        1.0 - (intersection_size as f64) / (union_size as f64)
-                    };
+                    for (_, (v2, hs2)) in right_meta.iter() {
+                        let dist = if hs1.is_empty() && hs2.is_empty() {
+                            0.0
+                        } else {
+                            let intersection_size = hs1.intersection(hs2).count();
+                            let union_size = hs1.union(hs2).count();
+                            1.0 - (intersection_size as f64) / (union_size as f64)
+                        };
 
-                    if dist <= max_distance || full {
-                        iproduct!(v1, v2).for_each(|(a, b)| {
-                            idxs.push((*a, *b, Some(dist)));
-                        });
+                        if dist <= max_distance || full {
+                            iproduct!(v1, v2).for_each(|(a, b)| {
+                                idxs.push((*a, *b, Some(dist)));
+                            });
+                        }
                     }
-                }
 
-                if idxs.is_empty() {
-                    None
-                } else {
-                    Some(idxs)
-                }
-            })
-            .flatten()
-            .collect();
+                    if idxs.is_empty() {
+                        None
+                    } else {
+                        Some(idxs)
+                    }
+                })
+                .flatten()
+                .collect()
+        });
         idxs
     }
 }

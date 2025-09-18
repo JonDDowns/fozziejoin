@@ -1,7 +1,7 @@
 use crate::utils::robj_index_map;
 use extendr_api::prelude::*;
 use rayon::iter::*;
-use rayon::ThreadPoolBuilder;
+use rayon::ThreadPool;
 use std::collections::HashMap;
 
 pub mod damerau_levenshtein;
@@ -49,18 +49,10 @@ pub trait EditDistance: Send + Sync {
         right_key: &str,
         max_distance: f64,
         full: bool,
-        nthread: Option<usize>,
+        pool: &ThreadPool,
     ) -> Vec<(usize, usize, Option<f64>)> {
         let map1 = robj_index_map(left, left_key);
         let map2 = robj_index_map(right, right_key);
-
-        // If user specified a number of threads, build a custom pool
-        if let Some(nt) = nthread {
-            ThreadPoolBuilder::new()
-                .num_threads(nt)
-                .build()
-                .expect("Global pool already initialized");
-        };
 
         // We don't need to check any strings where lengths differ by more than max
         // For RHS, keep a map of lengths of all strings
@@ -82,22 +74,25 @@ pub trait EditDistance: Send + Sync {
             .expect("Problem extracting maximum key length for RHS");
 
         // Begin generation of all matched indices
-        let idxs: Vec<(usize, usize, Option<f64>)> = map1
-            .par_iter()
-            .filter_map(|(k1, v1)| {
-                self.compare_one_to_many(
-                    k1,
-                    v1,
-                    &length_map,
-                    &map2,
-                    &full,
-                    &max_distance,
-                    min_key,
-                    max_key,
-                )
-            })
-            .flatten()
-            .collect();
+        //let idxs: Vec<(usize, usize, Option<f64>)> =
+
+        let idxs: Vec<(usize, usize, Option<f64>)> = pool.install(|| {
+            map1.par_iter()
+                .filter_map(|(k1, v1)| {
+                    self.compare_one_to_many(
+                        k1,
+                        v1,
+                        &length_map,
+                        &map2,
+                        &full,
+                        &max_distance,
+                        min_key,
+                        max_key,
+                    )
+                })
+                .flatten()
+                .collect()
+        });
         idxs
     }
 

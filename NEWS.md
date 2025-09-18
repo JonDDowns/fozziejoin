@@ -1,6 +1,7 @@
 # fozziejoin 0.0.8
 
 - Arbitrary vector attributes, such as factor levels and POSIX dates, should now be supported. See: [Issue #6](https://github.com/JonDDowns/fozziejoin/issues/6). Testing utilities updated to validate this change.
+- Fixed a bug in the `nthread` argument wherein the user-specified thread count was ignored and the default global thread pool settings were always used.
 - Contributor code of conduct added
 
 # fozziejoin 0.0.7

@@ -2,7 +2,7 @@ use crate::utils::{get_qgrams, robj_index_map, strvec_to_qgram_map};
 use extendr_api::prelude::*;
 use itertools::iproduct;
 use rayon::prelude::*;
-use rayon::ThreadPoolBuilder;
+use rayon::ThreadPool;
 use std::collections::HashMap;
 pub mod cosine;
 pub mod jaccard;
@@ -52,29 +52,23 @@ pub trait QGramDistance: Send + Sync {
         max_distance: f64,
         q: usize,
         full: bool,
-        nthread: Option<usize>,
+        pool: &ThreadPool,
     ) -> Vec<(usize, usize, Option<f64>)> {
-        if let Some(nt) = nthread {
-            ThreadPoolBuilder::new()
-                .num_threads(nt)
-                .build()
-                .expect("Global pool already initialized");
-        };
-
         let map1 = robj_index_map(&left, &left_key);
 
         // This map uses qgrams as keys and keeps track of both frequencies
         // and the number of occurrences of each qgram
         let map2_qgrams = strvec_to_qgram_map(right, right_key, q);
 
-        let idxs: Vec<(usize, usize, Option<f64>)> = map1
-            .par_iter()
-            .filter_map(|(k1, v1)| {
-                let out = self.compare_one_to_many(full, k1, v1, &map2_qgrams, q, max_distance);
-                out
-            })
-            .flatten()
-            .collect();
+        let idxs: Vec<(usize, usize, Option<f64>)> = pool.install(|| {
+            map1.par_iter()
+                .filter_map(|(k1, v1)| {
+                    let out = self.compare_one_to_many(full, k1, v1, &map2_qgrams, q, max_distance);
+                    out
+                })
+                .flatten()
+                .collect()
+        });
         idxs
     }
 
