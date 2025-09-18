@@ -1,5 +1,5 @@
 # Uncomment to re-install during development
-devtools::install()
+# devtools::install()
 
 library(dplyr)
 library(tidyr)

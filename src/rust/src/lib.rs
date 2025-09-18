@@ -15,7 +15,7 @@ use crate::edit::{
 };
 use crate::ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
 use crate::normalized::{jaro_winkler::JaroWinkler, NormalizedEditDistance};
-use crate::utils::robj_index_map;
+use crate::utils::{get_pool, robj_index_map};
 
 use merge::Merge;
 use utils::transpose_map;
@@ -103,6 +103,8 @@ pub fn fozzie_join_rs(
     // Running list of all IDXs that have survived
     let mut keep_idxs: HashMap<(usize, usize), Vec<Option<f64>>> = HashMap::new();
 
+    let pool = get_pool(nthread);
+
     // Begin looping through each supplied set of match keys
     for (match_iter, (left_key, right_key)) in by.iter().enumerate() {
         let rk = &right_key
@@ -111,9 +113,9 @@ pub fn fozzie_join_rs(
 
         // Get indices of all matching pairs using user-defined params.
         let matchdat = match method.as_str() {
-            "osa" => OSA.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, nthread),
+            "osa" => OSA.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, &pool),
             "levenshtein" | "lv" => {
-                Levenshtein.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, nthread)
+                Levenshtein.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, &pool)
             }
             "damerau_levensthein" | "dl" => DamerauLevenshtein.fuzzy_indices(
                 &df1,
@@ -122,12 +124,10 @@ pub fn fozzie_join_rs(
                 rk,
                 max_distance,
                 full,
-                nthread,
+                &pool,
             ),
-            "hamming" => {
-                Hamming.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, nthread)
-            }
-            "lcs" => LCSStr.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, nthread),
+            "hamming" => Hamming.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, &pool),
+            "lcs" => LCSStr.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, &pool),
             "qgram" => {
                 if let Some(qz) = q {
                     QGram.fuzzy_indices(
@@ -138,7 +138,7 @@ pub fn fozzie_join_rs(
                         max_distance,
                         qz as usize,
                         full,
-                        nthread,
+                        &pool,
                     )
                 } else {
                     panic!("Must provide q for method {}", method);
@@ -154,7 +154,7 @@ pub fn fozzie_join_rs(
                         max_distance,
                         qz as usize,
                         full,
-                        nthread,
+                        &pool,
                     )
                 } else {
                     panic!("Must provide q for method {}", method);
@@ -170,7 +170,7 @@ pub fn fozzie_join_rs(
                         max_distance,
                         qz as usize,
                         full,
-                        nthread,
+                        &pool,
                     )
                 } else {
                     panic!("Must provide q for method {}", method);
@@ -200,9 +200,9 @@ pub fn fozzie_join_rs(
                     map2,
                     max_distance,
                     full,
-                    nthread,
                     prefix_weight,
                     max_prefix,
+                    &pool,
                 )
             }
             _ => panic!("The join method {method} is not available."),

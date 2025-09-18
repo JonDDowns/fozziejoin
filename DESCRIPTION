@@ -1,6 +1,6 @@
 Package: fozziejoin
 Title: Performant Data Frame Joins with Inexact String Matching
-Version: 0.0.7
+Version: 0.0.8
 Authors@R: 
     person("Jon", "Downs", , "jon@jondowns.net", role = c("aut", "cre"))
 Description: Dataframes can be joined based on inexact matching using
@@ -11,10 +11,18 @@ Depends:
 Imports: 
     stats
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    dplyr,
+    ggplot2,
+    fuzzyjoin,
+    qdapDictionaries,
+    microbenchmark,
+    tidyr
 Config/rextendr/version: 0.4.0.9000
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 SystemRequirements: Cargo (Rust's package manager), rustc, xz
+LazyData: true
+Config/CodeOfConduct: https://github.com/JonDDowns/fozziejoin/blob/main/CODE_OF_CONDUCT.md

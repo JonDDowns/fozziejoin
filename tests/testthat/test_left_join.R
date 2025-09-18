@@ -1,35 +1,14 @@
 # Inner joins prove the string distance and match selection processes are correct
 # For left and right joins, we only need prove that the correct non-match records
-# are also included. One join test should suffice.
+# are also included and that all attributes are preserved in output.
 
-start_date <- as.Date("2023-01-01")
-end_date <- as.Date("2023-12-31")
-
-dates <- seq(from = start_date, to = end_date, length.out = 11)
-
-baby_names <- data.frame(
-	Name = c(
-		'Liam',
-		'Noah',
-		'Oliver',
-		'Theodore',
-		'James',
-		'Olivia',
-		'Emma',
-		'Amelia',
-		'Charlotte',
-		'Mia',
-		NA
-	),
-	int_col = c(1, 2, 3, 4, 5, 6, NA, 8, 9, 10, 11),
-	real_col = c(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, NA, 9.0, 10.0, 11.0),
-	logical_col = c(TRUE, TRUE, TRUE, TRUE, NA, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE),
-	date_col = dates,
-	factor_col = factor(c(
-		"West", "East", "West", "East", "West",
-		"Midwest", "Midwest", "South", "South", "South", "South"
-	))
-)
+make_expected <- function(rows, name_y) {
+	df <- test_df[rows, ]
+	names(df) <- paste0(names(df), ".x")
+	df$Name.y <- name_y
+	rownames(df) <- NULL
+	df
+}
 
 whoops <- data.frame(
   Name = c(
@@ -48,25 +27,13 @@ whoops <- data.frame(
 )
 
 testthat::test_that('Left join is correct for Hamming', {
-	expected <- data.frame(list(
-		Name.x = c("Emma", "Amelia", "Liam", "Noah", "Oliver", "Theodore", "James", "Olivia", "Charlotte", "Mia", NA), 
-		int_col.x = c(NA, 8, 1, 2, 3, 4, 5, 6, 9, 10, 11),
-		real_col.x = c(7, NA, 1, 2, 3, 4, 5, 6, 9, 10, 11),
-		logical_col.x = c(TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, NA, TRUE, FALSE, FALSE, FALSE),
-		date_col.x = structure(
-			c(19576.4, 19612.8, 19358, 19394.4, 19430.8, 19467.2, 19503.6, 19540, 19649.2, 19685.6, 19722),
-			class = "Date"
-		),
-		factor_col.x = structure(
-			c(2L, 3L, 4L, 1L, 4L, 1L, 4L, 2L, 3L, 3L, 3L),
-			class = "factor",
-			levels = c("East", "Midwest", "South", "West")
-		),
-		Name.y = c("Emma", "Smelia", NA, NA, NA, NA, NA, NA, NA, NA, NA)
-	))
+	expected <- make_expected(
+		rows = c(7:8, 1:6, 9:10),
+		name_y = c("Emma", "Smelia", rep(NA, 8))
+	)
 
 	actual <- fozzie_join(
-		baby_names,
+		test_df,
 		whoops,
 		by = list('Name' = 'Name'),
 		method = 'hamming',
@@ -82,7 +49,6 @@ testthat::test_that('Left join is correct for Hamming', {
 
 # Levensthein
 testthat::test_that('Left multi column joins work', {
-
 	left <- data.frame(
 		Name = c("Oliver", "James", "Emma", "Amelia"),
 		Pet = c("Sparky", "Spike", "Fido", "Bingo")

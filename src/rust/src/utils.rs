@@ -1,4 +1,6 @@
 use extendr_api::prelude::*;
+use rayon::ThreadPool;
+use rayon::ThreadPoolBuilder;
 use std::collections::HashMap;
 
 /// Constructs a HashMap that indexes occurrences of unique string values
@@ -147,4 +149,17 @@ pub fn get_qgrams(s: &str, q: usize) -> HashMap<&str, usize> {
     }
 
     qgram_map
+}
+
+pub fn get_pool(nthread: Option<usize>) -> ThreadPool {
+    if let Some(nt) = nthread {
+        ThreadPoolBuilder::new()
+            .num_threads(nt)
+            .build()
+            .expect("Failed to build custom thread pool")
+    } else {
+        rayon::ThreadPoolBuilder::new()
+            .build()
+            .expect("Failed to build default thread pool")
+    }
 }
