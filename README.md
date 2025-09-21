@@ -91,7 +91,7 @@ words <- tibble::as_tibble(DICTIONARY)
 Then, we run our join function.
 
 ```{r}
-fozzie <- fozzie_join(
+fozzie <- fozzie_string_join(
     sub_misspellings, words, method='lv', by = c('misspelling', 'word'), max_distance=2
 )
 ```

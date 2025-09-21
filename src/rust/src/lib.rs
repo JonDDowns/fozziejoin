@@ -19,7 +19,7 @@ use utils::transpose_map;
 
 /// @export
 #[extendr]
-pub fn fozzie_join_rs(
+pub fn fozzie_string_join_rs(
     df1: List,
     df2: List,
     by: List,
@@ -193,5 +193,5 @@ pub fn fozzie_join_rs(
 // Export the function to R
 extendr_module! {
     mod fozziejoin;
-    fn fozzie_join_rs;
+    fn fozzie_string_join_rs;
 }

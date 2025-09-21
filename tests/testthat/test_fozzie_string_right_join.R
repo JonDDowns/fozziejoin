@@ -40,7 +40,7 @@ testthat::test_that('Right join is correct for Hamming', {
 			"Jams", "A-A-ron", "Luças", "Oliv HEE-YAH", NA, "Ada"
 		)
 	))
-	actual <- fozzie_join(
+	actual <- fozzie_string_join(
 		test_df,
 		whoops,
 		by = list('Name' = 'Name'),
@@ -75,7 +75,7 @@ testthat::test_that('Right multi column joins work', {
 		mydist_Pet_Pet = c(0, 0, 1, NA)
 	))
 
-	actual <- fozzie_join(
+	actual <- fozzie_string_join(
 		left,
 		right,
 		by = list('Name' = 'Name', "Pet" = "Pet"),

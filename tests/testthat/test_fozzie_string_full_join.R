@@ -25,7 +25,7 @@ testthat::test_that('Full join is correct for Levenshtein', {
 		)
 	))
 
-	actual <- fozzie_join(
+	actual <- fozzie_string_join(
 		baby_names,
 		whoops,
 		by = list('Name' = 'Name'),
@@ -56,7 +56,7 @@ testthat::test_that('Full join is correct for Cosine', {
 	))
 
 
-	actual <- fozzie_join(
+	actual <- fozzie_string_join(
 		baby_names,
 		whoops,
 		by = list('Name' = 'Name'),
@@ -88,7 +88,7 @@ testthat::test_that('Full join is correct for JW', {
 	))
 
 
-	actual <- fozzie_join(
+	actual <- fozzie_string_join(
 		baby_names,
 		whoops,
 		by = list('Name' = 'Name'),

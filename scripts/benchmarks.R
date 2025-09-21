@@ -52,7 +52,7 @@ run_bench <- function(method, mode, max_dist, q=NA, nsamp, seed=2016) {
 			q = q
 		),
 		fozzie = fozzie <- sub_misspellings %>%
-			fozzie_join(
+			fozzie_string_join(
 				words,
 				by = list('misspelling' = 'word'),
 				method = method,
