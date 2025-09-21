@@ -12,37 +12,6 @@ pub mod qgram;
 pub trait QGramDistance: Send + Sync {
     fn compute(&self, s1: &HashMap<&str, usize>, s2: &HashMap<&str, usize>) -> f64;
 
-    /// Perform q-gram–based approximate string matching between two R data frame columns.
-    ///
-    /// This function compares tokens from the `left` data frame to q-gram–indexed values
-    /// in the `right` data frame using a token similarity metric (e.g., cosine, jaccard).
-    /// It computes distances for string pairs whose q-gram overlap exceeds a threshold,
-    /// returning matched row indices and similarity scores.
-    ///
-    /// # Parameters
-    ///
-    /// - `left`: The first R data frame (as `extendr_api::List`).
-    /// - `left_key`: Name of the column in `left` used for matching.
-    /// - `right`: The second R data frame (as `extendr_api::List`).
-    /// - `right_key`: Name of the column in `right` used for matching.
-    /// - `max_distance`: Maximum allowable dissimilarity (e.g., `1 - similarity score`).
-    /// - `q`: Q-gram size used for tokenization (e.g., 2 for bigrams).
-    /// - `full`: Whether to include matches with no overlap (`true` for `"full"` join mode).
-    /// - `nthread`: Optional number of threads to use for parallel matching.
-    ///
-    /// # Returns
-    ///
-    /// A `Vec` of tuples containing:
-    /// - `left_idx`: Row index from the `left` data frame
-    /// - `right_idx`: Row index from the `right` data frame
-    /// - `Option<f64>`: The computed similarity or distance score for the matched pair
-    ///
-    /// # Notes
-    ///
-    /// - Q-gram comparison is optimized by precomputing a q-gram frequency index for `right_key`.
-    /// - Matching is parallelized using Rayon for scalability across large data sets.
-    /// - Uses a user-defined scoring function via `self.compare_string_to_qgram_map` to compute distances.
-    /// - This version assumes the similarity algorithm (e.g. cosine, jaccard) is defined on the type that implements this method.
     fn fuzzy_indices(
         &self,
         left: &List,
@@ -51,7 +20,6 @@ pub trait QGramDistance: Send + Sync {
         right_key: &str,
         max_distance: f64,
         q: usize,
-        full: bool,
         pool: &ThreadPool,
     ) -> Vec<(usize, usize, Option<f64>)> {
         let map1 = robj_index_map(&left, &left_key);
@@ -63,7 +31,7 @@ pub trait QGramDistance: Send + Sync {
         let idxs: Vec<(usize, usize, Option<f64>)> = pool.install(|| {
             map1.par_iter()
                 .filter_map(|(k1, v1)| {
-                    let out = self.compare_one_to_many(full, k1, v1, &map2_qgrams, q, max_distance);
+                    let out = self.compare_one_to_many(k1, v1, &map2_qgrams, q, max_distance);
                     out
                 })
                 .flatten()
@@ -74,17 +42,14 @@ pub trait QGramDistance: Send + Sync {
 
     fn compare_one_to_many(
         &self,
-        full: bool,
         k1: &str,
         v1: &Vec<usize>,
         map2_qgrams: &HashMap<&str, (HashMap<&str, usize>, Vec<usize>)>,
         q: usize,
         max_distance: f64,
     ) -> Option<Vec<(usize, usize, Option<f64>)>> {
-        if !full {
-            if k1.is_na() {
-                return None;
-            }
+        if k1.is_na() {
+            return None;
         }
 
         let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
@@ -99,7 +64,7 @@ pub trait QGramDistance: Send + Sync {
             }
 
             let dist = self.compute(&qg1, &qg2) as f64;
-            if dist <= max_distance || full {
+            if dist <= max_distance {
                 iproduct!(v1, v2).for_each(|(a, b)| {
                     idxs.push((*a, *b, Some(dist)));
                 });

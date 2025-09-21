@@ -16,20 +16,18 @@ impl NormalizedEditDistance for JaroWinkler {
         k1: &str,
         v1: &Vec<usize>,
         idx_map: &HashMap<&str, Vec<usize>>,
-        full: bool,
         max_distance: f64,
         prefix_weight: f64,
         max_prefix: usize,
     ) -> Option<Vec<(usize, usize, Option<f64>)>> {
-        // If NA value, can skip all further checks
-        if k1.is_na() && !full {
+        if k1.is_na() {
             return None;
         }
 
         let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
 
         for (k2, v2) in idx_map.iter() {
-            if k2.is_na() && !full {
+            if k2.is_na() {
                 continue;
             }
 
@@ -55,19 +53,13 @@ impl NormalizedEditDistance for JaroWinkler {
             match dist {
                 Some(x) => {
                     let x2 = x + (capped_prefix_len as f64 * prefix_weight * (1.0 - x)) as f64;
-                    if x2 <= max_distance || full {
+                    if x2 <= max_distance {
                         iproduct!(v1, v2).for_each(|(a, b)| {
                             idxs.push((*a, *b, Some(x2)));
                         });
                     }
                 }
-                None => {
-                    if full {
-                        iproduct!(v1, v2).for_each(|(a, b)| {
-                            idxs.push((*a, *b, None));
-                        });
-                    }
-                }
+                None => (),
             }
         }
 

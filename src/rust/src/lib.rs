@@ -34,16 +34,6 @@ pub fn fozzie_string_join_rs(
     prefix_weight: Option<f64>,
     nthread: Option<usize>,
 ) -> Robj {
-    // Check for type of join requested
-    let full = match how.as_str() {
-        "inner" => false,
-        "left" => false,
-        "right" => false,
-        "anti" => false,
-        "full" => true,
-        _ => panic!("{how} is not currently a supported join type."),
-    };
-
     // Running list of all IDXs that have survived
     let mut keep_idxs: HashMap<(usize, usize), Vec<Option<f64>>> = HashMap::new();
 
@@ -57,49 +47,25 @@ pub fn fozzie_string_join_rs(
 
         // Get indices of all matching pairs using user-defined params.
         let matchdat = match method.as_str() {
-            "osa" => OSA.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, &pool),
+            "osa" => OSA.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, &pool),
             "levenshtein" | "lv" => {
-                Levenshtein.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, &pool)
+                Levenshtein.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, &pool)
             }
-            "damerau_levensthein" | "dl" => DamerauLevenshtein.fuzzy_indices(
-                &df1,
-                left_key,
-                &df2,
-                rk,
-                max_distance,
-                full,
-                &pool,
-            ),
-            "hamming" => Hamming.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, &pool),
-            "lcs" => LCSStr.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, full, &pool),
+            "damerau_levensthein" | "dl" => {
+                DamerauLevenshtein.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, &pool)
+            }
+            "hamming" => Hamming.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, &pool),
+            "lcs" => LCSStr.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, &pool),
             "qgram" => {
                 if let Some(qz) = q {
-                    QGram.fuzzy_indices(
-                        &df1,
-                        left_key,
-                        &df2,
-                        rk,
-                        max_distance,
-                        qz as usize,
-                        full,
-                        &pool,
-                    )
+                    QGram.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, qz as usize, &pool)
                 } else {
                     panic!("Must provide q for method {}", method);
                 }
             }
             "cosine" => {
                 if let Some(qz) = q {
-                    Cosine.fuzzy_indices(
-                        &df1,
-                        left_key,
-                        &df2,
-                        rk,
-                        max_distance,
-                        qz as usize,
-                        full,
-                        &pool,
-                    )
+                    Cosine.fuzzy_indices(&df1, left_key, &df2, rk, max_distance, qz as usize, &pool)
                 } else {
                     panic!("Must provide q for method {}", method);
                 }
@@ -113,7 +79,6 @@ pub fn fozzie_string_join_rs(
                         rk,
                         max_distance,
                         qz as usize,
-                        full,
                         &pool,
                     )
                 } else {
@@ -139,15 +104,7 @@ pub fn fozzie_string_join_rs(
 
                 // Define algorithm, run distance function
                 let jw = JaroWinkler {};
-                jw.fuzzy_indices(
-                    map1,
-                    map2,
-                    max_distance,
-                    full,
-                    prefix_weight,
-                    max_prefix,
-                    &pool,
-                )
+                jw.fuzzy_indices(map1, map2, max_distance, prefix_weight, max_prefix, &pool)
             }
             _ => panic!("The join method {method} is not available."),
         };
@@ -181,10 +138,11 @@ pub fn fozzie_string_join_rs(
 
     // Create the DF
     let out = match how.as_str() {
-        "inner" | "full" => Merge::inner(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+        "inner" => Merge::inner(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
         "left" => Merge::left(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
         "right" => Merge::right(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
         "anti" => Merge::anti(&df1, idxs1),
+        "full" => Merge::full(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
         _ => panic!("Join type not supported"),
     };
 

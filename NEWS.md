@@ -5,6 +5,8 @@
 - Contributor code of conduct added
 - string distance functions added to their own submodule within the Rust code. This is to better organize the code as we plan to add other fuzzy join types (distance, difference, geo, etc.)
 - `fozzie_join` functions have been renamed to `fozzie_string_join`. This will better describe the function behavior and allow us to add other join types in the future. See [Issue #9](https://github.com/JonDDowns/fozziejoin/issues/9)
+- `fozzie_string_full_join` now implements full joins as the union of the left and right fuzzy join. Before this, it was the cartesian product of left and right datasets.
+- `fozzie_difference_join` suite of functions now available. This allows joining on numeric distance.
 
 # fozziejoin 0.0.7
 

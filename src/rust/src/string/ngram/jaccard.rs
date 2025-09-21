@@ -58,7 +58,6 @@ impl QGramDistance for Jaccard {
         right_key: &str,
         max_distance: f64,
         q: usize,
-        full: bool,
         pool: &ThreadPool,
     ) -> Vec<(usize, usize, Option<f64>)> {
         let mut left_meta: HashMap<&str, (Vec<usize>, HashSet<&str>)> = HashMap::new();
@@ -151,7 +150,7 @@ impl QGramDistance for Jaccard {
                             1.0 - (intersection_size as f64) / (union_size as f64)
                         };
 
-                        if dist <= max_distance || full {
+                        if dist <= max_distance {
                             iproduct!(v1, v2).for_each(|(a, b)| {
                                 idxs.push((*a, *b, Some(dist)));
                             });

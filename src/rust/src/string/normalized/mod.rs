@@ -39,7 +39,6 @@ pub trait NormalizedEditDistance: Send + Sync {
         map1: HashMap<&str, Vec<usize>>,
         map2: HashMap<&str, Vec<usize>>,
         max_distance: f64,
-        full: bool,
         prefix_weight: f64,
         max_prefix: usize,
         pool: &ThreadPool,
@@ -47,15 +46,7 @@ pub trait NormalizedEditDistance: Send + Sync {
         let idxs: Vec<(usize, usize, Option<f64>)> = pool.install(|| {
             map1.par_iter()
                 .filter_map(|(k1, v1)| {
-                    self.compare_one_to_many(
-                        k1,
-                        v1,
-                        &map2,
-                        full,
-                        max_distance,
-                        prefix_weight,
-                        max_prefix,
-                    )
+                    self.compare_one_to_many(k1, v1, &map2, max_distance, prefix_weight, max_prefix)
                 })
                 .flatten()
                 .collect()
@@ -68,7 +59,6 @@ pub trait NormalizedEditDistance: Send + Sync {
         k1: &str,
         v1: &Vec<usize>,
         idx_map: &HashMap<&str, Vec<usize>>,
-        full: bool,
         max_distance: f64,
         prefix_weight: f64,
         max_prefix: usize,

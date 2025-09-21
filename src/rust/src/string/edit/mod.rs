@@ -19,7 +19,6 @@ pub trait EditDistance: Send + Sync {
         right: &List,
         right_key: &str,
         max_distance: f64,
-        full: bool,
         pool: &ThreadPool,
     ) -> Vec<(usize, usize, Option<f64>)> {
         let map1 = robj_index_map(left, left_key);
@@ -34,32 +33,13 @@ pub trait EditDistance: Send + Sync {
             length_map.entry(key_len).or_insert(Vec::new()).push(key);
         }
 
-        // Get the min/max string lengths in the RHS dataset
-        let min_key = length_map
-            .keys()
-            .min()
-            .expect("Problem extracting minimum key length RHS");
-        let max_key = length_map
-            .keys()
-            .max()
-            .expect("Problem extracting maximum key length for RHS");
-
         // Begin generation of all matched indices
         //let idxs: Vec<(usize, usize, Option<f64>)> =
 
         let idxs: Vec<(usize, usize, Option<f64>)> = pool.install(|| {
             map1.par_iter()
                 .filter_map(|(k1, v1)| {
-                    self.compare_one_to_many(
-                        k1,
-                        v1,
-                        &length_map,
-                        &map2,
-                        &full,
-                        &max_distance,
-                        min_key,
-                        max_key,
-                    )
+                    self.compare_one_to_many(k1, v1, &length_map, &map2, &max_distance)
                 })
                 .flatten()
                 .collect()
@@ -73,9 +53,6 @@ pub trait EditDistance: Send + Sync {
         v1: &Vec<usize>,
         length_map: &HashMap<usize, Vec<&str>>,
         idx_map: &HashMap<&str, Vec<usize>>,
-        full: &bool,
         max_distance: &f64,
-        min_key: &usize,
-        max_key: &usize,
     ) -> Option<Vec<(usize, usize, Option<f64>)>>;
 }
