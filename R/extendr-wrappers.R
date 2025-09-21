@@ -10,50 +10,11 @@
 #' @useDynLib fozziejoin, .registration = TRUE
 NULL
 
-#' Fuzzy Record Linkage via String Similarity Matching
-#'
-#' Performs approximate joins between two R data frames (lists) using fuzzy string matching.
-#' This function computes pairwise string distances between join keys using edit distance or
-#' similarity metrics, supporting parallel execution and key-wise filtering.
-#'
-#' @param df1 A data frame (`List`) representing the left input.
-#' @param df2 A data frame (`List`) representing the right input.
-#' @param by A named list mapping columns from `df1` to corresponding columns in `df2`.
-#' @param method A string specifying the string similarity or distance metric to use. Options include:
-#'   - `"levenshtein"`, `"lv"`: Levenshtein edit distance
-#'   - `"osa"`: Optimal string alignment
-#'   - `"damerau_levensthein"`, `"dl"`: Damerau-Levenshtein edit distance
-#'   - `"hamming"`: Hamming distance (requires equal-length strings)
-#'   - `"lcs"`: Longest common subsequence
-#'   - `"qgram"`, `"cosine"`, `"jaccard"`: Q-gram-based similarity (requires `q`)
-#'   - `"jaro_winkler"`, `"jw"`: Jaro-Winkler similarity (uses `max_prefix` and `prefix_weight`)
-#' @param how Type of join to perform. Options are:
-#'   - `"inner"` (default): Matches only
-#'   - `"left"`: All rows from `df1` with matches in `df2`
-#'   - `"right"`: All rows from `df2` with matches in `df1`
-#'   - `"anti"`: Unmatched rows from `df1`
-#'   - `"full"`: All matches from both sides
-#' @param max_distance A numeric threshold for allowable distance or dissimilarity.
-#' @param distance_col Optional string specifying the name of a column to include distance/similarity values.
-#' @param q Optional integer specifying q-gram size (required for `"qgram"`, `"cosine"`, and `"jaccard"`).
-#' @param max_prefix Optional integer for Jaro-Winkler: maximum prefix length for boosting.
-#' @param prefix_weight Optional numeric for Jaro-Winkler: weight multiplier for shared prefix boost.
-#' @param nthread Optional number of threads to use (defaults to all available cores if `NULL`).
-#'
-#' @return A data frame (`Robj`) containing joined rows with `.x` and `.y` suffixes from `df1` and `df2`, respectively.
-#'   If `distance_col` is specified, an additional numeric column stores the computed similarity or distance.
-#'
-#' @details
-#' Internally, string distances are computed using efficient hash maps and parallel search over character vectors.
-#' The function supports multi-column joins by filtering progressively across keys and computing distances at each level.
-#'
-#' This is an internal low-level wrapper used by high-level join interfaces such as `fozzie_join()`.
-#'
-#' @seealso [fozzie_join()], [fozzie_inner_join()], [fozzie_left_join()]
-#'
 #' @export
-fozzie_join_rs <- function(df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight, nthread) {
-  .Call(wrap__fozzie_join_rs, df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight, nthread)
-}
+fozzie_string_join_rs <- function(df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight, nthread) .Call(wrap__fozzie_string_join_rs, df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight, nthread)
+
+#' @export
+fozzie_difference_join_rs <- function(df1, df2, by, how, max_distance, distance_col, nthread) .Call(wrap__fozzie_difference_join_rs, df1, df2, by, how, max_distance, distance_col, nthread)
+
 
 # nolint end
