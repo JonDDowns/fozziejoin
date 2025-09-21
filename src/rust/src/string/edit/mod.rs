@@ -12,35 +12,6 @@ pub mod osa;
 
 // Define a trait for string distance calculations
 pub trait EditDistance: Send + Sync {
-    /// Perform approximate matching between two indexed string maps using a fuzzy distance metric.
-    ///
-    /// This method compares keys in `map1` against keys in `map2`, applying a fuzzy string
-    /// similarity algorithm (implemented by the caller via `self.word_map_lookup_and_compare`)
-    /// to generate matched index pairs whose distance is within `max_distance`. It filters
-    /// comparisons based on string length proximity to improve efficiency.
-    ///
-    /// # Parameters
-    ///
-    /// - `map1`: A map from unique string tokens to their corresponding row indices (e.g., from `df1`).
-    /// - `map2`: A second map of tokens to row indices (e.g., from `df2`), to match against.
-    /// - `max_distance`: The maximum allowable string distance for a match to be considered valid.
-    /// - `full`: If `true`, includes non-overlapping pairs in the join (used for `"full"` joins).
-    /// - `nthread`: Optional number of threads to use for parallel distance calculation.
-    ///
-    /// # Returns
-    ///
-    /// A vector of matched index pairs in the form:
-    /// - `(left_idx, right_idx, distance)` where
-    ///   - `left_idx` refers to a row in `map1`
-    ///   - `right_idx` refers to a row in `map2`
-    ///   - `distance` is the computed similarity or distance (may be `None` for exact matches)
-    ///
-    /// # Implementation Notes
-    ///
-    /// - Uses string length filtering to prune unnecessary comparisons across maps.
-    /// - Matches are computed in parallel via `rayon::par_iter`.
-    /// - Requires the implementor to define `word_map_lookup_and_compare`, which encapsulates
-    ///   the specific distance logic and output structure.
     fn fuzzy_indices(
         &self,
         left: &List,

@@ -2,10 +2,12 @@ use core::f64;
 use extendr_api::prelude::*;
 use std::collections::HashMap;
 
+pub mod difference;
 pub mod merge;
 pub mod string;
 pub mod utils;
 
+use crate::difference::fuzzy_indices_diff;
 use crate::string::edit::{
     damerau_levenshtein::DamerauLevenshtein, hamming::Hamming, lcs::LCSStr,
     levenshtein::Levenshtein, osa::OSA, EditDistance,
@@ -190,8 +192,84 @@ pub fn fozzie_string_join_rs(
     return out;
 }
 
+/// @export
+#[extendr]
+pub fn fozzie_difference_join_rs(
+    df1: List,
+    df2: List,
+    by: List,
+    how: String,
+    max_distance: f64,
+    distance_col: Option<String>,
+    nthread: Option<usize>,
+) -> Robj {
+    // Running list of all IDXs that have survived
+    let mut keep_idxs: HashMap<(usize, usize), Vec<Option<f64>>> = HashMap::new();
+
+    let pool = get_pool(nthread);
+
+    // Begin looping through each supplied set of match keys
+    for (match_iter, (left_key, right_key)) in by.iter().enumerate() {
+        let rk = &right_key
+            .as_str_vector()
+            .expect(&format!("Error converting {:?} to string.", right_key))[0];
+
+        let vec1 = df1
+            .dollar(left_key)
+            .expect("Error extracting {left_key}")
+            .as_real_vector()
+            .expect("Error extracting {left_key}");
+        let vec2 = df2
+            .dollar(rk)
+            .expect("Error extracting {rk}")
+            .as_real_vector()
+            .expect("Error extracting {rk}");
+        let matchdat = fuzzy_indices_diff(vec1, vec2, max_distance, &pool);
+
+        if match_iter == 0 {
+            // On the first iteration, we initialize the idx's to keep
+            keep_idxs = matchdat
+                .iter()
+                .map(|(a, b, c)| ((a.clone(), b.clone()), vec![c.clone()]))
+                .collect();
+        } else {
+            // For everything else: only keep those surviving this and all prior rounds
+
+            // Extract indices from current run
+            let idxs: Vec<(usize, usize)> = matchdat.iter().map(|(a, b, _)| (*a, *b)).collect();
+
+            // Anything that did not survive this iteration should be removed from contention
+            keep_idxs.retain(|key, _| idxs.contains(key));
+
+            // Add stringdistance result for survivors
+            for (id1, id2, dist) in matchdat {
+                if keep_idxs.contains_key(&(id1, id2)) {
+                    keep_idxs.get_mut(&(id1, id2)).expect("hm").push(dist);
+                }
+            }
+        }
+    }
+
+    // Reshape output to enable final DF creation
+    let (idxs1, idxs2, dists) = transpose_map(keep_idxs);
+
+    // Create the DF
+    let out = match how.as_str() {
+        "inner" => Merge::inner(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+        "left" => Merge::left(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+        "right" => Merge::right(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+        "anti" => Merge::anti(&df1, idxs1),
+        "full" => Merge::full(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+        _ => panic!("Join type not supported"),
+    };
+
+    // Final result
+    return out;
+}
+
 // Export the function to R
 extendr_module! {
     mod fozziejoin;
     fn fozzie_string_join_rs;
+    fn fozzie_difference_join_rs;
 }

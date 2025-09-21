@@ -2,6 +2,7 @@ use extendr_api::prelude::*;
 
 pub struct Merge;
 pub mod anti;
+pub mod full;
 pub mod inner;
 pub mod left;
 pub mod right;
