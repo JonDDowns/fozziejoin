@@ -3,7 +3,7 @@
 // Source: https://docs.rs/textdistance/latest/textdistance/
 // License: MIT
 
-use crate::normalized::NormalizedEditDistance;
+use crate::string::normalized::NormalizedEditDistance;
 use extendr_api::prelude::*;
 use itertools::iproduct;
 use rapidfuzz::distance::jaro as jaro_rf;

@@ -2,7 +2,7 @@
 // Source: https://docs.rs/textdistance/latest/textdistance/
 // License: MIT
 
-use crate::ngram::QGramDistance;
+use crate::string::ngram::QGramDistance;
 use std::collections::HashMap;
 
 // Cosine Distance Implementation

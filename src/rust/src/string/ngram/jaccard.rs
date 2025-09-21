@@ -7,7 +7,7 @@ use itertools::iproduct;
 use rayon::prelude::*;
 use rayon::ThreadPool;
 
-use crate::ngram::QGramDistance;
+use crate::string::ngram::QGramDistance;
 
 // Cosine Distance Implementation
 pub struct Jaccard;

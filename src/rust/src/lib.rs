@@ -1,80 +1,22 @@
-use crate::edit::EditDistance;
 use core::f64;
 use extendr_api::prelude::*;
 use std::collections::HashMap;
 
-pub mod edit;
 pub mod merge;
-pub mod ngram;
-pub mod normalized;
+pub mod string;
 pub mod utils;
 
-use crate::edit::{
+use crate::string::edit::{
     damerau_levenshtein::DamerauLevenshtein, hamming::Hamming, lcs::LCSStr,
-    levenshtein::Levenshtein, osa::OSA,
+    levenshtein::Levenshtein, osa::OSA, EditDistance,
 };
-use crate::ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
-use crate::normalized::{jaro_winkler::JaroWinkler, NormalizedEditDistance};
+use crate::string::ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
+use crate::string::normalized::{jaro_winkler::JaroWinkler, NormalizedEditDistance};
 use crate::utils::{get_pool, robj_index_map};
 
 use merge::Merge;
 use utils::transpose_map;
 
-/// Perform a fuzzy join between two R data frames using approximate string similarity.
-///
-/// This function performs record linkage between `df1` and `df2`, allowing approximate
-/// matches based on the specified join keys and string similarity metrics. The algorithm
-/// efficiently computes pairwise distances using parallel iteration and indexed maps.
-///
-/// # Parameters
-///
-/// - `df1` (`List`): The first data frame (as an R list).
-/// - `df2` (`List`): The second data frame (as an R list).
-/// - `by` (`List`): Named list of matching columns. Each name-value pair maps a column
-///   in `df1` to a corresponding column in `df2`.
-/// - `method` (`String`): The similarity metric to use:
-///   - `"levenshtein"`, `"lv"` – Levenshtein edit distance
-///   - `"osa"` – Optimal string alignment
-///   - `"damerau_levensthein"`, `"dl"` – Damerau-Levenshtein distance
-///   - `"hamming"` – Hamming distance (requires equal-length strings)
-///   - `"lcs"` – Longest common subsequence
-///   - `"qgram"`, `"cosine"`, `"jaccard"` – Token-based methods (requires `q`)
-///   - `"jaro_winkler"`, `"jw"` – Jaro-Winkler similarity (requires `max_prefix` & `prefix_weight`)
-/// - `how` (`String`): Type of join:
-///   - `"inner"` – Only matching rows from both inputs (default)
-///   - `"left"` – All rows from `df1`, matched to `df2`
-///   - `"right"` – All rows from `df2`, matched to `df1`
-///   - `"anti"` – Only unmatched rows from `df1`
-///   - `"full"` – All matches across both inputs
-/// - `max_distance` (`f64`): Maximum similarity threshold. Depending on the method,
-///   this acts as either a maximum distance or minimum similarity.
-/// - `distance_col` (`Option<String>`): Optional name of a column to include per-match
-///   distance or similarity score.
-/// - `q` (`Option<i32>`): Gram size for `qgram`, `cosine`, and `jaccard`.
-/// - `max_prefix` (`Option<i32>`): Required by `jaro_winkler`; controls prefix match scope.
-/// - `prefix_weight` (`Option<f64>`): Required by `jaro_winkler`; adjusts prefix weight.
-/// - `nthread` (`Option<usize>`): Number of threads to use (optional, defaults to all cores).
-///
-/// # Returns
-///
-/// An R-compatible data frame (`Robj`) containing the join result. Column names are suffixed:
-/// - `.x` for values from `df1`
-/// - `.y` for values from `df2`
-///
-/// If `distance_col` is specified, a numeric column is appended containing the calculated
-/// similarity or distance for each match.
-///
-/// # Implementation Notes
-///
-/// - Internally uses indexed lookup tables to avoid full pairwise string comparisons.
-/// - Supports multi-column matching and filters progressively across keys.
-/// - Distance results are transposed and aligned across join keys using `transpose_map`.
-///
-/// # Dependencies
-///
-/// Relies on the `extendr` framework for R interop and uses an internal fuzzy matching trait
-/// that differs by distance metric: qgrams, edit distance, or normalized edit distance.
-///
 /// @export
 #[extendr]
 pub fn fozzie_join_rs(

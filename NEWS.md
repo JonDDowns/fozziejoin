@@ -3,6 +3,7 @@
 - Arbitrary vector attributes, such as factor levels and POSIX dates, should now be supported. See: [Issue #6](https://github.com/JonDDowns/fozziejoin/issues/6). Testing utilities updated to validate this change.
 - Fixed a bug in the `nthread` argument wherein the user-specified thread count was ignored and the default global thread pool settings were always used.
 - Contributor code of conduct added
+- string distance functions added to their own submodule within the Rust code. This is to better organize the code as we plan to add other fuzzy join types (distance, difference, geo, etc.)
 
 # fozziejoin 0.0.7
 
