@@ -4,9 +4,9 @@
 \name{fozziejoin-package}
 \alias{fozziejoin}
 \alias{fozziejoin-package}
-\title{fozziejoin: Performant Data Frame Joins with Inexact String Matching}
+\title{fozziejoin: Efficient Data Frame Joins with Inexact Matching}
 \description{
-Dataframes can be joined based on inexact matching using Levenshtein edit distance and similar algorithms.
+data frames can be joined based on inexact matching using common string distance and other fuzzy join methodologies.
 }
 \author{
 \strong{Maintainer}: Jon Downs \email{jon@jondowns.net}

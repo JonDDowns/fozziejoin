@@ -3,20 +3,29 @@
 > ⚠️ **Note**: This project is in early development.
 > APIs may change, and installing from source requires the Rust toolchain.
 
-`fozziejoin` is an R package that uses Rust to perform high-performance dataframe joins based on string distance metrics.
-It’s designed as a fast alternative to functions like `stringdist_inner_join()` from the [fuzzyjoin package](https://github.com/dgrtwo/fuzzyjoin).
+`fozziejoin` is an R package that performs fast fuzzy joins using Rust as a backend. It is meant to be a performance-minded version of the [fuzzyjoin package](https://github.com/dgrtwo/fuzzyjoin). Speedups can be significant: see our benchmarks section.
 
-Unlike the [`stringdist` package](https://github.com/markvanderloo/stringdist), which computes all pairwise distances before filtering, `fozziejoin` implements string distance algorithms optimized for threshold-based filtering.
-This avoids unnecessary computation, improves memory efficiency, and speeds up performance in real-world applications.
+`fozziejoin` currently has two fuzzy algorithms implemented: 
 
-The name is a playful nod to “fuzzy join” — reminiscent of [Fozzie Bear](https://en.wikipedia.org/wiki/Fozzie_Bear) from the Muppets.
-A picture of Fozzie will appear in the repo once the legal team gets braver.
-**Wocka wocka!**
+- `fozzie_string_join`: join two data frames together by string distance algorithms (Hamming, Levenshtein, etc.)
+- `fozzie_distance_join`: join two data frames together by numeric distance.
+- `fozzie_interval_join`: join two dataframes together by any interval overlap
+
+As one example of where performance gains come from, consider the case of string
+distance joins.`fozziejoin` saves memory by filtering out any results that are
+not within the user-defined threshold before returning a result to R.
+`fozziejoin` relies on the `stringdist` library, which requires all pairwise
+distances to be returned as an intermediate object.
+
+The name is a playful nod to “fuzzy join” — reminiscent of [Fozzie Bear](https://en.wikipedia.org/wiki/Fozzie_Bear)
+from the Muppets. A picture of Fozzie will appear in the repo once the legal
+team gets braver. **Wocka wocka!**
 
 ## Getting started
 
-Code has been written on a combination of Windows (R 4.3.2, x86_64-w64-mingw32/64) and Linux (R 4.5.0, x86-64-pc-linux-gnu platform).
-All builds to date are done using Rust 1.65.
+Code has been written on a combination of Windows (R 4.3.2, 
+x86_64-w64-mingw32/64) and Linux (R 4.5.0, x86-64-pc-linux-gnu platform). All
+builds to date are done using Rust 1.65.
 
 ### Requirements
 
@@ -28,7 +37,8 @@ On Linux or to build from source, you will need these additional dependencies:
 - Rustc
 - xz
 
-And to run the examples in the README or benchmarking scripts, the following are required:
+And to run the examples in the README or benchmarking scripts, the following
+are required:
 
 - `dplyr`
 - `fuzzyjoin`
@@ -37,8 +47,10 @@ And to run the examples in the README or benchmarking scripts, the following are
 
 ### Installation
 
-Installing from binary is the easiest method on Windows, as it skips the need for the Rust toolchain.
-Installing from source is the only officially supported option on Linux systems currently.
+Installing from binary is the easiest method on Windows, as it skips the need
+for the Rust toolchain. Installing from source is the only officially supported
+option on Linux and MacOS systems currently. The package has not been tested on
+MacOS.
 
 #### From binary (Windows only)
 
@@ -48,15 +60,50 @@ We will not be actively supporting other R versions at this time, as our primary
 Please consider installing from source.
 
 ```
-install.packages('https://github.com/JonDDowns/fozziejoin/releases/download/v0.0.7/fozziejoin_0.0.7', type='win.binary')
+install.packages('https://github.com/JonDDowns/fozziejoin/releases/download/v0.0.8/fozziejoin_0.0.8', type='win.binary')
 ```
 
 #### From source
 
+#### Windows users
+
+To compile Rust extensions for R on Windows (such as those used by `rextendr`),
+you must use the **GNU Rust toolchain**, not MSVC. This is because R is built
+with GCC (via Rtools), and Rust must match that ABI for compatibility.
+This assumes you already have Rust installed.
+
+1. Clone the repo
+
+```sh
+git clone https://github.com/JonDDowns/fozziejoin.git
+cd fozziejoin
 ```
-install.packages('https://github.com/JonDDowns/fozziejoin/archive/refs/tags/v0.0.7.tar.gz', type='source')
+
+2. Set the default Rust toolchain to GNU:
+
+```sh
+# Install the GNU toolchain if needed
+# rustup install stable-x86_64-pc-windows-gnu
+
+rustup override set stable-x86_64-pc-windows-gnu
+```
+
+3. Install the package:
+
+```r
+install.packages('https://github.com/JonDDowns/fozziejoin/archive/refs/tags/v0.0.8.tar.gz', type='source')
 # Alternative: use devtools
-# devtools::install_github('https://github.com/JonDDowns/fozziejoin')
+# devtools::install_github('JonDDowns/fozziejoin')
+```
+
+##### Linux
+
+This should also work on MacOS, but is not currently tested.
+
+```r
+install.packages('https://github.com/JonDDowns/fozziejoin/archive/refs/tags/v0.0.8.tar.gz', type='source')
+# Alternative: use devtools
+# devtools::install_github('JonDDowns/fozziejoin')
 ```
 
 ### Usage
@@ -98,11 +145,12 @@ fozzie <- fozzie_string_join(
 
 ## Benchmarks
 
-To date, `fozziejoin` has been benchmarked on Windows and Linux.
-Currently all algorithms except for `soundex` joins have been implemented.
-As of v0.0.7, `fozziejoin` beats the equivalent `fuzzyjoin` benchmark in every instance while producing identical results.
-The highest observed performance gains come from Linux systems, presumably due to the relative efficiency of parallelization via `rayon`.
-Benchmark scripts are located [here](./scripts/benchmarks.R).
+To date, `fozziejoin` has been benchmarked on Windows and Linux. Currently all
+algorithms except for `soundex` joins have been implemented. As of v0.0.7,
+`fozziejoin` beats the equivalent `fuzzyjoin` benchmark in every instance while
+producing identical results. The highest observed performance gains come from
+Linux systems, presumably due to the relative efficiency of parallelization via
+`rayon`. Benchmark scripts are located [here](./scripts/).
 
 [![Linux benchmark results](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Linux.svg)](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Linux.svg)
 

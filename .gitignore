@@ -66,3 +66,11 @@ rsconnect/
 
 CRAN-SUBMISSION
 revdep/
+
+renv/library/
+renv/staging/
+renv/python/
+.Rhistory
+.RData
+.Rproj.user/
+

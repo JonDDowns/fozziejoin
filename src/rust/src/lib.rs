@@ -1,13 +1,16 @@
 use core::f64;
 use extendr_api::prelude::*;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 
 pub mod difference;
+pub mod interval;
 pub mod merge;
 pub mod string;
 pub mod utils;
 
 use crate::difference::fuzzy_indices_diff;
+use crate::interval::fuzzy_indices_interval;
 use crate::string::edit::{
     damerau_levenshtein::DamerauLevenshtein, hamming::Hamming, lcs::LCSStr,
     levenshtein::Levenshtein, osa::OSA, EditDistance,
@@ -19,6 +22,7 @@ use crate::utils::{get_pool, robj_index_map};
 use merge::Merge;
 use utils::transpose_map;
 
+/// Rust internal function performing string distance joins
 /// @export
 #[extendr]
 pub fn fozzie_string_join_rs(
@@ -150,6 +154,7 @@ pub fn fozzie_string_join_rs(
     return out;
 }
 
+/// Rust internal function performing difference joins
 /// @export
 #[extendr]
 pub fn fozzie_difference_join_rs(
@@ -225,9 +230,111 @@ pub fn fozzie_difference_join_rs(
     return out;
 }
 
+/// @export
+#[extendr]
+pub fn fozzie_interval_join_rs(
+    df1: List,
+    df2: List,
+    by: List,
+    how: String,
+    max_distance: f64,
+    distance_col: Option<String>,
+    nthread: Option<usize>,
+) -> Robj {
+    // Ensure exactly two named pairs are provided
+    if by.len() != 2 {
+        panic!("Interval join requires exactly two named pairs in `by` (start and end columns).");
+    }
+
+    let pool = get_pool(nthread);
+
+    // Extract left and right keys
+    let left_keys: Vec<String> = by
+        .names()
+        .expect("`by` must be a named list.")
+        .into_iter()
+        .map(|s| s.to_string())
+        .collect();
+
+    let right_keys: Vec<String> = by
+        .iter()
+        .map(|(_, val)| {
+            val.as_str_vector()
+                .expect("Each `by` value must be a string vector.")
+                .get(0)
+                .expect("Empty string vector in `by`.")
+                .to_string()
+        })
+        .collect();
+
+    // Extract vectors from dataframe columns
+    // Step 1: Extract and bind the column
+    let right_end_col = df1
+        .dollar(&left_keys[1])
+        .expect("Error extracting right end column");
+
+    // Step 2: Convert to iterator
+    let vec1b = right_end_col
+        .as_real_iter()
+        .expect("Right end column must be numeric");
+
+    let indexed_vec1: Vec<(usize, f64, f64)> = df1
+        .dollar(&left_keys[0])
+        .expect("Error extracting right start column")
+        .as_real_iter()
+        .expect("Right start column must be numeric")
+        .zip(vec1b)
+        .enumerate()
+        .map(|(j, (start, end))| (j, start.min(*end), start.max(*end)))
+        .collect();
+
+    let right_end_col = df2
+        .dollar(&right_keys[1])
+        .expect("Error extracting right end column");
+
+    // Step 2: Convert to iterator
+    let vec2b = right_end_col
+        .as_real_iter()
+        .expect("Right end column must be numeric");
+
+    let mut indexed_vec2: Vec<(usize, f64, f64)> = df2
+        .dollar(&right_keys[0])
+        .expect("Error extracting right start column")
+        .as_real_iter()
+        .expect("Right start column must be numeric")
+        .zip(vec2b)
+        .enumerate()
+        .map(|(j, (start, end))| (j, start.min(*end), start.max(*end)))
+        .collect();
+
+    indexed_vec2.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Equal));
+    let matchdat = fuzzy_indices_interval(indexed_vec1, indexed_vec2, max_distance, &pool);
+
+    // Collect results
+    let keep_idxs: HashMap<(usize, usize), Vec<Option<f64>>> = matchdat
+        .iter()
+        .map(|(a, b, dist)| ((*a, *b), vec![dist.clone()]))
+        .collect();
+
+    let (idxs1, idxs2, dists) = transpose_map(keep_idxs);
+
+    // Create the DF
+    let out = match how.as_str() {
+        "inner" => Merge::inner(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+        "left" => Merge::left(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+        "right" => Merge::right(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+        "anti" => Merge::anti(&df1, idxs1),
+        "full" => Merge::full(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+        _ => panic!("Join type not supported"),
+    };
+
+    out
+}
+
 // Export the function to R
 extendr_module! {
     mod fozziejoin;
     fn fozzie_string_join_rs;
     fn fozzie_difference_join_rs;
+    fn fozzie_interval_join_rs;
 }

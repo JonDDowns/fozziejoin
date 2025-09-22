@@ -1,10 +1,10 @@
 Package: fozziejoin
-Title: Performant Data Frame Joins with Inexact String Matching
+Title: Efficient Data Frame Joins with Inexact Matching
 Version: 0.0.8
 Authors@R: 
     person("Jon", "Downs", , "jon@jondowns.net", role = c("aut", "cre"))
-Description: Dataframes can be joined based on inexact matching using
-    Levenshtein edit distance and similar algorithms.
+Description: data frames can be joined based on inexact matching using
+    common string distance and other fuzzy join methodologies.
 License: MIT + file LICENSE
 Depends: 
     R (>= 4.2)
@@ -18,11 +18,11 @@ Suggests:
     qdapDictionaries,
     microbenchmark,
     tidyr
-Config/rextendr/version: 0.4.0.9000
+Config/rextendr/version: 0.4.2
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 SystemRequirements: Cargo (Rust's package manager), rustc, xz
 LazyData: true
 Config/CodeOfConduct: https://github.com/JonDDowns/fozziejoin/blob/main/CODE_OF_CONDUCT.md

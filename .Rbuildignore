@@ -1,3 +1,5 @@
+^renv$
+^renv\.lock$
 ^src/\.cargo$
 ^src/rust/vendor$
 ^src/rust/target$
