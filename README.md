@@ -113,7 +113,7 @@ Code herein is adapted from the motivating example used in the `fuzzyjoin` packa
 First, we take a list of common misspellings (and their corrected alternatives) from Wikipedia.
 To run in a a reasonable amount of time, we take a random sample of 1000.
 
-```{r}
+```r
 library(dplyr)
 library(fozziejoin)
 library(fuzzyjoin) # For misspellings dataset
@@ -129,7 +129,7 @@ sub_misspellings <- misspellings %>%
 
 Next, we load a dictionary of words from the `qdapDictionaries` package.
 
-```{r}
+```r
 # Use the dictionary of words from the qdapDictionaries package,
 # which is based on the Nettalk corpus.
 library(qdapDictionaries)
@@ -138,7 +138,7 @@ words <- tibble::as_tibble(DICTIONARY)
 
 Then, we run our join function.
 
-```{r}
+```r
 fozzie <- fozzie_string_join(
     sub_misspellings, words, method='lv', 
     by = list('misspelling' = 'word'), max_distance=2
