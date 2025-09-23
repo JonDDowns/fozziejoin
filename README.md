@@ -90,7 +90,7 @@ rustup override set stable-x86_64-pc-windows-gnu
 3. Install the package:
 
 ```r
-install.packages('https://github.com/JonDDowns/fozziejoin/archive/refs/tags/v0.0.8.tar.gz', type='source')
+devtools::install()
 # Alternative: use devtools
 # devtools::install_github('JonDDowns/fozziejoin')
 ```
