@@ -182,29 +182,18 @@ pub fn fozzie_difference_join_rs(
             .expect("Error extracting {rk}")
             .as_real_vector()
             .expect("Error extracting {rk}");
+
         let matchdat = fuzzy_indices_diff(vec1, vec2, max_distance, &pool);
 
         if match_iter == 0 {
-            // On the first iteration, we initialize the idx's to keep
-            keep_idxs = matchdat
-                .iter()
-                .map(|(a, b, c)| ((a.clone(), b.clone()), vec![c.clone()]))
-                .collect();
+            keep_idxs = matchdat;
         } else {
-            // For everything else: only keep those surviving this and all prior rounds
-
-            // Extract indices from current run
-            let idxs: Vec<(usize, usize)> = matchdat.iter().map(|(a, b, _)| (*a, *b)).collect();
-
-            // Anything that did not survive this iteration should be removed from contention
-            keep_idxs.retain(|key, _| idxs.contains(key));
-
-            // Add stringdistance result for survivors
-            for (id1, id2, dist) in matchdat {
-                if keep_idxs.contains_key(&(id1, id2)) {
-                    keep_idxs.get_mut(&(id1, id2)).expect("hm").push(dist);
+            for (key, match_vals) in &matchdat {
+                if let Some(keep_vals) = keep_idxs.get_mut(key) {
+                    keep_vals.extend(match_vals.iter().cloned());
                 }
             }
+            keep_idxs.retain(|key, _| matchdat.contains_key(key));
         }
     }
 

@@ -1,15 +1,14 @@
 use core::f64;
 use rayon::prelude::*;
-use std::collections::HashMap;
-
 use rayon::ThreadPool;
+use std::collections::HashMap;
 
 pub fn fuzzy_indices_diff(
     vec1: Vec<f64>,
     vec2: Vec<f64>,
     max_distance: f64,
     pool: &ThreadPool,
-) -> Vec<(usize, usize, Option<f64>)> {
+) -> HashMap<(usize, usize), Vec<Option<f64>>> {
     let indexed_vec1: Vec<(usize, f64)> = vec1.into_iter().enumerate().collect();
     let indexed_vec2: Vec<(usize, f64)> = vec2.into_iter().enumerate().collect();
 
@@ -23,7 +22,6 @@ pub fn fuzzy_indices_diff(
         map
     };
 
-    // Avoid false negatives due to machine epsilon
     let threshold = max_distance + f64::EPSILON;
 
     pool.install(|| {
@@ -39,13 +37,13 @@ pub fn fuzzy_indices_diff(
                         bucket.iter().filter_map(move |&(j_idx, y)| {
                             let diff = (x - y).abs();
                             if diff <= threshold {
-                                Some((i_idx + 1, j_idx + 1, Some(diff)))
+                                Some(((i_idx + 1, j_idx + 1), vec![Some(diff)]))
                             } else {
                                 None
                             }
                         })
                     })
             })
-            .collect()
+            .collect::<HashMap<_, _>>() // Safe because keys are guaranteed unique
     })
 }
