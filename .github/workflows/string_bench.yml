@@ -40,7 +40,7 @@ jobs:
         run: Rscript scripts/string_benchmarks.R
 
       - name: Upload benchmark SVG
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: benchmark-plot
           path: outputs/string_inner_bench_latest.svg
