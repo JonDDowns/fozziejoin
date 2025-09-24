@@ -31,46 +31,98 @@
 #'
 #' @name fozzie_difference_join_family
 #' @export
-fozzie_difference_join <- function(df1, df2, by, how = "inner", max_distance = 1, distance_col = NULL, nthread = NULL) {
-    if (is.character(by) && length(by) == 2) {
-        by <- setNames(list(by[2]), by[1])
-    }
-    fozzie_difference_join_rs(
-        df1, df2, by,
-        how = how,
-        max_distance = max_distance,
-        distance_col = distance_col,
-        nthread = nthread
-    )
+fozzie_difference_join <- function(
+    df1, df2, by = NULL,
+    how = "inner",
+    max_distance = 1,
+    distance_col = NULL,
+    nthread = NULL) {
+  by <- normalize_by(df1, df2, by)
+  fozzie_difference_join_rs(
+    df1, df2, by,
+    how = how,
+    max_distance = max_distance,
+    distance_col = distance_col,
+    nthread = nthread
+  )
 }
 
 #' @rdname fozzie_difference_join_family
 #' @export
-fozzie_difference_inner_join <- function(df1, df2, by, max_distance = 1, distance_col = NULL, nthread = NULL) {
-    fozzie_difference_join(df1, df2, by, how = "inner", max_distance = max_distance, distance_col = distance_col, nthread = nthread)
+fozzie_difference_inner_join <- function(
+    df1, df2, by,
+    max_distance = 1,
+    distance_col = NULL,
+    nthread = NULL) {
+  fozzie_difference_join(
+    df1, df2, by,
+    how = "inner",
+    max_distance = max_distance,
+    distance_col = distance_col,
+    nthread = nthread
+  )
 }
 
 #' @rdname fozzie_difference_join_family
 #' @export
-fozzie_difference_left_join <- function(df1, df2, by, max_distance = 1, distance_col = NULL, nthread = NULL) {
-    fozzie_difference_join(df1, df2, by, how = "left", max_distance = max_distance, distance_col = distance_col, nthread = nthread)
+fozzie_difference_left_join <- function(
+    df1, df2, by,
+    max_distance = 1,
+    distance_col = NULL,
+    nthread = NULL) {
+  fozzie_difference_join(
+    df1, df2, by,
+    how = "left",
+    max_distance = max_distance,
+    distance_col = distance_col,
+    nthread = nthread
+  )
 }
 
 #' @rdname fozzie_difference_join_family
 #' @export
-fozzie_difference_right_join <- function(df1, df2, by, max_distance = 1, distance_col = NULL, nthread = NULL) {
-    fozzie_difference_join(df1, df2, by, how = "right", max_distance = max_distance, distance_col = distance_col, nthread = nthread)
+fozzie_difference_right_join <- function(
+    df1, df2, by,
+    max_distance = 1,
+    distance_col = NULL,
+    nthread = NULL) {
+  fozzie_difference_join(
+    df1, df2, by,
+    how = "right",
+    max_distance = max_distance,
+    distance_col = distance_col,
+    nthread = nthread
+  )
 }
 
 #' @rdname fozzie_difference_join_family
 #' @export
-fozzie_difference_anti_join <- function(df1, df2, by, max_distance = 1, distance_col = NULL, nthread = NULL) {
-    fozzie_difference_join(df1, df2, by, how = "anti", max_distance = max_distance, distance_col = distance_col, nthread = nthread)
+fozzie_difference_anti_join <- function(
+    df1, df2, by,
+    max_distance = 1,
+    distance_col = NULL,
+    nthread = NULL) {
+  fozzie_difference_join(
+    df1, df2, by,
+    how = "anti",
+    max_distance = max_distance,
+    distance_col = distance_col,
+    nthread = nthread
+  )
 }
 
 #' @rdname fozzie_difference_join_family
 #' @export
-fozzie_difference_full_join <- function(df1, df2, by, max_distance = 1, distance_col = NULL, nthread = NULL) {
-    fozzie_difference_join(df1, df2, by, how = "full", max_distance = max_distance, distance_col = distance_col, nthread = nthread)
+fozzie_difference_full_join <- function(
+    df1, df2, by,
+    max_distance = 1,
+    distance_col = NULL,
+    nthread = NULL) {
+  fozzie_difference_join(
+    df1, df2, by,
+    how = "full",
+    max_distance = max_distance,
+    distance_col = distance_col,
+    nthread = nthread
+  )
 }
-

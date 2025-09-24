@@ -9,15 +9,15 @@ library(qdapDictionaries)
 
 # These are all the benchmarks we may wish to run
 params <- list(
-        list(method = "osa", mode = "inner", max_dist = 1, q = 0),
-        list(method = "lv", mode = "inner", max_dist = 1, q = 0),
-        list(method = "dl", mode = "inner", max_dist = 1, q = 0),
-        list(method = "hamming", mode = "inner", max_dist = 1, q = 0),
-        list(method = "lcs", mode = "inner", max_dist = 1, q = 0),
-        list(method = "qgram", mode = "inner", max_dist = 2, q = 2),
-        list(method = "cosine", mode = "inner", max_dist = 0.9, q = 2),
-        list(method = "jaccard", mode = "inner", max_dist = 0.9, q = 2),
-        list(method = "jw", mode = "inner", max_dist = 0.9, q = 0)
+  list(method = "osa", mode = "inner", max_dist = 1, q = 0),
+  list(method = "lv", mode = "inner", max_dist = 1, q = 0),
+  list(method = "dl", mode = "inner", max_dist = 1, q = 0),
+  list(method = "hamming", mode = "inner", max_dist = 1, q = 0),
+  list(method = "lcs", mode = "inner", max_dist = 1, q = 0),
+  list(method = "qgram", mode = "inner", max_dist = 2, q = 2),
+  list(method = "cosine", mode = "inner", max_dist = 0.9, q = 2),
+  list(method = "jaccard", mode = "inner", max_dist = 0.9, q = 2),
+  list(method = "jw", mode = "inner", max_dist = 0.9, q = 0)
 )
 
 # If running in script mode, use user input to set methods to call
@@ -27,7 +27,7 @@ if (length(args) > 0) {
 }
 
 # Compares runtimes for fuzzyjoin and fozziejoin for a given set of parameters
-run_bench <- function(method, mode, max_dist, q=NA, nsamp, seed=2016) {
+run_bench <- function(method, mode, max_dist, q = NA, nsamp, seed = 2016) {
   # Load data
   data(misspellings)
 
@@ -52,7 +52,7 @@ run_bench <- function(method, mode, max_dist, q=NA, nsamp, seed=2016) {
     fozzie = fozzie <- sub_misspellings %>%
       fozzie_string_join(
         words,
-        by = list('misspelling' = 'word'),
+        by = list("misspelling" = "word"),
         method = method,
         how = mode,
         max_distance = as.numeric(max_dist),
@@ -66,7 +66,7 @@ run_bench <- function(method, mode, max_dist, q=NA, nsamp, seed=2016) {
   fuzzy <- data.frame(fuzzy)
 
   # Confirm all results are the same
-  if(!isTRUE(all.equal(fuzzy, fozzie))) {
+  if (!isTRUE(all.equal(fuzzy, fozzie))) {
     print("Not all observations equal! differences")
     print(all.equal(fuzzy, fozzie))
   }
@@ -76,10 +76,10 @@ run_bench <- function(method, mode, max_dist, q=NA, nsamp, seed=2016) {
   timing_results$method <- method
   timing_results$time_ms <- timing_results$time / 1e6
   timing_results$mill_comps <- round((nrow(sub_misspellings) * nrow(words)) / 1e6, 1)
-  timing_results$os <- Sys.info()['sysname']
+  timing_results$os <- Sys.info()["sysname"]
 
   # Get mean run time by group
-  timing_summary <- aggregate(time_ms ~ expr + mill_comps + method, data=timing_results, FUN=mean)
+  timing_summary <- aggregate(time_ms ~ expr + mill_comps + method, data = timing_results, FUN = mean)
   timing_summary <- timing_summary[order(timing_summary$expr), ]
   timing_summary$ratio <- timing_summary$time_ms / timing_summary$time_ms[[2]]
 
@@ -97,10 +97,10 @@ bench_file <- file.path(sprintf("outputs/last_bench_%s.RDS", tnow))
 results <- lapply(
   params,
   function(args, data) {
-    cat(paste0("Function params:\n", paste0(args, collapse=", "), "\n"))
+    cat(paste0("Function params:\n", paste0(args, collapse = ", "), "\n"))
     out <- data.frame()
     samp_sizes <- c(100, 500, 1000, 2000, 3000)
-    for(i in samp_sizes) {
+    for (i in samp_sizes) {
       cat(paste0("Sampling ", i, " records.\n"))
       args$nsamp <- i
       tmp <- do.call(run_bench, args)
@@ -108,33 +108,32 @@ results <- lapply(
     }
     out
   },
-  data=misspellings
+  data = misspellings
 )
 results <- do.call(rbind, results)
 saveRDS(results, bench_file)
 
 # Determine operating system, set chart title and plot name
-os <- Sys.info()['sysname']
+os <- Sys.info()["sysname"]
 img_file <- file.path(sprintf("outputs/string_inner_bench_latest.svg", os, tnow))
 chart_title <- sprintf("Benchmark times of fuzzyjoin vs. fozziejoin inner join methods (%s)", os)
 
 # Generate plot
 svg(img_file, width = 12, height = 6)
-ggplot(results, aes(x=mill_comps, y = time_ms, fill = expr, color = expr)) +
-        geom_point() +
-        facet_wrap(~ method, scales='free') +
-        labs(
-                title = chart_title,
-                x = "Number of comparisons (millions)",
-                y = "Execution Time (ms)",
+ggplot(results, aes(x = mill_comps, y = time_ms, fill = expr, color = expr)) +
+  geom_point() +
+  facet_wrap(~method, scales = "free") +
+  labs(
+    title = chart_title,
+    x = "Number of comparisons (millions)",
+    y = "Execution Time (ms)",
     fill = "Package",
     color = "Package"
-
-          ) +
-        theme_minimal() +
-        geom_smooth(method='lm', se=FALSE) +
-        scale_y_continuous(labels = scales::comma) +
-        scale_x_continuous(labels = scales::comma)
+  ) +
+  theme_minimal() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_continuous(labels = scales::comma)
 dev.off()
 
 # Done!

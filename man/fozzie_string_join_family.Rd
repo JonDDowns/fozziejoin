@@ -13,7 +13,7 @@
 fozzie_string_join(
   df1,
   df2,
-  by,
+  by = NULL,
   method = "levenshtein",
   how = "inner",
   max_distance = 1,

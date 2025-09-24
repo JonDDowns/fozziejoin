@@ -1,3 +1,12 @@
+# fozziejoin 0.0.9 (WORKING)
+
+- The `by` function should now better resemble the `fuzzyjoin` implementation. Notes have been added to the internal function signature to acknowledge their contribution.
+- Significant performance improvements. Rust code now uses FxHashMap and FxHashSet universally. Special cases in `fozzie_string_join` and `fozzie_difference_join` handle the case where only one pair of columns is to be addressed. This further reduces memory overhead.
+- Better code organization internally.
+- Rust code error handling improved.
+- Now using `styler` to be more style guide compliant.
+
+
 # fozziejoin 0.0.8
 
 - Arbitrary vector attributes, such as factor levels and POSIX dates, should now be supported. See: [Issue #6](https://github.com/JonDDowns/fozziejoin/issues/6). Testing utilities updated to validate this change.

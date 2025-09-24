@@ -57,4 +57,3 @@ test_that("named list for `by` works", {
   result <- fozzie_difference_inner_join(df1, df2, by = list(a = "b"), max_distance = 0.1)
   expect_equal(nrow(result), 1)
 })
-
