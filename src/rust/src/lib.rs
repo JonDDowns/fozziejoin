@@ -14,7 +14,7 @@ use crate::string::edit::{
 };
 use crate::string::ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
 use crate::string::normalized::{jaro_winkler::JaroWinkler, NormalizedEditDistance};
-use crate::utils::{get_pool, robj_index_map};
+use crate::utils::{get_pool, robj_index_map, transpose_map_fx};
 
 use merge::Merge;
 use utils::transpose_map;
@@ -150,6 +150,8 @@ pub fn fozzie_string_join_rs(
     return out;
 }
 
+use rustc_hash::FxHashMap;
+
 /// @export
 #[extendr]
 pub fn fozzie_difference_join_rs(
@@ -162,7 +164,7 @@ pub fn fozzie_difference_join_rs(
     nthread: Option<usize>,
 ) -> Robj {
     // Running list of all IDXs that have survived
-    let mut keep_idxs: HashMap<(usize, usize), Vec<Option<f64>>> = HashMap::new();
+    let mut keep_idxs: FxHashMap<(usize, usize), Vec<Option<f64>>> = FxHashMap::default();
 
     let pool = get_pool(nthread);
 
@@ -198,7 +200,7 @@ pub fn fozzie_difference_join_rs(
     }
 
     // Reshape output to enable final DF creation
-    let (idxs1, idxs2, dists) = transpose_map(keep_idxs);
+    let (idxs1, idxs2, dists) = transpose_map_fx(keep_idxs);
 
     // Create the DF
     let out = match how.as_str() {

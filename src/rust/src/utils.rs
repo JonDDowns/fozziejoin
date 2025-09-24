@@ -108,6 +108,41 @@ pub fn transpose_map(
     (keys1, keys2, transposed_values)
 }
 
+use rustc_hash::FxHashMap;
+pub fn transpose_map_fx(
+    data: FxHashMap<(usize, usize), Vec<Option<f64>>>,
+) -> (Vec<usize>, Vec<usize>, Vec<Vec<Option<f64>>>) {
+    // Convert the HashMap into a sorted Vec by key
+    let mut sorted_entries: Vec<((usize, usize), Vec<Option<f64>>)> = data.into_iter().collect();
+    sorted_entries.sort_by(|a, b| a.0.cmp(&b.0));
+
+    // Initialize our 3 output vectors
+    let mut keys1 = Vec::new();
+    let mut keys2 = Vec::new();
+    let mut transposed_values: Vec<Vec<Option<f64>>> = Vec::new();
+
+    // How many distances do we have for each pair?
+    let max_len = sorted_entries
+        .iter()
+        .map(|(_, v)| v.len())
+        .max()
+        .unwrap_or(0);
+    transposed_values.resize(max_len, Vec::new());
+
+    // Populate output vectors
+    for ((key1, key2), values) in sorted_entries {
+        keys1.push(key1);
+        keys2.push(key2);
+
+        for (i, &val) in values.iter().enumerate() {
+            transposed_values[i].push(val);
+        }
+    }
+
+    // Return outputs
+    (keys1, keys2, transposed_values)
+}
+
 pub fn strvec_to_qgram_map<'a>(
     df: &'a List,
     key: &'a str,
