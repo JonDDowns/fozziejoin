@@ -56,3 +56,59 @@ pub fn combine_robj(a: &Robj, b: &Robj) -> Result<Robj> {
 
     Ok(combined)
 }
+
+/// Helper to subset and label columns from a data frame
+pub fn subset_and_label(df: &List, indices: &[usize], suffix: &str) -> (Vec<String>, Vec<Robj>) {
+    let mut names = Vec::with_capacity(df.ncols());
+    let mut columns = Vec::with_capacity(df.ncols());
+    for (name, col) in df.iter() {
+        let vals = col.slice(indices).unwrap();
+        names.push(format!("{}{}", name, suffix));
+        columns.push(vals);
+    }
+    (names, columns)
+}
+
+/// Helper to construct distance columns
+pub fn build_distance_columns(
+    dist: &[Vec<f64>],
+    by: &List,
+    distance_col: &str,
+) -> (Vec<String>, Vec<Robj>) {
+    let mut names = Vec::with_capacity(dist.len());
+    let mut columns = Vec::with_capacity(dist.len());
+
+    let ndist = dist.len();
+    for (x, (y, z)) in dist.iter().zip(by.iter()) {
+        let cname = if ndist == 1 {
+            distance_col.to_string()
+        } else {
+            format!(
+                "{}_{}_{}",
+                distance_col,
+                y,
+                z.as_str_vector().expect("hi")[0]
+            )
+        };
+        names.push(cname);
+        columns.push(x.into_robj());
+    }
+
+    (names, columns)
+}
+
+/// Helper to construct single distance column
+pub fn build_single_distance_column(dist: &[f64], distance_col: &str) -> (String, Robj) {
+    (distance_col.to_string(), dist.to_vec().into_robj())
+}
+
+/// Pad a column with R-style NA values based on its type
+pub fn pad_column(col: &Robj, pad_len: usize) -> Robj {
+    match col.rtype() {
+        Rtype::Integers => Robj::from(vec![Rint::na(); pad_len]),
+        Rtype::Doubles => Robj::from(vec![Rfloat::na(); pad_len]),
+        Rtype::Logicals => Robj::from(vec![Rbool::na(); pad_len]),
+        Rtype::Strings => Robj::from(vec![Rstr::na(); pad_len]),
+        _ => Robj::from(vec![Robj::from(()); pad_len]),
+    }
+}

@@ -1,0 +1,47 @@
+name: Benchmark fozziejoin String Joins
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - '**' 
+    paths:
+      - scripts/string_benchmarks.R
+      - src/**
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libclang-dev
+
+      - name: Install R dependencies
+        run: |
+          Rscript -e 'install.packages(c("devtools", "dplyr", "tidyr", "ggplot2", "microbenchmark", "fuzzyjoin", "qdapDictionaries"))'
+          Rscript -e 'devtools::install_local(".")'
+
+      - name: Run benchmarks
+        run: Rscript scripts/string_benchmarks.R
+
+      - name: Upload benchmark SVG
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-plot
+          path: outputs/string_inner_bench_latest.svg
+

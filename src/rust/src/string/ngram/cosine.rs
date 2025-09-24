@@ -3,13 +3,17 @@
 // License: MIT
 
 use crate::string::ngram::QGramDistance;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 // Cosine Distance Implementation
 pub struct Cosine;
 
 impl QGramDistance for Cosine {
-    fn compute(&self, qgrams_s1: &HashMap<&str, usize>, qgrams_s2: &HashMap<&str, usize>) -> f64 {
+    fn compute(
+        &self,
+        qgrams_s1: &FxHashMap<&str, usize>,
+        qgrams_s2: &FxHashMap<&str, usize>,
+    ) -> f64 {
         let mut dot_product = 0;
         let mut norm_s1 = 0;
         let mut norm_s2 = 0;

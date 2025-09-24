@@ -7,7 +7,7 @@ use crate::string::normalized::NormalizedEditDistance;
 use extendr_api::prelude::*;
 use itertools::iproduct;
 use rapidfuzz::distance::jaro as jaro_rf;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 pub struct JaroWinkler;
 impl NormalizedEditDistance for JaroWinkler {
@@ -15,16 +15,16 @@ impl NormalizedEditDistance for JaroWinkler {
         &self,
         k1: &str,
         v1: &Vec<usize>,
-        idx_map: &HashMap<&str, Vec<usize>>,
+        idx_map: &FxHashMap<&str, Vec<usize>>,
         max_distance: f64,
         prefix_weight: f64,
         max_prefix: usize,
-    ) -> Option<Vec<(usize, usize, Option<f64>)>> {
+    ) -> Option<Vec<(usize, usize, f64)>> {
         if k1.is_na() {
             return None;
         }
 
-        let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
+        let mut idxs: Vec<(usize, usize, f64)> = Vec::new();
 
         for (k2, v2) in idx_map.iter() {
             if k2.is_na() {
@@ -33,7 +33,7 @@ impl NormalizedEditDistance for JaroWinkler {
 
             if &k1 == k2 {
                 iproduct!(v1, v2).for_each(|(v1, v2)| {
-                    idxs.push((*v1, *v2, Some(0.)));
+                    idxs.push((*v1, *v2, 0.));
                 });
                 continue;
             }
@@ -55,7 +55,7 @@ impl NormalizedEditDistance for JaroWinkler {
                     let x2 = x + (capped_prefix_len as f64 * prefix_weight * (1.0 - x)) as f64;
                     if x2 <= max_distance {
                         iproduct!(v1, v2).for_each(|(a, b)| {
-                            idxs.push((*a, *b, Some(x2)));
+                            idxs.push((*a, *b, x2));
                         });
                     }
                 }

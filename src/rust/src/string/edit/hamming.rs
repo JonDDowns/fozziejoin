@@ -1,8 +1,8 @@
-use crate::EditDistance;
+use crate::string::edit::EditDistance;
 use extendr_api::prelude::*;
 use itertools::iproduct;
 use rapidfuzz::distance::hamming as ham_rf;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 pub struct Hamming;
 impl EditDistance for Hamming {
@@ -10,10 +10,10 @@ impl EditDistance for Hamming {
         &self,
         k1: &str,
         v1: &Vec<usize>,
-        length_map: &HashMap<usize, Vec<&str>>,
-        idx_map: &HashMap<&str, Vec<usize>>,
+        length_map: &FxHashMap<usize, Vec<&str>>,
+        idx_map: &FxHashMap<&str, Vec<usize>>,
         max_distance: &f64,
-    ) -> Option<Vec<(usize, usize, Option<f64>)>> {
+    ) -> Option<Vec<(usize, usize, f64)>> {
         // Skip all comparisons if string is NA
         if k1.is_na() {
             return None;
@@ -28,7 +28,7 @@ impl EditDistance for Hamming {
         let end_len = k1_len.saturating_add(*max_distance as usize + 1);
 
         // Start a list to collect results
-        let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
+        let mut idxs: Vec<(usize, usize, f64)> = Vec::new();
 
         // Begin making string comparisons
         for i in start_len..end_len {
@@ -43,7 +43,7 @@ impl EditDistance for Hamming {
                     if &k1 == k2 {
                         let v2 = idx_map.get(k2).unwrap();
                         iproduct!(v1, v2).for_each(|(v1, v2)| {
-                            idxs.push((*v1, *v2, Some(0.)));
+                            idxs.push((*v1, *v2, 0.));
                         });
                         return;
                     }
@@ -63,7 +63,7 @@ impl EditDistance for Hamming {
                             if x <= *max_distance {
                                 let v2 = idx_map.get(k2).unwrap();
                                 iproduct!(v1, v2).for_each(|(v1, v2)| {
-                                    idxs.push((*v1, *v2, Some(x as f64)));
+                                    idxs.push((*v1, *v2, x as f64));
                                 });
                                 return;
                             }

@@ -45,62 +45,146 @@
 #'
 #' @name fozzie_string_join_family
 #' @export
-fozzie_string_join <- function(df1, df2, by, method = "levenshtein", how = "inner", max_distance = 1,
-			distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
+fozzie_string_join <- function(
+    df1, df2, by = NULL,
+    method = "levenshtein",
+    how = "inner",
+    max_distance = 1,
+    distance_col = NULL,
+    q = NULL,
+    max_prefix = 0,
+    prefix_weight = 0,
+    nthread = NULL) {
+  by <- normalize_by(df1, df2, by)
 
-	# If char vec provided, convert to list.
-	if (is.character(by) && length(by) == 2) {
-		by <- setNames(list(by[2]), by[1])
-	}
-
-	# Run Rust function and return
-	fozzie_string_join_rs(
-		df1, df2, by, method, how,
-		max_distance, distance_col, q, max_prefix, prefix_weight, nthread
-	)
+  # Run Rust function and return
+  fozzie_string_join_rs(
+    df1, df2, by, method, how,
+    max_distance, distance_col, q, max_prefix, prefix_weight, nthread
+  )
 }
 
 #' @rdname fozzie_string_join_family
 #' @return See [fozzie_string_join()]
 #' @export
-fozzie_string_inner_join <- function(df1, df2, by, method = "levenshtein", max_distance = 1,
-			      distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
-	fozzie_string_join(df1, df2, by, method, max_distance,
-		distance_col, q, max_prefix, prefix_weight, nthread, how = "inner")
+fozzie_string_inner_join <- function(
+    df1, df2, by,
+    method = "levenshtein",
+    max_distance = 1,
+    distance_col = NULL,
+    q = NULL,
+    max_prefix = 0,
+    prefix_weight = 0,
+    nthread = NULL) {
+  fozzie_string_join(
+    df1, df2, by,
+    method = method,
+    max_distance = max_distance,
+    distance_col = distance_col,
+    q = q,
+    max_prefix = max_prefix,
+    prefix_weight = prefix_weight,
+    nthread = nthread,
+    how = "inner"
+  )
 }
 
 #' @rdname fozzie_string_join_family
 #' @return See [fozzie_string_join()]
 #' @export
-fozzie_string_left_join <- function(df1, df2, by, method = "levenshtein", max_distance = 1,
-			     distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
-	fozzie_string_join(df1, df2, by, method, max_distance,
-		distance_col, q, max_prefix, prefix_weight, nthread, how = "left")
+fozzie_string_left_join <- function(
+    df1, df2, by,
+    method = "levenshtein",
+    max_distance = 1,
+    distance_col = NULL,
+    q = NULL,
+    max_prefix = 0,
+    prefix_weight = 0,
+    nthread = NULL) {
+  fozzie_string_join(
+    df1, df2, by,
+    method = method,
+    max_distance = max_distance,
+    distance_col = distance_col,
+    q = q,
+    max_prefix = max_prefix,
+    prefix_weight = prefix_weight,
+    nthread = nthread,
+    how = "left"
+  )
 }
 
 #' @rdname fozzie_string_join_family
 #' @return See [fozzie_string_join()]
 #' @export
-fozzie_string_right_join <- function(df1, df2, by, method = "levenshtein", max_distance = 1,
-			      distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
-	fozzie_string_join(df1, df2, by, method, max_distance,
-		distance_col, q, max_prefix, prefix_weight, nthread, how = "right")
+fozzie_string_right_join <- function(
+    df1, df2, by,
+    method = "levenshtein",
+    max_distance = 1,
+    distance_col = NULL,
+    q = NULL,
+    max_prefix = 0,
+    prefix_weight = 0,
+    nthread = NULL) {
+  fozzie_string_join(
+    df1, df2, by,
+    method = method,
+    max_distance = max_distance,
+    distance_col = distance_col,
+    q = q,
+    max_prefix = max_prefix,
+    prefix_weight = prefix_weight,
+    nthread = nthread,
+    how = "right"
+  )
 }
 
 #' @rdname fozzie_string_join_family
 #' @return See [fozzie_string_join()]
 #' @export
-fozzie_string_anti_join <- function(df1, df2, by, method = "levenshtein", max_distance = 1,
-			     distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
-	fozzie_string_join(df1, df2, by, method, max_distance,
-		distance_col, q, max_prefix, prefix_weight, nthread, how = "anti")
+fozzie_string_anti_join <- function(
+    df1, df2, by,
+    method = "levenshtein",
+    max_distance = 1,
+    distance_col = NULL,
+    q = NULL,
+    max_prefix = 0,
+    prefix_weight = 0,
+    nthread = NULL) {
+  fozzie_string_join(
+    df1, df2, by,
+    method = method,
+    max_distance = max_distance,
+    distance_col = distance_col,
+    q = q,
+    max_prefix = max_prefix,
+    prefix_weight = prefix_weight,
+    nthread = nthread,
+    how = "anti"
+  )
 }
 
 #' @rdname fozzie_string_join_family
 #' @return See [fozzie_string_join()]
 #' @export
-fozzie_string_full_join <- function(df1, df2, by, method = "levenshtein", max_distance = 1,
-			     distance_col = NULL, q = NULL, max_prefix = 0, prefix_weight = 0, nthread = NULL) {
-	fozzie_string_join(df1, df2, by, method, max_distance,
-		distance_col, q, max_prefix, prefix_weight, nthread, how = "full")
+fozzie_string_full_join <- function(
+    df1, df2, by,
+    method = "levenshtein",
+    max_distance = 1,
+    distance_col = NULL,
+    q = NULL,
+    max_prefix = 0,
+    prefix_weight = 0,
+    nthread = NULL) {
+  fozzie_string_join(
+    df1, df2, by,
+    method = method,
+    max_distance = max_distance,
+    distance_col = distance_col,
+    q = q,
+    max_prefix = max_prefix,
+    prefix_weight = prefix_weight,
+    nthread = nthread,
+    how = "full"
+  )
 }

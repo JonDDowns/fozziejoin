@@ -3,6 +3,12 @@
 version = 3
 
 [[package]]
+name = "anyhow"
+version = "1.0.100"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
+
+[[package]]
 name = "build-print"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -75,10 +81,12 @@ dependencies = [
 name = "fozziejoin"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "extendr-api",
  "itertools",
  "rapidfuzz",
  "rayon",
+ "rustc-hash",
  "textdistance",
 ]
 
@@ -146,6 +154,12 @@ dependencies = [
  "crossbeam-deque",
  "crossbeam-utils",
 ]
+
+[[package]]
+name = "rustc-hash"
+version = "2.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "357703d41365b4b27c590e3ed91eabb1b663f07c4c084095e60cbed4362dff0d"
 
 [[package]]
 name = "syn"

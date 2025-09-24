@@ -48,20 +48,26 @@ required:
 
 ### Installation
 
-The package is still in active development and most users will need to install
-from source. Some Windows binaries are provided (see below). After CRAN release,
-most Windows and macOS users will be able to install from pre-compiled binaries.
+`fozziejoin` is currently under active development. The recommended
+installation method is from source. Precompiled binaries for select Windows
+builds will be provided with each tagged release. Once the package is accepted
+to CRAN, binaries will be available across platforms and R versions. Until 
+then, our focus is on building a stable, CRAN-ready product.
 
 #### From source
 
+We recommend installing from the main GitHub branch for the latest updates.
+The main branch is only updated when all tests are passing.
+
 ##### Linux
 
-This should also work on MacOS, but is not currently tested.
+macOS is expected to work but is not yet officially tested.
 
 ```r
-install.packages('https://github.com/JonDDowns/fozziejoin/archive/refs/tags/v0.0.8.tar.gz', type='source')
-# Alternative: use devtools
-# devtools::install_github('JonDDowns/fozziejoin')
+devtools::install_github("JonDDowns/fozziejoin")
+
+# Alternatively, install a tagged release:
+# install.packages("https://github.com/JonDDowns/fozziejoin/archive/refs/tags/v0.0.8.tar.gz", type = "source")
 ```
 
 ##### Windows users
@@ -91,8 +97,8 @@ rustup override set stable-x86_64-pc-windows-gnu
 
 ```r
 devtools::install()
-# Alternative: use devtools
-# devtools::install_github('JonDDowns/fozziejoin')
+# Or install directly from GitHub:
+# devtools::install_github("JonDDowns/fozziejoin")
 ```
 
 #### From binary (Windows only)
@@ -109,9 +115,10 @@ install.packages('https://github.com/JonDDowns/fozziejoin/releases/download/v0.0
 
 ### Usage
 
-Code herein is adapted from the motivating example used in the `fuzzyjoin` package.
-First, we take a list of common misspellings (and their corrected alternatives) from Wikipedia.
-To run in a a reasonable amount of time, we take a random sample of 1000.
+Code herein is adapted from the motivating example used in the `fuzzyjoin`
+package. First, we take a list of common misspellings (and their corrected
+alternatives) from Wikipedia. To run in a a reasonable amount of time, we
+take a random sample of 1000.
 
 ```r
 library(dplyr)
@@ -141,7 +148,7 @@ Then, we run our join function.
 ```r
 fozzie <- fozzie_string_join(
     sub_misspellings, words, method='lv', 
-    by = list('misspelling' = 'word'), max_distance=2
+    by = c('misspelling' = 'word'), max_distance=2
 )
 ```
 

@@ -12,13 +12,14 @@ covr::report()
 # Run tests
 devtools::test()
 
-# Run examples 
+# Run examples
 devtools::run_examples()
 
 # Check package as CRAN using the correct CRAN repo
-withr::with_options(list(repos = c(CRAN = "https://cloud.r-project.org/")),
-                     {callr::default_repos()
-                         rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran")) })
+withr::with_options(list(repos = c(CRAN = "https://cloud.r-project.org/")), {
+  callr::default_repos()
+  rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"))
+})
 
 # Check content
 # All functions must have either `@noRd` or an `@export`.
@@ -58,25 +59,25 @@ usethis::use_git_ignore("revdep/")
 usethis::use_build_ignore("revdep/")
 
 devtools::revdep()
-#library(revdepcheck)
+# library(revdepcheck)
 # In another session because Rstudio interactive change your config:
-#id <- rstudioapi::terminalExecute("Rscript -e 'revdepcheck::revdep_check(num_workers = 4)'")
-#rstudioapi::terminalKill(id)
+# id <- rstudioapi::terminalExecute("Rscript -e 'revdepcheck::revdep_check(num_workers = 4)'")
+# rstudioapi::terminalKill(id)
 # if [Exit Code] is not 0, there is a problem !
 # to see the problem: execute the command in a new terminal manually.
 
 # See outputs now available in revdep/
-#revdep_details(revdep = "pkg")
-#revdep_summary()                 # table of results by package
-#revdep_report()
+# revdep_details(revdep = "pkg")
+# revdep_summary()                 # table of results by package
+# revdep_report()
 # Clean up when on CRAN
-#revdep_reset()
+# revdep_reset()
 
 # Add comments for CRAN
-#usethis::use_cran_comments(open = rlang::is_interactive())
+# usethis::use_cran_comments(open = rlang::is_interactive())
 
 # Upgrade version number
-#usethis::use_version(which = c("patch", "minor", "major", "dev")[1])
+# usethis::use_version(which = c("patch", "minor", "major", "dev")[1])
 
 # Verify you're ready for release, and release
-#devtools::release()
+# devtools::release()

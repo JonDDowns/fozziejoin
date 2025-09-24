@@ -1,6 +1,5 @@
-use crate::merge::Merge;
+use crate::merge::{build_distance_columns, build_single_distance_column, subset_and_label, Merge};
 use extendr_api::prelude::*;
-
 impl Merge {
     pub fn inner(
         df1: &List,
@@ -8,43 +7,55 @@ impl Merge {
         idx1: Vec<usize>,
         idx2: Vec<usize>,
         distance_col: Option<String>,
-        dist: &Vec<Vec<Option<f64>>>,
+        dist: &Vec<Vec<f64>>,
         by: List,
     ) -> Robj {
-        // Generate vectors of column names and R objects
-        let num_cols: usize = df1.ncols() + df2.ncols();
-        let mut names: Vec<String> = Vec::with_capacity(num_cols);
-        let mut combined: Vec<Robj> = Vec::with_capacity(num_cols);
+        let (mut names, mut combined): (Vec<String>, Vec<Robj>) = {
+            let (n1, c1) = subset_and_label(df1, &idx1, ".x");
+            let (n2, c2) = subset_and_label(df2, &idx2, ".y");
+            (
+                n1.into_iter().chain(n2).collect(),
+                c1.into_iter().chain(c2).collect(),
+            )
+        };
 
-        // Subset to matched records in left-hand side, push to main list
-        for (name, col1) in df1.iter() {
-            let vals = col1.slice(&idx1).unwrap();
-            names.push(name.to_string() + ".x");
-            combined.push(vals);
-        }
-
-        // Subset to matched records in right-hand side, push to main list
-        for (name, col2) in df2.iter() {
-            let vals = col2.slice(&idx2).unwrap();
-            names.push(name.to_string() + ".y");
-            combined.push(vals);
-        }
-
-        let ndist = dist.len();
         if let Some(colname) = distance_col {
-            dist.iter().zip(by.iter()).for_each(|(x, (y, z))| {
-                let cname = match ndist {
-                    1 => colname.clone(),
-                    _ => colname.clone() + &format!("_{}_{}", y, z.as_str_vector().expect("hi")[0]),
-                };
-                names.push(cname);
-                let vals = x.into_robj();
-                combined.push(vals);
-            });
+            let (dist_names, dist_cols) = build_distance_columns(dist, &by, &colname);
+            names.extend(dist_names);
+            combined.extend(dist_cols);
         }
 
-        // Final type conversions and output
-        let out: Robj = List::from_names_and_values(names, combined)
+        let out = List::from_names_and_values(names, combined)
+            .unwrap()
+            .as_robj()
+            .clone();
+        data_frame!(out)
+    }
+
+    pub fn inner_single(
+        df1: &List,
+        df2: &List,
+        idx1: Vec<usize>,
+        idx2: Vec<usize>,
+        distance_col: Option<String>,
+        dist: &Vec<f64>,
+    ) -> Robj {
+        let (mut names, mut combined): (Vec<String>, Vec<Robj>) = {
+            let (n1, c1) = subset_and_label(df1, &idx1, ".x");
+            let (n2, c2) = subset_and_label(df2, &idx2, ".y");
+            (
+                n1.into_iter().chain(n2).collect(),
+                c1.into_iter().chain(c2).collect(),
+            )
+        };
+
+        if let Some(colname) = distance_col {
+            let (name, col) = build_single_distance_column(dist, &colname);
+            names.push(name);
+            combined.push(col);
+        }
+
+        let out = List::from_names_and_values(names, combined)
             .unwrap()
             .as_robj()
             .clone();
