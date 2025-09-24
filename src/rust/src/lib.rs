@@ -26,9 +26,8 @@ pub fn fozzie_string_join_rs(
     prefix_weight: Option<f64>,
     nthread: Option<usize>,
 ) -> Robj {
-    let n_by = by.len();
-    match n_by {
-        1 => string_single_join(
+    let result = if by.len() == 1 {
+        string_single_join(
             df1,
             df2,
             by,
@@ -40,8 +39,9 @@ pub fn fozzie_string_join_rs(
             max_prefix,
             prefix_weight,
             nthread,
-        ),
-        _ => string_multi_join(
+        )
+    } else {
+        string_multi_join(
             df1,
             df2,
             by,
@@ -53,7 +53,15 @@ pub fn fozzie_string_join_rs(
             max_prefix,
             prefix_weight,
             nthread,
-        ),
+        )
+    };
+
+    match result {
+        Ok(obj) => obj,
+        Err(e) => {
+            rprintln!("Error in fozzie_string_join_rs: {}", e);
+            Robj::from(format!("Error: {}", e))
+        }
     }
 }
 
@@ -68,10 +76,18 @@ pub fn fozzie_difference_join_rs(
     distance_col: Option<String>,
     nthread: Option<usize>,
 ) -> Robj {
-    let n_by = by.len();
-    match n_by {
+    let result = match by.len() {
         1 => difference_single_join(df1, df2, by, how, max_distance, distance_col, nthread),
         _ => difference_multi_join(df1, df2, by, how, max_distance, distance_col, nthread),
+    };
+
+    match result {
+        Ok(obj) => obj,
+        Err(e) => {
+            // Return an R error object with the message
+            rprintln!("Error in fozzie_difference_join_rs: {}", e);
+            Robj::from(format!("Error: {}", e))
+        }
     }
 }
 

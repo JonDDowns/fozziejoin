@@ -1,5 +1,6 @@
 use crate::utils::{get_pool, transpose_map_fx};
 use crate::Merge;
+use anyhow::Result;
 use core::f64;
 use extendr_api::prelude::*;
 use rayon::prelude::*;
@@ -59,7 +60,7 @@ pub fn difference_multi_join(
     max_distance: f64,
     distance_col: Option<String>,
     nthread: Option<usize>,
-) -> Robj {
+) -> Result<Robj> {
     // Running list of all IDXs that have survived
     let mut keep_idxs: FxHashMap<(usize, usize), Vec<f64>> = FxHashMap::default();
 
@@ -116,5 +117,5 @@ pub fn difference_multi_join(
     };
 
     // Final result
-    return out;
+    return Ok(out);
 }

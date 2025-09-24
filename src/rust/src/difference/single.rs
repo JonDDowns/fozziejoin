@@ -1,5 +1,6 @@
 use crate::utils::get_pool;
 use crate::Merge;
+use anyhow::{anyhow, Result};
 use core::f64;
 use extendr_api::prelude::*;
 use rayon::prelude::*;
@@ -71,47 +72,55 @@ pub fn difference_single_join(
     max_distance: f64,
     distance_col: Option<String>,
     nthread: Option<usize>,
-) -> Robj {
+) -> Result<Robj> {
     let pool = get_pool(nthread);
 
-    let n_by = by.len();
-    if n_by > 1 {
-        panic!("Uhoh");
+    if by.len() != 1 {
+        return Err(anyhow!(
+            "Expected exactly one pair of match keys in `by`, found {}",
+            by.len()
+        ));
     }
 
-    // Begin looping through each supplied set of match keys
-    let (left_key, right_key) = match by.iter().next() {
-        Some((x, y)) => (x, y),
-        None => panic!("No `by` arguments provided."),
-    };
+    let (left_key, right_key) = by
+        .iter()
+        .next()
+        .ok_or_else(|| anyhow!("No `by` arguments provided."))?;
 
-    let rk = &right_key
+    let rk_vec = right_key
         .as_str_vector()
-        .expect(&format!("Error converting {:?} to string.", right_key))[0];
+        .ok_or_else(|| anyhow!("Right key {:?} is not a string vector", right_key))?;
 
-    let vec1 = df1
+    let rk = rk_vec
+        .get(0)
+        .ok_or_else(|| anyhow!("Right key vector is empty"))?;
+
+    let left_col = df1
         .dollar(left_key)
-        .expect("Error extracting {left_key}")
+        .map_err(|_| anyhow!("Column `{}` not found in df1", left_key))?;
+
+    let vec1 = left_col
         .as_real_vector()
-        .expect("Error extracting {left_key}");
-    let vec2 = df2
+        .ok_or_else(|| anyhow!("Column `{}` in df1 is not a numeric vector", left_key))?;
+
+    let right_col = df2
         .dollar(rk)
-        .expect("Error extracting {rk}")
+        .map_err(|_| anyhow!("Column `{}` not found in df2", rk))?;
+
+    let vec2 = right_col
         .as_real_vector()
-        .expect("Error extracting {rk}");
+        .ok_or_else(|| anyhow!("Column `{}` in df2 is not a numeric vector", rk))?;
 
     let (idxs1, idxs2, dists) = fuzzy_indices_single_diff(vec1, vec2, max_distance, &pool);
 
-    // Create the DF
     let out = match how.as_str() {
         "inner" => Merge::inner_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
         "left" => Merge::left_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
         "right" => Merge::right_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
         "anti" => Merge::anti(&df1, idxs1),
         "full" => Merge::full_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
-        _ => panic!("Join type not supported"),
+        _ => return Err(anyhow!("Join type `{}` not supported", how)),
     };
 
-    // Final result
-    return out;
+    Ok(out)
 }

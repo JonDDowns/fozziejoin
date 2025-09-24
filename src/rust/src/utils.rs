@@ -2,7 +2,6 @@ use extendr_api::prelude::*;
 use rayon::ThreadPool;
 use rayon::ThreadPoolBuilder;
 use rustc_hash::FxHashMap;
-use std::collections::HashMap;
 
 pub fn robj_index_map<'a>(df: &'a List, key: &'a str) -> FxHashMap<&'a str, Vec<usize>> {
     let mut map: FxHashMap<&str, Vec<usize>> = FxHashMap::default();
@@ -57,8 +56,9 @@ pub fn strvec_to_qgram_map<'a>(
     df: &'a List,
     key: &'a str,
     q: usize,
-) -> HashMap<&'a str, (HashMap<&'a str, usize>, Vec<usize>)> {
-    let mut qgram_map: HashMap<&'a str, (HashMap<&'a str, usize>, Vec<usize>)> = HashMap::new();
+) -> FxHashMap<&'a str, (FxHashMap<&'a str, usize>, Vec<usize>)> {
+    let mut qgram_map: FxHashMap<&'a str, (FxHashMap<&'a str, usize>, Vec<usize>)> =
+        FxHashMap::default();
 
     df.dollar(key)
         .expect(&format!("Column {key} does not exist or is not string."))
@@ -66,7 +66,7 @@ pub fn strvec_to_qgram_map<'a>(
         .expect(&format!("Column {key} does not exist or is not string."))
         .enumerate()
         .for_each(|(index, val)| {
-            let hm: HashMap<&str, usize> = get_qgrams(val, q);
+            let hm: FxHashMap<&str, usize> = get_qgrams(val, q);
             qgram_map
                 .entry(val)
                 .and_modify(|v| v.1.push(index + 1))
@@ -76,8 +76,8 @@ pub fn strvec_to_qgram_map<'a>(
     qgram_map
 }
 
-pub fn get_qgrams(s: &str, q: usize) -> HashMap<&str, usize> {
-    let mut qgram_map = HashMap::new();
+pub fn get_qgrams(s: &str, q: usize) -> FxHashMap<&str, usize> {
+    let mut qgram_map = FxHashMap::default();
 
     if s.len() < q {
         return qgram_map;

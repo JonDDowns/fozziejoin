@@ -3,14 +3,14 @@ use extendr_api::prelude::*;
 use itertools::iproduct;
 use rayon::prelude::*;
 use rayon::ThreadPool;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 pub mod cosine;
 pub mod jaccard;
 pub mod qgram;
 
 // Define a trait for string distance calculations
 pub trait QGramDistance: Send + Sync {
-    fn compute(&self, s1: &HashMap<&str, usize>, s2: &HashMap<&str, usize>) -> f64;
+    fn compute(&self, s1: &FxHashMap<&str, usize>, s2: &FxHashMap<&str, usize>) -> f64;
 
     fn fuzzy_indices(
         &self,
@@ -44,7 +44,7 @@ pub trait QGramDistance: Send + Sync {
         &self,
         k1: &str,
         v1: &Vec<usize>,
-        map2_qgrams: &HashMap<&str, (HashMap<&str, usize>, Vec<usize>)>,
+        map2_qgrams: &FxHashMap<&str, (FxHashMap<&str, usize>, Vec<usize>)>,
         q: usize,
         max_distance: f64,
     ) -> Option<Vec<(usize, usize, f64)>> {

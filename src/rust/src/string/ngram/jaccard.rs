@@ -6,16 +6,16 @@ use extendr_api::prelude::*;
 use itertools::iproduct;
 use rayon::prelude::*;
 use rayon::ThreadPool;
+use rustc_hash::{FxHashMap, FxHashSet};
+use std::collections::VecDeque;
 
 use crate::string::ngram::QGramDistance;
 
 // Cosine Distance Implementation
 pub struct Jaccard;
 
-use std::collections::{HashMap, HashSet, VecDeque};
-
 impl Jaccard {
-    pub fn jaccard_distance<'a>(&self, a: &HashSet<&'a str>, b: &HashSet<&'a str>) -> f64 {
+    pub fn jaccard_distance<'a>(&self, a: &FxHashSet<&'a str>, b: &FxHashSet<&'a str>) -> f64 {
         if a.is_empty() && b.is_empty() {
             return 0.0; // no dissimilarity when both sets are empty
         }
@@ -28,11 +28,15 @@ impl Jaccard {
 }
 
 impl QGramDistance for Jaccard {
-    fn compute(&self, qgrams_s1: &HashMap<&str, usize>, qgrams_s2: &HashMap<&str, usize>) -> f64 {
+    fn compute(
+        &self,
+        qgrams_s1: &FxHashMap<&str, usize>,
+        qgrams_s2: &FxHashMap<&str, usize>,
+    ) -> f64 {
         let mut intersection = 0;
         let mut union = 0;
 
-        let mut all_keys: HashSet<_> = qgrams_s1.keys().cloned().collect();
+        let mut all_keys: FxHashSet<_> = qgrams_s1.keys().cloned().collect();
         all_keys.extend(qgrams_s2.keys().cloned());
 
         for key in all_keys {
@@ -60,7 +64,7 @@ impl QGramDistance for Jaccard {
         q: usize,
         pool: &ThreadPool,
     ) -> Vec<(usize, usize, f64)> {
-        let mut left_meta: HashMap<&str, (Vec<usize>, HashSet<&str>)> = HashMap::new();
+        let mut left_meta: FxHashMap<&str, (Vec<usize>, FxHashSet<&str>)> = FxHashMap::default();
         left.dollar(&left_key)
             .expect(&format!(
                 "Column {right_key} does not exist or is not string."
@@ -73,7 +77,7 @@ impl QGramDistance for Jaccard {
             .for_each(|(index, val)| {
                 let entry = left_meta
                     .entry(val)
-                    .or_insert_with(|| (Vec::new(), HashSet::new()));
+                    .or_insert_with(|| (Vec::new(), FxHashSet::default()));
                 entry.0.push(index + 1);
 
                 let mut ring = VecDeque::with_capacity(q + 1);
@@ -98,7 +102,7 @@ impl QGramDistance for Jaccard {
 
         // This map uses qgrams as keys and keeps track of both frequencies
         // and the number of occurrences of each qgram
-        let mut right_meta: HashMap<&str, (Vec<usize>, HashSet<&str>)> = HashMap::new();
+        let mut right_meta: FxHashMap<&str, (Vec<usize>, FxHashSet<&str>)> = FxHashMap::default();
         right
             .dollar(&right_key)
             .expect(&format!(
@@ -112,7 +116,7 @@ impl QGramDistance for Jaccard {
             .for_each(|(index, val)| {
                 let entry = right_meta
                     .entry(val)
-                    .or_insert_with(|| (Vec::new(), HashSet::new()));
+                    .or_insert_with(|| (Vec::new(), FxHashSet::default()));
                 entry.0.push(index + 1);
 
                 let mut ring = VecDeque::with_capacity(q + 1);

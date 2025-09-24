@@ -68,6 +68,7 @@ pub fn subset_and_label(df: &List, indices: &[usize], suffix: &str) -> (Vec<Stri
     }
     (names, columns)
 }
+
 /// Helper to construct distance columns
 pub fn build_distance_columns(
     dist: &[Vec<f64>],

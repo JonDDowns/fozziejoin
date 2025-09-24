@@ -3,13 +3,17 @@
 // License: MIT
 
 use crate::string::ngram::QGramDistance;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 // Q-Gram Distance Implementation
 pub struct QGram;
 
 impl QGramDistance for QGram {
-    fn compute(&self, qgrams_s1: &HashMap<&str, usize>, qgrams_s2: &HashMap<&str, usize>) -> f64 {
+    fn compute(
+        &self,
+        qgrams_s1: &FxHashMap<&str, usize>,
+        qgrams_s2: &FxHashMap<&str, usize>,
+    ) -> f64 {
         let mut mismatch_count = 0;
 
         for (qgram, &count1) in qgrams_s1 {
