@@ -1,4 +1,4 @@
-name: Benchmark FozzieJoin String Joins
+name: Benchmark fozziejoin String Joins
 
 on:
   workflow_dispatch:
