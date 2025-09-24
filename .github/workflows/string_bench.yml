@@ -33,7 +33,8 @@ jobs:
 
       - name: Install R dependencies
         run: |
-          Rscript -e 'install.packages(c("devtools", "dplyr", "tidyr", "ggplot2", "microbenchmark", "fuzzyjoin", "qdapDictionaries"))'
+          Rscript -e 'install.packages("devtools", repos = "https://cloud.r-project.org")'
+          Rscript -e 'install.packages(c("dplyr", "tidyr", "ggplot2", "microbenchmark", "fuzzyjoin", "qdapDictionaries"), repos = "https://cloud.r-project.org")'
           Rscript -e 'devtools::install_local(".")'
 
       - name: Run benchmarks
