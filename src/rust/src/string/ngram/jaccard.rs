@@ -59,7 +59,7 @@ impl QGramDistance for Jaccard {
         max_distance: f64,
         q: usize,
         pool: &ThreadPool,
-    ) -> Vec<(usize, usize, Option<f64>)> {
+    ) -> Vec<(usize, usize, f64)> {
         let mut left_meta: HashMap<&str, (Vec<usize>, HashSet<&str>)> = HashMap::new();
         left.dollar(&left_key)
             .expect(&format!(
@@ -135,11 +135,11 @@ impl QGramDistance for Jaccard {
                 }
             });
 
-        let idxs: Vec<(usize, usize, Option<f64>)> = pool.install(|| {
+        let idxs: Vec<(usize, usize, f64)> = pool.install(|| {
             left_meta
                 .par_iter()
                 .filter_map(|(_, (v1, hs1))| {
-                    let mut idxs: Vec<(usize, usize, Option<f64>)> = Vec::new();
+                    let mut idxs: Vec<(usize, usize, f64)> = Vec::new();
 
                     for (_, (v2, hs2)) in right_meta.iter() {
                         let dist = if hs1.is_empty() && hs2.is_empty() {
@@ -152,7 +152,7 @@ impl QGramDistance for Jaccard {
 
                         if dist <= max_distance {
                             iproduct!(v1, v2).for_each(|(a, b)| {
-                                idxs.push((*a, *b, Some(dist)));
+                                idxs.push((*a, *b, dist));
                             });
                         }
                     }
