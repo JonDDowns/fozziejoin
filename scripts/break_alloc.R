@@ -1,11 +1,9 @@
 # Uncomment to re-install during development
 library(dplyr)
 library(tidyr)
-library(ggplot2)
-library(microbenchmark)
-library(fuzzyjoin)
-library(fozziejoin)
 library(qdapDictionaries)
+library(fuzzyjoin)
+devtools::load_all()
 
 # Load data
 data(misspellings)
