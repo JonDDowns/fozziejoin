@@ -1,6 +1,11 @@
 use core::f64;
 use extendr_api::prelude::*;
 
+use extendr_api::alloc::RAllocator;
+
+#[global_allocator]
+static GLOBAL: RAllocator = RAllocator;
+
 pub mod difference;
 pub mod merge;
 pub mod string;

@@ -11,9 +11,10 @@ name = 'fozziejoin'
 
 [dependencies]
 anyhow = "1.0.100"
-extendr-api = "0.8.0"
+extendr-api = { git = "https://github.com/extendr/extendr.git", branch = "ralloc_luke" }
 itertools = "0.14.0"
 rapidfuzz = "0.5.0"
 rayon = "1.10.0"
 rustc-hash = "2.1.1"
 textdistance = "1.1.1"
+
