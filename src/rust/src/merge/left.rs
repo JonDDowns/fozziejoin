@@ -12,7 +12,7 @@ impl Merge {
         distance_col: Option<String>,
         dist: &Vec<Vec<f64>>,
         by: List,
-    ) -> Robj {
+    ) -> List {
         let lhs_len = df1.index(1).unwrap().len();
         let lhs_complement: Vec<usize> = (1..=lhs_len).filter(|i| !idx1.contains(i)).collect();
         let pad_len = lhs_complement.len();
@@ -48,11 +48,8 @@ impl Merge {
             }
         }
 
-        let out = List::from_names_and_values(names, combined)
-            .unwrap()
-            .as_robj()
-            .clone();
-        data_frame!(out)
+        let out = List::from_names_and_values(names, combined).unwrap();
+        out
     }
 
     pub fn left_single(
@@ -62,7 +59,7 @@ impl Merge {
         idx2: Vec<usize>,
         distance_col: Option<String>,
         dist: &Vec<f64>,
-    ) -> Robj {
+    ) -> List {
         let lhs_len = df1.index(1).unwrap().len();
         let lhs_complement: Vec<usize> = (1..=lhs_len).filter(|i| !idx1.contains(i)).collect();
         let pad_len = lhs_complement.len();
@@ -96,10 +93,6 @@ impl Merge {
             combined.push(padded.into_robj());
         }
 
-        let out = List::from_names_and_values(names, combined)
-            .unwrap()
-            .as_robj()
-            .clone();
-        data_frame!(out)
+        List::from_names_and_values(names, combined).unwrap()
     }
 }

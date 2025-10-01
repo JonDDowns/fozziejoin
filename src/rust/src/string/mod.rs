@@ -106,7 +106,7 @@ pub fn string_multi_join(
         _ => return Err(anyhow!("Join type `{}` not supported", how)),
     };
 
-    Ok(out)
+    Ok(data_frame!(out))
 }
 
 pub fn string_single_join(
@@ -201,5 +201,5 @@ pub fn string_single_join(
         _ => return Err(anyhow!("Join type `{}` not supported", how)),
     };
 
-    Ok(out)
+    Ok(data_frame!(out))
 }
