@@ -16,7 +16,7 @@ whoops <- data.frame(
 
 make_expected <- function(rows, name_y) {
   df <- test_df[rows, ]
-  names(df) <- paste0(names(df), ".x")
+  colnames(df)[1] <- paste0(colnames(df)[1], ".x")
   df$Name.y <- name_y
   rownames(df) <- NULL
   df
