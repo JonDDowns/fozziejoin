@@ -1,3 +1,4 @@
+use crate::utils::get_pool;
 use core::f64;
 use extendr_api::prelude::*;
 
@@ -59,6 +60,8 @@ pub fn fozzie_difference_join_rs(
     distance_col: Option<String>,
     nthread: Option<usize>,
 ) -> List {
+    let pool = get_pool(nthread);
+
     let keys: Vec<(String, String)> = by
         .iter()
         .map(|(left_key, val)| {
@@ -68,7 +71,7 @@ pub fn fozzie_difference_join_rs(
         .collect();
 
     let (mut idxs1, mut idxs2, dists): (Vec<usize>, Vec<usize>, Vec<f64>) =
-        difference_join(&df1, &df2, keys[0].clone(), max_distance, nthread).expect("lul");
+        difference_join(&df1, &df2, keys[0].clone(), max_distance, &pool).expect("lul");
 
     let out: List = if keys.len() == 1 {
         let joined = match how.as_str() {
@@ -83,9 +86,17 @@ pub fn fozzie_difference_join_rs(
     } else {
         let mut dists = vec![dists];
         for bypair in keys[1..].iter() {
-            (idxs1, idxs2, dists) =
-                difference_pairs(&df1, &idxs1, &df2, &idxs2, &bypair, &dists, max_distance)
-                    .expect("ruhoh");
+            (idxs1, idxs2, dists) = difference_pairs(
+                &df1,
+                &idxs1,
+                &df2,
+                &idxs2,
+                &bypair,
+                &dists,
+                max_distance,
+                &pool,
+            )
+            .expect("ruhoh");
         }
         let joined = match how.as_str() {
             "inner" => Merge::inner(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),

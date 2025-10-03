@@ -70,34 +70,36 @@ impl QGramDistance for Jaccard {
         right: &Vec<&str>,
         q: &usize,
         max_distance: &f64,
+        pool: &rayon::ThreadPool,
     ) -> (Vec<usize>, Vec<f64>) {
-        let (keep, dists): (Vec<usize>, Vec<f64>) = left
-            .iter()
-            .zip(right)
-            .enumerate()
-            .filter_map(|(i, (l, r))| {
-                if l.is_na() || r.is_na() {
-                    return None;
-                }
+        let (keep, dists): (Vec<usize>, Vec<f64>) = pool.install(|| {
+            left.par_iter()
+                .zip(right)
+                .enumerate()
+                .filter_map(|(i, (l, r))| {
+                    if l.is_na() || r.is_na() {
+                        return None;
+                    }
 
-                let hs1 = get_qgram_set(l, *q);
-                let hs2 = get_qgram_set(r, *q);
+                    let hs1 = get_qgram_set(l, *q);
+                    let hs2 = get_qgram_set(r, *q);
 
-                let dist = if hs1.is_empty() && hs2.is_empty() {
-                    0.0
-                } else {
-                    let intersection = hs1.intersection(&hs2).count();
-                    let union = hs1.union(&hs2).count();
-                    1.0 - (intersection as f64 / union as f64)
-                };
+                    let dist = if hs1.is_empty() && hs2.is_empty() {
+                        0.0
+                    } else {
+                        let intersection = hs1.intersection(&hs2).count();
+                        let union = hs1.union(&hs2).count();
+                        1.0 - (intersection as f64 / union as f64)
+                    };
 
-                if dist <= *max_distance {
-                    Some((i, dist))
-                } else {
-                    None
-                }
-            })
-            .unzip();
+                    if dist <= *max_distance {
+                        Some((i, dist))
+                    } else {
+                        None
+                    }
+                })
+                .unzip()
+        });
 
         (keep, dists)
     }

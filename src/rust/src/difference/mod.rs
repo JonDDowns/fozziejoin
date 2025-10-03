@@ -1,4 +1,3 @@
-use crate::utils::get_pool;
 use anyhow::{anyhow, Result};
 use core::f64;
 use extendr_api::prelude::*;
@@ -68,9 +67,8 @@ pub fn difference_join(
     df2: &List,
     by: (String, String),
     max_distance: f64,
-    nthread: Option<usize>,
+    pool: &ThreadPool,
 ) -> Result<(Vec<usize>, Vec<usize>, Vec<f64>)> {
-    let pool = get_pool(nthread);
     let lk = by.0.as_str();
     let rk = by.1.as_str();
 
@@ -102,6 +100,7 @@ pub fn difference_pairs(
     by: &(String, String),
     dists: &Vec<Vec<f64>>,
     max_distance: f64,
+    pool: &ThreadPool,
 ) -> Result<(Vec<usize>, Vec<usize>, Vec<Vec<f64>>)> {
     let lk = by.0.as_str();
     let rk = by.1.as_str();
@@ -124,22 +123,23 @@ pub fn difference_pairs(
 
     let threshold = max_distance + f64::EPSILON;
 
-    let (idxs0, newdist): (Vec<usize>, Vec<f64>) = vec1
-        .iter()
-        .zip(vec2)
-        .enumerate()
-        .filter_map(|(i, (left, right))| {
-            if left.is_na() || right.is_na() {
-                return None;
-            }
-            let diff = (left - right).abs();
-            if diff <= threshold {
-                Some((i, diff))
-            } else {
-                None
-            }
-        })
-        .unzip();
+    let (idxs0, newdist): (Vec<usize>, Vec<f64>) = pool.install(|| {
+        vec1.par_iter()
+            .zip(vec2)
+            .enumerate()
+            .filter_map(|(i, (left, right))| {
+                if left.is_na() || right.is_na() {
+                    return None;
+                }
+                let diff = (left - right).abs();
+                if diff <= threshold {
+                    Some((i, diff))
+                } else {
+                    None
+                }
+            })
+            .unzip()
+    });
 
     let (idxs1b, idxs2b) = { idxs0.iter().map(|&i| (idxs1[i], idxs2[i])).unzip() };
 

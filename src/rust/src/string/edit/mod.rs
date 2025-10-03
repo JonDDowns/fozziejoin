@@ -17,6 +17,7 @@ pub trait EditDistance: Send + Sync {
         left: &Vec<&str>,
         right: &Vec<&str>,
         max_distance: &f64,
+        pool: &rayon::ThreadPool,
     ) -> (Vec<usize>, Vec<f64>);
 
     fn fuzzy_indices(
