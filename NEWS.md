@@ -1,11 +1,13 @@
 # fozziejoin 0.0.9 (WORKING)
 
 - The `by` function should now better resemble the `fuzzyjoin` implementation. Notes have been added to the internal function signature to acknowledge their contribution.
-- Significant performance improvements. Rust code now uses FxHashMap and FxHashSet universally. Special cases in `fozzie_string_join` and `fozzie_difference_join` handle the case where only one pair of columns is to be addressed. This further reduces memory overhead.
-- Better code organization internally.
+- Performance improvements.
+    - Rust code now uses FxHashMap and FxHashSet universally.
+    - Simplified memory structures for case when only one column is joined on.
+- Better code organization in Rust code.
 - Rust code error handling improved.
 - Now using `styler` to be more style guide compliant.
-
+- Fixed bug with the implementation for `by` arguments to join functions.
 
 # fozziejoin 0.0.8
 

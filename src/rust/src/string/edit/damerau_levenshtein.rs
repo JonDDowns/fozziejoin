@@ -2,10 +2,45 @@ use crate::string::edit::EditDistance;
 use extendr_api::prelude::*;
 use itertools::iproduct;
 use rapidfuzz::distance::damerau_levenshtein as dl_rf;
+use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
 pub struct DamerauLevenshtein;
 impl EditDistance for DamerauLevenshtein {
+    fn compare_pairs(
+        &self,
+        left: &Vec<&str>,
+        right: &Vec<&str>,
+        max_distance: &f64,
+        pool: &rayon::ThreadPool,
+    ) -> (Vec<usize>, Vec<f64>) {
+        let args = dl_rf::Args::default().score_cutoff(*max_distance as usize);
+        let (keep, dists): (Vec<usize>, Vec<f64>) = pool.install(|| {
+            left.par_iter()
+                .zip(right)
+                .enumerate()
+                .filter_map(|(i, (l, r))| {
+                    if l.is_na() || r.is_na() {
+                        return None;
+                    }
+                    let dist = dl_rf::distance_with_args(l.chars(), r.chars(), &args);
+                    let out = match dist {
+                        None => None,
+                        Some(x) => {
+                            let x = x as f64;
+                            if x <= *max_distance {
+                                Some((i, x))
+                            } else {
+                                None
+                            }
+                        }
+                    };
+                    out
+                })
+                .unzip()
+        });
+        (keep, dists)
+    }
     fn compare_one_to_many(
         &self,
         k1: &str,

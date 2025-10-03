@@ -1,6 +1,7 @@
 use crate::string::edit::EditDistance;
 use extendr_api::prelude::*;
 use itertools::iproduct;
+use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
 pub struct LCSStr;
@@ -24,7 +25,35 @@ impl LCSStr {
         (m + n) - 2 * dp[m][n]
     }
 }
+
 impl EditDistance for LCSStr {
+    fn compare_pairs(
+        &self,
+        left: &Vec<&str>,
+        right: &Vec<&str>,
+        max_distance: &f64,
+        pool: &rayon::ThreadPool,
+    ) -> (Vec<usize>, Vec<f64>) {
+        let (keep, dists): (Vec<usize>, Vec<f64>) = pool.install(|| {
+            left.par_iter()
+                .zip(right)
+                .enumerate()
+                .filter_map(|(i, (l, r))| {
+                    if l.is_na() || r.is_na() {
+                        return None;
+                    }
+                    let dist = self.compute(l, r) as f64;
+                    if dist <= *max_distance {
+                        Some((i, dist))
+                    } else {
+                        None
+                    }
+                })
+                .unzip()
+        });
+        (keep, dists)
+    }
+
     fn compare_one_to_many(
         &self,
         k1: &str,

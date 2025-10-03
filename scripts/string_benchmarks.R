@@ -58,7 +58,7 @@ run_bench <- function(method, mode, max_dist, q = NA, nsamp, seed = 2016) {
         max_distance = as.numeric(max_dist),
         q = q
       ),
-    times = 2
+    times = 10
   )
 
   # Get fuzzy df in same format as fozzie to do a direct comparison
@@ -99,7 +99,7 @@ results <- lapply(
   function(args, data) {
     cat(paste0("Function params:\n", paste0(args, collapse = ", "), "\n"))
     out <- data.frame()
-    samp_sizes <- c(100, 500, 1000, 2000, 3000)
+    samp_sizes <- c(1000, 2000, 3000)
     for (i in samp_sizes) {
       cat(paste0("Sampling ", i, " records.\n"))
       args$nsamp <- i
@@ -115,7 +115,7 @@ saveRDS(results, bench_file)
 
 # Determine operating system, set chart title and plot name
 os <- Sys.info()["sysname"]
-img_file <- file.path(sprintf("outputs/string_inner_bench_latest.svg", os, tnow))
+img_file <- sprintf("outputs/bench_string_%s_latest.svg", os)
 chart_title <- sprintf("Benchmark times of fuzzyjoin vs. fozziejoin inner join methods (%s)", os)
 
 # Generate plot

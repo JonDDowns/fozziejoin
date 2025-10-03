@@ -38,13 +38,14 @@ fozzie_difference_join <- function(
     distance_col = NULL,
     nthread = NULL) {
   by <- normalize_by(df1, df2, by)
-  fozzie_difference_join_rs(
+  tmp <- fozzie_difference_join_rs(
     df1, df2, by,
     how = how,
     max_distance = max_distance,
     distance_col = distance_col,
     nthread = nthread
   )
+  data.frame(tmp)
 }
 
 #' @rdname fozzie_difference_join_family

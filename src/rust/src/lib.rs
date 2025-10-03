@@ -1,3 +1,4 @@
+use crate::utils::get_pool;
 use core::f64;
 use extendr_api::prelude::*;
 
@@ -6,8 +7,8 @@ pub mod merge;
 pub mod string;
 pub mod utils;
 
-use crate::difference::{multi::difference_multi_join, single::difference_single_join};
-use crate::string::{string_multi_join, string_single_join};
+use crate::difference::{difference_join, difference_pairs};
+use crate::string::string_join;
 
 use merge::Merge;
 
@@ -26,36 +27,19 @@ pub fn fozzie_string_join_rs(
     prefix_weight: Option<f64>,
     nthread: Option<usize>,
 ) -> Robj {
-    let result = if by.len() == 1 {
-        string_single_join(
-            df1,
-            df2,
-            by,
-            method,
-            how,
-            max_distance,
-            distance_col,
-            q,
-            max_prefix,
-            prefix_weight,
-            nthread,
-        )
-    } else {
-        string_multi_join(
-            df1,
-            df2,
-            by,
-            method,
-            how,
-            max_distance,
-            distance_col,
-            q,
-            max_prefix,
-            prefix_weight,
-            nthread,
-        )
-    };
-
+    let result = string_join(
+        df1,
+        df2,
+        by,
+        method,
+        how,
+        max_distance,
+        distance_col,
+        q,
+        max_prefix,
+        prefix_weight,
+        nthread,
+    );
     match result {
         Ok(obj) => obj,
         Err(e) => {
@@ -75,20 +59,56 @@ pub fn fozzie_difference_join_rs(
     max_distance: f64,
     distance_col: Option<String>,
     nthread: Option<usize>,
-) -> Robj {
-    let result = match by.len() {
-        1 => difference_single_join(df1, df2, by, how, max_distance, distance_col, nthread),
-        _ => difference_multi_join(df1, df2, by, how, max_distance, distance_col, nthread),
-    };
+) -> List {
+    let pool = get_pool(nthread);
 
-    match result {
-        Ok(obj) => obj,
-        Err(e) => {
-            // Return an R error object with the message
-            rprintln!("Error in fozzie_difference_join_rs: {}", e);
-            Robj::from(format!("Error: {}", e))
+    let keys: Vec<(String, String)> = by
+        .iter()
+        .map(|(left_key, val)| {
+            let right_key = val.as_string_vector().expect("lul");
+            (left_key.to_string(), right_key[0].clone())
+        })
+        .collect();
+
+    let (mut idxs1, mut idxs2, dists): (Vec<usize>, Vec<usize>, Vec<f64>) =
+        difference_join(&df1, &df2, keys[0].clone(), max_distance, &pool).expect("lul");
+
+    let out: List = if keys.len() == 1 {
+        let joined = match how.as_str() {
+            "inner" => Merge::inner_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
+            "left" => Merge::left_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
+            "right" => Merge::right_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
+            "anti" => Merge::anti(&df1, idxs1),
+            "full" => Merge::full_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
+            _ => panic!("Problem with join logic!"),
+        };
+        joined
+    } else {
+        let mut dists = vec![dists];
+        for bypair in keys[1..].iter() {
+            (idxs1, idxs2, dists) = difference_pairs(
+                &df1,
+                &idxs1,
+                &df2,
+                &idxs2,
+                &bypair,
+                &dists,
+                max_distance,
+                &pool,
+            )
+            .expect("ruhoh");
         }
-    }
+        let joined = match how.as_str() {
+            "inner" => Merge::inner(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+            "left" => Merge::left(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+            "right" => Merge::right(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+            "anti" => Merge::anti(&df1, idxs1),
+            "full" => Merge::full(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
+            _ => panic!("I got 99 problems and a join is one"),
+        };
+        joined
+    };
+    out
 }
 
 // Export the function to R
