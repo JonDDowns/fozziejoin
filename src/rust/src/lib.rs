@@ -3,11 +3,13 @@ use core::f64;
 use extendr_api::prelude::*;
 
 pub mod difference;
+pub mod distance;
 pub mod merge;
 pub mod string;
 pub mod utils;
 
 use crate::difference::{difference_join, difference_pairs};
+use crate::distance::fuzzy_indices_dist;
 use crate::string::string_join;
 
 use merge::Merge;
@@ -111,9 +113,46 @@ pub fn fozzie_difference_join_rs(
     out
 }
 
+/// @export
+#[extendr]
+pub fn fozzie_distance_join_rs(
+    df1: List,
+    df2: List,
+    by: List,
+    method: String,
+    how: String,
+    max_distance: f64,
+    distance_col: Option<String>,
+    nthread: Option<usize>,
+) -> Robj {
+    let pool = get_pool(nthread);
+
+    let result = fuzzy_indices_dist(&df1, &df2, &by, &method, max_distance, &pool);
+    let (idxs1, idxs2, dists) = match result {
+        Ok(obj) => obj,
+        Err(e) => {
+            rprintln!("Error in fozzie_string_join_rs: {}", e);
+            return Robj::from(format!("Error: {}", e));
+        }
+    };
+
+    let joined = match how.as_str() {
+        "inner" => Merge::inner_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
+        "left" => Merge::left_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
+        "right" => Merge::right_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
+        "anti" => Merge::anti(&df1, idxs1),
+        "full" => Merge::full_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
+        _ => {
+            return Robj::from(format!("Error in dataframe join logic"));
+        }
+    };
+    Robj::from(joined)
+}
+
 // Export the function to R
 extendr_module! {
     mod fozziejoin;
     fn fozzie_string_join_rs;
     fn fozzie_difference_join_rs;
+    fn fozzie_distance_join_rs;
 }

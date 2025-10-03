@@ -13,6 +13,7 @@ Currently, the following function families are available:
 
 - `fozzie_string_join` 
 - `fozzie_difference_join`
+- `fozzie_distance_join`
 
 These function families include related functions, such as 
 `fozzie_string_inner_join`.
@@ -25,8 +26,7 @@ A picture of Fozzie will appear in the repo once the legal team gets braver.
 ## Getting started
 
 Code has been written on a combination of Windows (R 4.3.2, 
-x86_64-w64-mingw32/64) and Linux (R 4.5.0, x86-64-pc-linux-gnu platform). All
-builds to date are done using Rust 1.65.
+x86_64-w64-mingw32/64) and Linux (R 4.5.1, x86-64-pc-linux-gnu platform).
 
 ### Requirements
 
