@@ -7,7 +7,7 @@
 backend. It is meant to be a performance-minded version of the
 [`fuzzyjoin` package]( https://CRAN.R-project.org/package=fuzzyjoin).
 Performance improvements relative to `fuzzyjoin` can be significant, especially
-for string distance joins. See the [benchmarks][#Benchmarks] for more details.
+for string distance joins. See the [benchmarks](#Benchmarks) for more details.
 
 Currently, the following function families are available:
 
