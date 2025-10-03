@@ -79,4 +79,3 @@ test_that("multi-column left difference join matches rows across multiple keys",
   expect_true(all(abs(result$x.x[1:3] - result$x.y[1:3]) <= 0.15))
   expect_true(all(abs(result$y.x[1:3] - result$y.y[1:3]) <= 0.15))
 })
-
