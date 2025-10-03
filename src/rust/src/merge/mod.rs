@@ -58,12 +58,12 @@ pub fn combine_robj(a: &Robj, b: &Robj) -> Result<Robj> {
 }
 
 /// Helper to subset and label columns from a data frame
-pub fn subset_and_label(df: &List, indices: &[usize], suffix: &str) -> (Vec<String>, Vec<Robj>) {
+pub fn subset_and_label(df: &List, indices: &[usize]) -> (Vec<String>, Vec<Robj>) {
     let mut names = Vec::with_capacity(df.ncols());
     let mut columns = Vec::with_capacity(df.ncols());
     for (name, col) in df.iter() {
         let vals = col.slice(indices).unwrap();
-        names.push(format!("{}{}", name, suffix));
+        names.push(name.to_string());
         columns.push(vals);
     }
     (names, columns)

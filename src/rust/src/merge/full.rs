@@ -2,6 +2,7 @@ use crate::merge::{
     build_distance_columns, build_single_distance_column, combine_robj, pad_column, Merge,
 };
 use extendr_api::prelude::*;
+use rustc_hash::FxHashSet;
 
 impl Merge {
     pub fn full(
@@ -22,6 +23,10 @@ impl Merge {
         let unmatched_lhs = lhs_complement.len();
         let unmatched_rhs = rhs_complement.len();
 
+        let df1_names: FxHashSet<&str> = df1.names().unwrap_or_default().into_iter().collect();
+        let df2_names: FxHashSet<&str> = df2.names().unwrap_or_default().into_iter().collect();
+        let shared: FxHashSet<&str> = df1_names.intersection(&df2_names).cloned().collect();
+
         let (mut names, mut combined): (Vec<String>, Vec<Robj>) = df1
             .iter()
             .map(|(name, col)| {
@@ -30,7 +35,12 @@ impl Merge {
                 let pad = pad_column(&col, unmatched_rhs);
                 let merged =
                     combine_robj(&combine_robj(&matched, &unmatched).unwrap(), &pad).unwrap();
-                (format!("{}{}", name, ".x"), merged)
+                let final_name = if shared.contains(&name) {
+                    format!("{}{}", name, ".x")
+                } else {
+                    name.to_string()
+                };
+                (final_name, merged)
             })
             .unzip();
 
@@ -39,7 +49,12 @@ impl Merge {
             let pad = pad_column(&col, unmatched_lhs);
             let unmatched = col.slice(&rhs_complement).unwrap();
             let merged = combine_robj(&combine_robj(&matched, &pad).unwrap(), &unmatched).unwrap();
-            names.push(format!("{}{}", name, ".y"));
+            let final_name = if shared.contains(&name) {
+                format!("{}{}", name, ".y")
+            } else {
+                name.to_string()
+            };
+            names.push(final_name);
             combined.push(merged);
         }
 
@@ -74,6 +89,10 @@ impl Merge {
         let unmatched_lhs = lhs_complement.len();
         let unmatched_rhs = rhs_complement.len();
 
+        let df1_names: FxHashSet<&str> = df1.names().unwrap_or_default().into_iter().collect();
+        let df2_names: FxHashSet<&str> = df2.names().unwrap_or_default().into_iter().collect();
+        let shared: FxHashSet<&str> = df1_names.intersection(&df2_names).cloned().collect();
+
         let (mut names, mut combined): (Vec<String>, Vec<Robj>) = df1
             .iter()
             .map(|(name, col)| {
@@ -82,7 +101,12 @@ impl Merge {
                 let pad = pad_column(&col, unmatched_rhs);
                 let merged =
                     combine_robj(&combine_robj(&matched, &unmatched).unwrap(), &pad).unwrap();
-                (format!("{}{}", name, ".x"), merged)
+                let final_name = if shared.contains(&name) {
+                    format!("{}{}", name, ".x")
+                } else {
+                    name.to_string()
+                };
+                (final_name, merged)
             })
             .unzip();
 
@@ -91,7 +115,12 @@ impl Merge {
             let pad = pad_column(&col, unmatched_lhs);
             let unmatched = col.slice(&rhs_complement).unwrap();
             let merged = combine_robj(&combine_robj(&matched, &pad).unwrap(), &unmatched).unwrap();
-            names.push(format!("{}{}", name, ".y"));
+            let final_name = if shared.contains(&name) {
+                format!("{}{}", name, ".y")
+            } else {
+                name.to_string()
+            };
+            names.push(final_name);
             combined.push(merged);
         }
 
