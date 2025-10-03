@@ -16,5 +16,8 @@ fozzie_string_join_rs <- function(df1, df2, by, method, how, max_distance, dista
 #' @export
 fozzie_difference_join_rs <- function(df1, df2, by, how, max_distance, distance_col, nthread) .Call(wrap__fozzie_difference_join_rs, df1, df2, by, how, max_distance, distance_col, nthread)
 
+#' @export
+fozzie_distance_join_rs <- function(df1, df2, by, method, how, max_distance, distance_col, nthread) .Call(wrap__fozzie_distance_join_rs, df1, df2, by, method, how, max_distance, distance_col, nthread)
+
 
 # nolint end

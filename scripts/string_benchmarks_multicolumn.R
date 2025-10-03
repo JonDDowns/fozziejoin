@@ -7,15 +7,15 @@ library(qdapDictionaries)
 
 # Benchmark configurations
 params <- list(
-  list(method = "osa",     mode = "inner", max_dist = 1,   q = 0),
-  list(method = "lv",      mode = "inner", max_dist = 1,   q = 0),
-  list(method = "dl",      mode = "inner", max_dist = 1,   q = 0),
-  list(method = "hamming", mode = "inner", max_dist = 1,   q = 0),
-  list(method = "lcs",     mode = "inner", max_dist = 1,   q = 0),
-  list(method = "qgram",   mode = "inner", max_dist = 2,   q = 2),
-  list(method = "cosine",  mode = "inner", max_dist = 0.9, q = 2),
+  list(method = "osa", mode = "inner", max_dist = 1, q = 0),
+  list(method = "lv", mode = "inner", max_dist = 1, q = 0),
+  list(method = "dl", mode = "inner", max_dist = 1, q = 0),
+  list(method = "hamming", mode = "inner", max_dist = 1, q = 0),
+  list(method = "lcs", mode = "inner", max_dist = 1, q = 0),
+  list(method = "qgram", mode = "inner", max_dist = 2, q = 2),
+  list(method = "cosine", mode = "inner", max_dist = 0.9, q = 2),
   list(method = "jaccard", mode = "inner", max_dist = 0.9, q = 2),
-  list(method = "jw",      mode = "inner", max_dist = 0.9, q = 0)
+  list(method = "jw", mode = "inner", max_dist = 0.9, q = 0)
 )
 
 # Optional method filtering via command line
@@ -127,4 +127,3 @@ dev.off()
 
 # Exit
 q(status = 0, save = "no")
-

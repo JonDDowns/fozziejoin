@@ -1,5 +1,6 @@
 # fozziejoin 0.0.9 (WORKING)
 
+- Distance joins now available.
 - The `by` function should now better resemble the `fuzzyjoin` implementation. Notes have been added to the internal function signature to acknowledge their contribution.
 - Performance improvements.
     - Rust code now uses FxHashMap and FxHashSet universally.
