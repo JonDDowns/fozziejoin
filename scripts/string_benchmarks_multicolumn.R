@@ -48,7 +48,7 @@ run_bench <- function(method, mode, max_dist, q = NA, nsamp, seed = 2016) {
         max_distance = max_dist, q = q
       )
     },
-    times = 2
+    times = 10
   )
 
   # Compare outputs
@@ -93,7 +93,7 @@ bench_file <- sprintf("outputs/last_bench_%s.RDS", tnow)
 results <- list()
 for (p in params) {
   cat("Running method:", p$method, "\n")
-  for (n in c(100, 500, 1000, 2000, 3000)) {
+  for (n in c(1000, 2000, 3000)) {
     cat("  Sample size:", n, "\n")
     p$nsamp <- n
     res <- do.call(run_bench, p)
@@ -105,8 +105,8 @@ saveRDS(results_df, bench_file)
 
 # Plot results
 os <- Sys.info()["sysname"]
-img_file <- sprintf("outputs/string_inner_bench_latest_%s.svg", os)
-chart_title <- sprintf("String distance inner join: fuzzyjoin vs fozziejoin (%s)", os)
+img_file <- sprintf("outputs/bench_string_multicolumn_%s_latest.svg", os)
+chart_title <- sprintf("String distance inner join: fuzzyjoin vs fozziejoin, multiple columns (%s)", os)
 
 svg(img_file, width = 12, height = 6)
 ggplot(results_df, aes(x = mill_comps, y = time_ms, fill = expr, color = expr)) +
