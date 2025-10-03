@@ -24,7 +24,33 @@ impl LCSStr {
         (m + n) - 2 * dp[m][n]
     }
 }
+
 impl EditDistance for LCSStr {
+    fn compare_pairs(
+        &self,
+        left: &Vec<&str>,
+        right: &Vec<&str>,
+        max_distance: &f64,
+    ) -> (Vec<usize>, Vec<f64>) {
+        let (keep, dists): (Vec<usize>, Vec<f64>) = left
+            .iter()
+            .zip(right)
+            .enumerate()
+            .filter_map(|(i, (l, r))| {
+                if l.is_na() || r.is_na() {
+                    return None;
+                }
+                let dist = self.compute(l, r) as f64;
+                if dist <= *max_distance {
+                    Some((i, dist))
+                } else {
+                    None
+                }
+            })
+            .unzip();
+        (keep, dists)
+    }
+
     fn compare_one_to_many(
         &self,
         k1: &str,

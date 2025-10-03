@@ -94,7 +94,7 @@ pub fn difference_join(
     Ok((idxs1, idxs2, dists))
 }
 
-pub fn difference_filter(
+pub fn difference_pairs(
     df1: &List,
     idxs1: &Vec<usize>,
     df2: &List,

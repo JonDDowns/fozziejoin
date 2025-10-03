@@ -1,8 +1,3 @@
-// All text distance algorithms either directly use or import the
-// the `textdistance` crate by orsinium.
-// Source: https://docs.rs/textdistance/latest/textdistance/
-// License: MIT
-
 use crate::string::normalized::NormalizedEditDistance;
 use extendr_api::prelude::*;
 use itertools::iproduct;
@@ -11,6 +6,48 @@ use rustc_hash::FxHashMap;
 
 pub struct JaroWinkler;
 impl NormalizedEditDistance for JaroWinkler {
+    fn compare_pairs(
+        &self,
+        left: &Vec<&str>,
+        right: &Vec<&str>,
+        max_distance: &f64,
+        prefix_weight: f64,
+        max_prefix: usize,
+    ) -> (Vec<usize>, Vec<f64>) {
+        let args = jaro_rf::Args::default().score_cutoff(*max_distance);
+        let (keep, dists): (Vec<usize>, Vec<f64>) = left
+            .iter()
+            .zip(right)
+            .enumerate()
+            .filter_map(|(i, (l, r))| {
+                if l.is_na() || r.is_na() {
+                    return None;
+                }
+                let dist: Option<f64> = jaro_rf::distance_with_args(l.chars(), r.chars(), &args);
+                // Compute capped common prefix length
+                let capped_prefix_len = l
+                    .chars()
+                    .zip(r.chars())
+                    .take_while(|(c1, c2)| c1 == c2)
+                    .count()
+                    .min(max_prefix);
+
+                match dist {
+                    Some(x) => {
+                        let x2 = x + (capped_prefix_len as f64 * prefix_weight * (1.0 - x)) as f64;
+                        if x2 <= *max_distance {
+                            Some((i, x2))
+                        } else {
+                            None
+                        }
+                    }
+                    None => None,
+                }
+            })
+            .unzip();
+        (keep, dists)
+    }
+
     fn compare_one_to_many(
         &self,
         k1: &str,

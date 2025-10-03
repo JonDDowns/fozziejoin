@@ -12,6 +12,33 @@ pub mod qgram;
 pub trait QGramDistance: Send + Sync {
     fn compute(&self, s1: &FxHashMap<&str, usize>, s2: &FxHashMap<&str, usize>) -> f64;
 
+    fn compare_pairs(
+        &self,
+        left: &Vec<&str>,
+        right: &Vec<&str>,
+        q: &usize,
+        max_distance: &f64,
+    ) -> (Vec<usize>, Vec<f64>) {
+        let (keep, dists): (Vec<usize>, Vec<f64>) = left
+            .par_iter()
+            .zip(right)
+            .enumerate()
+            .filter_map(|(i, (l, r))| {
+                if l.is_na() || r.is_na() {
+                    return None;
+                }
+                let l_qgrams = get_qgrams(l, *q);
+                let r_qgrams = get_qgrams(r, *q);
+                let dist = self.compute(&l_qgrams, &r_qgrams);
+                if dist <= *max_distance {
+                    Some((i, dist))
+                } else {
+                    None
+                }
+            })
+            .unzip();
+        (keep, dists)
+    }
     fn fuzzy_indices(
         &self,
         left: &List,

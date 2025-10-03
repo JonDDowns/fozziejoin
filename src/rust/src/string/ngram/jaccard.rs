@@ -14,17 +14,27 @@ use crate::string::ngram::QGramDistance;
 // Cosine Distance Implementation
 pub struct Jaccard;
 
-impl Jaccard {
-    pub fn jaccard_distance<'a>(&self, a: &FxHashSet<&'a str>, b: &FxHashSet<&'a str>) -> f64 {
-        if a.is_empty() && b.is_empty() {
-            return 0.0; // no dissimilarity when both sets are empty
+fn get_qgram_set(s: &str, q: usize) -> FxHashSet<&str> {
+    let mut grams = FxHashSet::default();
+    let mut ring = VecDeque::with_capacity(q + 1);
+
+    for (i, _) in s.char_indices() {
+        ring.push_back(i);
+        if ring.len() == q + 1 {
+            let start = ring[0];
+            let end = ring[q];
+            grams.insert(&s[start..end]);
+            ring.pop_front();
         }
-
-        let intersection_size = a.intersection(b).count();
-        let union_size = a.union(b).count();
-
-        1.0 - (intersection_size as f64) / (union_size as f64)
     }
+
+    if ring.len() == q {
+        let start = ring[0];
+        let end = s.len();
+        grams.insert(&s[start..end]);
+    }
+
+    grams
 }
 
 impl QGramDistance for Jaccard {
@@ -52,6 +62,44 @@ impl QGramDistance for Jaccard {
         } else {
             1.0 - (intersection as f64 / union as f64)
         }
+    }
+
+    fn compare_pairs(
+        &self,
+        left: &Vec<&str>,
+        right: &Vec<&str>,
+        q: &usize,
+        max_distance: &f64,
+    ) -> (Vec<usize>, Vec<f64>) {
+        let (keep, dists): (Vec<usize>, Vec<f64>) = left
+            .iter()
+            .zip(right)
+            .enumerate()
+            .filter_map(|(i, (l, r))| {
+                if l.is_na() || r.is_na() {
+                    return None;
+                }
+
+                let hs1 = get_qgram_set(l, *q);
+                let hs2 = get_qgram_set(r, *q);
+
+                let dist = if hs1.is_empty() && hs2.is_empty() {
+                    0.0
+                } else {
+                    let intersection = hs1.intersection(&hs2).count();
+                    let union = hs1.union(&hs2).count();
+                    1.0 - (intersection as f64 / union as f64)
+                };
+
+                if dist <= *max_distance {
+                    Some((i, dist))
+                } else {
+                    None
+                }
+            })
+            .unzip();
+
+        (keep, dists)
     }
 
     fn fuzzy_indices(

@@ -12,6 +12,13 @@ pub mod osa;
 
 // Define a trait for string distance calculations
 pub trait EditDistance: Send + Sync {
+    fn compare_pairs(
+        &self,
+        left: &Vec<&str>,
+        right: &Vec<&str>,
+        max_distance: &f64,
+    ) -> (Vec<usize>, Vec<f64>);
+
     fn fuzzy_indices(
         &self,
         left: &List,

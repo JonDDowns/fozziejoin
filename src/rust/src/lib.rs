@@ -6,8 +6,8 @@ pub mod merge;
 pub mod string;
 pub mod utils;
 
-use crate::difference::{difference_filter, difference_join};
-use crate::string::{string_multi_join, string_single_join};
+use crate::difference::{difference_join, difference_pairs};
+use crate::string::string_join;
 
 use merge::Merge;
 
@@ -26,36 +26,19 @@ pub fn fozzie_string_join_rs(
     prefix_weight: Option<f64>,
     nthread: Option<usize>,
 ) -> Robj {
-    let result = if by.len() == 1 {
-        string_single_join(
-            df1,
-            df2,
-            by,
-            method,
-            how,
-            max_distance,
-            distance_col,
-            q,
-            max_prefix,
-            prefix_weight,
-            nthread,
-        )
-    } else {
-        string_multi_join(
-            df1,
-            df2,
-            by,
-            method,
-            how,
-            max_distance,
-            distance_col,
-            q,
-            max_prefix,
-            prefix_weight,
-            nthread,
-        )
-    };
-
+    let result = string_join(
+        df1,
+        df2,
+        by,
+        method,
+        how,
+        max_distance,
+        distance_col,
+        q,
+        max_prefix,
+        prefix_weight,
+        nthread,
+    );
     match result {
         Ok(obj) => obj,
         Err(e) => {
@@ -101,7 +84,7 @@ pub fn fozzie_difference_join_rs(
         let mut dists = vec![dists];
         for bypair in keys[1..].iter() {
             (idxs1, idxs2, dists) =
-                difference_filter(&df1, &idxs1, &df2, &idxs2, &bypair, &dists, max_distance)
+                difference_pairs(&df1, &idxs1, &df2, &idxs2, &bypair, &dists, max_distance)
                     .expect("ruhoh");
         }
         let joined = match how.as_str() {
