@@ -14,6 +14,7 @@
 #'   - `"right"`: all rows from `df2`, unmatched rows filled with NAs.
 #'   - `"full"`: all rows from both `df1` and `df2`.
 #'   - `"anti"`: rows from `df1` not matched in `df2`.
+#'   - `"semi"`: rows from `df1` that matched with one or more matches in `df2`.
 #' @param max_distance A numeric threshold for allowable absolute difference between values (lower is stricter).
 #' @param distance_col Optional name of column to store computed differences.
 #' @param nthread Optional integer to specify number of threads for parallelization.
@@ -122,6 +123,22 @@ fozzie_difference_full_join <- function(
   fozzie_difference_join(
     df1, df2, by,
     how = "full",
+    max_distance = max_distance,
+    distance_col = distance_col,
+    nthread = nthread
+  )
+}
+
+#' @rdname fozzie_difference_join_family
+#' @export
+fozzie_difference_semi_join <- function(
+    df1, df2, by,
+    max_distance = 1,
+    distance_col = NULL,
+    nthread = NULL) {
+  fozzie_difference_join(
+    df1, df2, by,
+    how = "semi",
     max_distance = max_distance,
     distance_col = distance_col,
     nthread = nthread

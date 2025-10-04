@@ -44,7 +44,6 @@ for (size in sizes) {
   )
 
   # Align column names for comparison
-  colnames(fuzzy) <- colnames(fozzie)
   fuzzy <- data.frame(fuzzy)
 
   # Confirm all results are the same

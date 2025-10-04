@@ -8,6 +8,7 @@
 \alias{fozzie_difference_right_join}
 \alias{fozzie_difference_anti_join}
 \alias{fozzie_difference_full_join}
+\alias{fozzie_difference_semi_join}
 \title{Perform a fuzzy join between two data frames using numeric difference matching.}
 \usage{
 fozzie_difference_join(
@@ -64,6 +65,15 @@ fozzie_difference_full_join(
   distance_col = NULL,
   nthread = NULL
 )
+
+fozzie_difference_semi_join(
+  df1,
+  df2,
+  by,
+  max_distance = 1,
+  distance_col = NULL,
+  nthread = NULL
+)
 }
 \arguments{
 \item{df1}{A data frame to join from (left table).}
@@ -80,6 +90,7 @@ or a named list like \code{list(col1 = "col2")}.}
 \item \code{"right"}: all rows from \code{df2}, unmatched rows filled with NAs.
 \item \code{"full"}: all rows from both \code{df1} and \code{df2}.
 \item \code{"anti"}: rows from \code{df1} not matched in \code{df2}.
+\item \code{"semi"}: rows from \code{df1} that matched with one or more matches in \code{df2}.
 }}
 
 \item{max_distance}{A numeric threshold for allowable absolute difference between values (lower is stricter).}

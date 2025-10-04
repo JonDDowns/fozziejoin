@@ -25,6 +25,7 @@
 #'   - `"right"`: all rows from `df2`, unmatched rows filled with NAs.
 #'   - `"full"`: all rows from both `df1` and `df2`.
 #'   - `"anti"`: rows from `df1` not matched in `df2`.
+#'   - `"semi"`: rows from `df1` that matched with one or more matches in `df2`.
 #' @param q Integer. Size of q-grams for `"qgram"`, `"cosine"`, or `"jaccard"` methods.
 #' @param max_distance A numeric threshold for allowable string distance or dissimilarity (lower is stricter).
 #' @param distance_col Optional name of column to store computed string distances.
@@ -187,5 +188,30 @@ fozzie_string_full_join <- function(
     prefix_weight = prefix_weight,
     nthread = nthread,
     how = "full"
+  )
+}
+
+#' @rdname fozzie_string_join_family
+#' @return See [fozzie_string_join()]
+#' @export
+fozzie_string_semi_join <- function(
+    df1, df2, by,
+    method = "levenshtein",
+    max_distance = 1,
+    distance_col = NULL,
+    q = NULL,
+    max_prefix = 0,
+    prefix_weight = 0,
+    nthread = NULL) {
+  fozzie_string_join(
+    df1, df2, by,
+    method = method,
+    max_distance = max_distance,
+    distance_col = distance_col,
+    q = q,
+    max_prefix = max_prefix,
+    prefix_weight = prefix_weight,
+    nthread = nthread,
+    how = "semi"
   )
 }
