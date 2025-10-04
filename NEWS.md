@@ -6,7 +6,7 @@
     - Rust code now uses FxHashMap and FxHashSet universally.
     - Simplified memory structures for case when only one column is joined on.
 - Better code organization in Rust code.
-- Rust code error handling improved.
+- Better error handling
 - Now using `styler` to be more style guide compliant.
 - Fixed bug with the implementation for `by` arguments to join functions.
 

@@ -2,6 +2,7 @@
 // Source: https://docs.rs/textdistance/latest/textdistance/
 // License: MIT
 
+use anyhow::{anyhow, Result};
 use extendr_api::prelude::*;
 use itertools::iproduct;
 use rayon::prelude::*;
@@ -113,88 +114,72 @@ impl QGramDistance for Jaccard {
         max_distance: f64,
         q: usize,
         pool: &ThreadPool,
-    ) -> Vec<(usize, usize, f64)> {
+    ) -> Result<Vec<(usize, usize, f64)>> {
         let mut left_meta: FxHashMap<&str, (Vec<usize>, FxHashSet<&str>)> = FxHashMap::default();
-        left.dollar(&left_key)
-            .expect(&format!(
-                "Column {right_key} does not exist or is not string."
-            ))
+        let left_iter = left
+            .dollar(left_key)
+            .map_err(|_| anyhow!("Column '{}' not found in left dataframe", left_key))?
             .as_str_iter()
-            .expect(&format!(
-                "Column {right_key} does not exist or is not string."
-            ))
-            .enumerate()
-            .for_each(|(index, val)| {
-                let entry = left_meta
-                    .entry(val)
-                    .or_insert_with(|| (Vec::new(), FxHashSet::default()));
-                entry.0.push(index + 1);
+            .ok_or_else(|| anyhow!("Column '{}' is not a string vector", left_key))?;
 
-                let mut ring = VecDeque::with_capacity(q + 1);
+        for (index, val) in left_iter.enumerate() {
+            let entry = left_meta
+                .entry(val)
+                .or_insert_with(|| (Vec::new(), FxHashSet::default()));
+            entry.0.push(index + 1);
 
-                for (i, _) in val.char_indices() {
-                    ring.push_back(i);
-                    if ring.len() == q + 1 {
-                        let start = ring[0];
-                        let end = ring[q];
-                        entry.1.insert(&val[start..end]);
-                        ring.pop_front(); // slide the window
-                    }
-                }
-
-                // Handle final gram if at end of string
-                if ring.len() == q {
+            let mut ring = VecDeque::with_capacity(q + 1);
+            for (i, _) in val.char_indices() {
+                ring.push_back(i);
+                if ring.len() == q + 1 {
                     let start = ring[0];
-                    let end = val.len();
+                    let end = ring[q];
                     entry.1.insert(&val[start..end]);
+                    ring.pop_front();
                 }
-            });
+            }
+            if ring.len() == q {
+                let start = ring[0];
+                let end = val.len();
+                entry.1.insert(&val[start..end]);
+            }
+        }
 
-        // This map uses qgrams as keys and keeps track of both frequencies
-        // and the number of occurrences of each qgram
         let mut right_meta: FxHashMap<&str, (Vec<usize>, FxHashSet<&str>)> = FxHashMap::default();
-        right
-            .dollar(&right_key)
-            .expect(&format!(
-                "Column {right_key} does not exist or is not string."
-            ))
+        let right_iter = right
+            .dollar(right_key)
+            .map_err(|_| anyhow!("Column '{}' not found in right dataframe", right_key))?
             .as_str_iter()
-            .expect(&format!(
-                "Column {right_key} does not exist or is not string."
-            ))
-            .enumerate()
-            .for_each(|(index, val)| {
-                let entry = right_meta
-                    .entry(val)
-                    .or_insert_with(|| (Vec::new(), FxHashSet::default()));
-                entry.0.push(index + 1);
+            .ok_or_else(|| anyhow!("Column '{}' is not a string vector", right_key))?;
 
-                let mut ring = VecDeque::with_capacity(q + 1);
+        for (index, val) in right_iter.enumerate() {
+            let entry = right_meta
+                .entry(val)
+                .or_insert_with(|| (Vec::new(), FxHashSet::default()));
+            entry.0.push(index + 1);
 
-                for (i, _) in val.char_indices() {
-                    ring.push_back(i);
-                    if ring.len() == q + 1 {
-                        let start = ring[0];
-                        let end = ring[q];
-                        entry.1.insert(&val[start..end]);
-                        ring.pop_front(); // slide the window
-                    }
-                }
-
-                // Handle final gram if at end of string
-                if ring.len() == q {
+            let mut ring = VecDeque::with_capacity(q + 1);
+            for (i, _) in val.char_indices() {
+                ring.push_back(i);
+                if ring.len() == q + 1 {
                     let start = ring[0];
-                    let end = val.len();
+                    let end = ring[q];
                     entry.1.insert(&val[start..end]);
+                    ring.pop_front();
                 }
-            });
+            }
+            if ring.len() == q {
+                let start = ring[0];
+                let end = val.len();
+                entry.1.insert(&val[start..end]);
+            }
+        }
 
-        let idxs: Vec<(usize, usize, f64)> = pool.install(|| {
+        let idxs = pool.install(|| {
             left_meta
                 .par_iter()
                 .filter_map(|(_, (v1, hs1))| {
-                    let mut idxs: Vec<(usize, usize, f64)> = Vec::new();
-
+                    let mut idxs = Vec::new();
                     for (_, (v2, hs2)) in right_meta.iter() {
                         let dist = if hs1.is_empty() && hs2.is_empty() {
                             0.0
@@ -210,7 +195,6 @@ impl QGramDistance for Jaccard {
                             });
                         }
                     }
-
                     if idxs.is_empty() {
                         None
                     } else {
@@ -220,6 +204,6 @@ impl QGramDistance for Jaccard {
                 .flatten()
                 .collect()
         });
-        idxs
+        Ok(idxs)
     }
 }

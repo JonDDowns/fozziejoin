@@ -1,4 +1,5 @@
 use crate::utils::robj_index_map;
+use anyhow::Result;
 use extendr_api::prelude::*;
 use itertools::iproduct;
 use rapidfuzz::distance::jaro as jaro_rf;
@@ -18,9 +19,9 @@ impl JaroWinkler {
         prefix_weight: f64,
         max_prefix: usize,
         pool: &ThreadPool,
-    ) -> Vec<(usize, usize, f64)> {
-        let map1 = robj_index_map(&df1, left_key);
-        let map2 = robj_index_map(&df2, right_key);
+    ) -> Result<Vec<(usize, usize, f64)>> {
+        let map1 = robj_index_map(&df1, left_key)?;
+        let map2 = robj_index_map(&df2, right_key)?;
 
         let idxs: Vec<(usize, usize, f64)> = pool.install(|| {
             map1.par_iter()
@@ -30,7 +31,7 @@ impl JaroWinkler {
                 .flatten()
                 .collect()
         });
-        idxs
+        Ok(idxs)
     }
 
     pub fn compare_pairs(

@@ -1,21 +1,22 @@
+use anyhow::{anyhow, Result};
 use extendr_api::prelude::*;
 use rayon::ThreadPool;
 use rayon::ThreadPoolBuilder;
 use rustc_hash::FxHashMap;
 
-pub fn robj_index_map<'a>(df: &'a List, key: &'a str) -> FxHashMap<&'a str, Vec<usize>> {
+pub fn robj_index_map<'a>(df: &'a List, key: &'a str) -> Result<FxHashMap<&'a str, Vec<usize>>> {
     let mut map: FxHashMap<&str, Vec<usize>> = FxHashMap::default();
 
     df.dollar(key)
-        .expect(&format!("Column {key} does not exist or is not string."))
+        .map_err(|_| anyhow!("Column {key} does not exist or is not string."))?
         .as_str_iter()
-        .expect(&format!("Column {key} does not exist or is not string."))
+        .ok_or_else(|| anyhow!("Column {key} does not exist or is not string."))?
         .enumerate()
         .for_each(|(index, val)| {
             map.entry(val).or_default().push(index + 1);
         });
 
-    map
+    Ok(map)
 }
 
 pub fn transpose_map_fx(
@@ -56,24 +57,25 @@ pub fn strvec_to_qgram_map<'a>(
     df: &'a List,
     key: &'a str,
     q: usize,
-) -> FxHashMap<&'a str, (FxHashMap<&'a str, usize>, Vec<usize>)> {
+) -> Result<FxHashMap<&'a str, (FxHashMap<&'a str, usize>, Vec<usize>)>> {
     let mut qgram_map: FxHashMap<&'a str, (FxHashMap<&'a str, usize>, Vec<usize>)> =
         FxHashMap::default();
 
-    df.dollar(key)
-        .expect(&format!("Column {key} does not exist or is not string."))
+    let str_iter = df
+        .dollar(key)
+        .map_err(|_| anyhow!("Column '{}' not found in dataframe", key))?
         .as_str_iter()
-        .expect(&format!("Column {key} does not exist or is not string."))
-        .enumerate()
-        .for_each(|(index, val)| {
-            let hm: FxHashMap<&str, usize> = get_qgrams(val, q);
-            qgram_map
-                .entry(val)
-                .and_modify(|v| v.1.push(index + 1))
-                .or_insert((hm, vec![index + 1]));
-        });
+        .ok_or_else(|| anyhow!("Column '{}' is not a string vector", key))?;
 
-    qgram_map
+    for (index, val) in str_iter.enumerate() {
+        let hm: FxHashMap<&str, usize> = get_qgrams(val, q);
+        qgram_map
+            .entry(val)
+            .and_modify(|v| v.1.push(index + 1))
+            .or_insert((hm, vec![index + 1]));
+    }
+
+    Ok(qgram_map)
 }
 
 pub fn get_qgrams(s: &str, q: usize) -> FxHashMap<&str, usize> {
@@ -84,7 +86,7 @@ pub fn get_qgrams(s: &str, q: usize) -> FxHashMap<&str, usize> {
     }
 
     let mut char_indices = s.char_indices().collect::<Vec<_>>();
-    char_indices.push((s.len(), '\0')); // Sentinel to get the final slice
+    char_indices.push((s.len(), '\0'));
 
     for i in 0..=char_indices.len().saturating_sub(q + 1) {
         let start = char_indices[i].0;
@@ -96,15 +98,17 @@ pub fn get_qgrams(s: &str, q: usize) -> FxHashMap<&str, usize> {
     qgram_map
 }
 
-pub fn get_pool(nthread: Option<usize>) -> ThreadPool {
+pub fn get_pool(nthread: Option<usize>) -> Result<ThreadPool> {
     if let Some(nt) = nthread {
-        ThreadPoolBuilder::new()
+        let pool = ThreadPoolBuilder::new()
             .num_threads(nt)
             .build()
-            .expect("Failed to build custom thread pool")
+            .map_err(|e| anyhow!("{e}"))?;
+        Ok(pool)
     } else {
-        rayon::ThreadPoolBuilder::new()
+        let pool = rayon::ThreadPoolBuilder::new()
             .build()
-            .expect("Failed to build default thread pool")
+            .map_err(|e| anyhow!("{e}"))?;
+        Ok(pool)
     }
 }

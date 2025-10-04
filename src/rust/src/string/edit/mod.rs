@@ -28,9 +28,9 @@ pub trait EditDistance: Send + Sync {
         right_key: &str,
         max_distance: f64,
         pool: &ThreadPool,
-    ) -> Vec<(usize, usize, f64)> {
-        let map1 = robj_index_map(left, left_key);
-        let map2 = robj_index_map(right, right_key);
+    ) -> anyhow::Result<Vec<(usize, usize, f64)>> {
+        let map1 = robj_index_map(left, left_key)?;
+        let map2 = robj_index_map(right, right_key)?;
 
         let mut length_map: FxHashMap<usize, Vec<&str>> = FxHashMap::default();
         for key in map2.keys() {
@@ -47,7 +47,7 @@ pub trait EditDistance: Send + Sync {
                 .collect()
         });
 
-        idxs
+        Ok(idxs)
     }
 
     fn compare_one_to_many(

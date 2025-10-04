@@ -11,9 +11,9 @@ whoops <- data.frame(Name = c("Laim", "Noahhh", "Olive", NA))
 testthat::test_that("Full join is correct for Levenshtein", {
   expected <- data.frame(list(
     Name.x = c("Oliver", "Liam", "Noah", NA, NA, NA),
-    int_col.x = c(3, 1, 2, NA, NA, NA),
-    real_col.x = c(3, 1, 2, NA, NA, NA),
-    logical_col.x = c(TRUE, TRUE, TRUE, NA, NA, NA),
+    int_col = c(3, 1, 2, NA, NA, NA),
+    real_col = c(3, 1, 2, NA, NA, NA),
+    logical_col = c(TRUE, TRUE, TRUE, NA, NA, NA),
     Name.y = c("Olive", NA, NA, "Laim", "Noahhh", NA)
   ))
 
@@ -34,9 +34,9 @@ testthat::test_that("Full join is correct for Levenshtein", {
 testthat::test_that("Full join is correct for Cosine", {
   expected <- data.frame(list(
     Name.x = c("Noah", "Oliver", "Liam", NA, NA),
-    int_col.x = c(2, 3, 1, NA, NA),
-    real_col.x = c(2, 3, 1, NA, NA),
-    logical_col.x = c(TRUE, TRUE, TRUE, NA, NA),
+    int_col = c(2, 3, 1, NA, NA),
+    real_col = c(2, 3, 1, NA, NA),
+    logical_col = c(TRUE, TRUE, TRUE, NA, NA),
     Name.y = c("Noahhh", "Olive", NA, "Laim", NA)
   ))
 
@@ -58,9 +58,9 @@ testthat::test_that("Full join is correct for Cosine", {
 testthat::test_that("Full join is correct for JW", {
   expected <- data.frame(list(
     Name.x = c("Liam", "Noah", "Noah", "Oliver", NA),
-    int_col.x = c(1, 2, 2, 3, NA),
-    real_col.x = c(1, 2, 2, 3, NA),
-    logical_col.x = c(TRUE, TRUE, TRUE, TRUE, NA),
+    int_col = c(1, 2, 2, 3, NA),
+    real_col = c(1, 2, 2, 3, NA),
+    logical_col = c(TRUE, TRUE, TRUE, TRUE, NA),
     Name.y = c("Laim", "Laim", "Noahhh", "Olive", NA)
   ))
 
