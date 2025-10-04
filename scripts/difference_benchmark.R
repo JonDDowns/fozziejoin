@@ -17,17 +17,16 @@ for (size in sizes) {
   timing_results <- microbenchmark(
     fuzzy = fuzzy <- difference_join(
       df1, df2,
-      mode = "inner", max_dist = 1, by = c("x")
+      mode = "semi", max_dist = 1, by = c("x")
     ),
     fozzie = fozzie <- fozzie_difference_join(
       df1, df2,
-      how = "inner", max_distance = 1, by = c("x")
+      how = "semi", max_distance = 1, by = c("x")
     ),
     times = 10
   )
 
   # Get fuzzy df in same format as fozzie to do a direct comparison
-  colnames(fuzzy) <- colnames(fozzie)
   fuzzy <- data.frame(fuzzy)
 
   # Confirm all results are the same

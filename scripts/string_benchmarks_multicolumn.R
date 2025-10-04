@@ -52,7 +52,6 @@ run_bench <- function(method, mode, max_dist, q = NA, nsamp, seed = 2016) {
   )
 
   # Compare outputs
-  colnames(fuzzy) <- colnames(fozzie)
   fuzzy <- as.data.frame(fuzzy)
   if (!isTRUE(all.equal(fuzzy, fozzie))) {
     cat("Mismatch detected:\n")

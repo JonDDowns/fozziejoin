@@ -62,7 +62,6 @@ run_bench <- function(method, mode, max_dist, q = NA, nsamp, seed = 2016) {
   )
 
   # Get fuzzy df in same format as fozzie to do a direct comparison
-  colnames(fuzzy) <- colnames(fozzie)
   fuzzy <- data.frame(fuzzy)
 
   # Confirm all results are the same

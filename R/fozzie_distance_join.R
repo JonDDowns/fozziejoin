@@ -13,6 +13,7 @@
 #'   - `"right"`: all rows from `df2`, unmatched rows filled with NAs.
 #'   - `"full"`: all rows from both `df1` and `df2`.
 #'   - `"anti"`: rows from `df1` not matched in `df2`.
+#'   - `"semi"`: rows from `df1` that matched with one or more matches in `df2`.
 #' @param max_distance A numeric threshold for allowable vector distance between rows.
 #' @param method A string specifying the distance metric. One of:
 #'   - `"manhattan"`: sum of absolute differences.
@@ -132,6 +133,24 @@ fozzie_distance_anti_join <- function(
   fozzie_distance_join(
     df1, df2, by,
     how = "anti",
+    max_distance = max_distance,
+    method = method,
+    distance_col = distance_col,
+    nthread = nthread
+  )
+}
+
+#' @rdname fozzie_distance_join_family
+#' @export
+fozzie_distance_semi_join <- function(
+    df1, df2, by,
+    max_distance = 1,
+    method = "manhattan",
+    distance_col = NULL,
+    nthread = NULL) {
+  fozzie_distance_join(
+    df1, df2, by,
+    how = "semi",
     max_distance = max_distance,
     method = method,
     distance_col = distance_col,

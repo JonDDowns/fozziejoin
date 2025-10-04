@@ -6,6 +6,7 @@ pub mod full;
 pub mod inner;
 pub mod left;
 pub mod right;
+pub mod semi;
 
 pub fn dispatch_join(
     how: &str,
@@ -23,6 +24,7 @@ pub fn dispatch_join(
         "right" => Merge::right(df1, df2, idxs1, idxs2, distance_col, dist, by),
         "full" => Merge::full(df1, df2, idxs1, idxs2, distance_col, dist, by),
         "anti" => Merge::anti(df1, idxs1),
+        "semi" => Merge::semi(df1, idxs1),
         _ => panic!("Unknown join type: {}", how),
     }
 }

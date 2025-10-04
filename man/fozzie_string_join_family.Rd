@@ -8,6 +8,7 @@
 \alias{fozzie_string_right_join}
 \alias{fozzie_string_anti_join}
 \alias{fozzie_string_full_join}
+\alias{fozzie_string_semi_join}
 \title{Perform a fuzzy join between two data frames using approximate string matching.}
 \usage{
 fozzie_string_join(
@@ -88,6 +89,19 @@ fozzie_string_full_join(
   prefix_weight = 0,
   nthread = NULL
 )
+
+fozzie_string_semi_join(
+  df1,
+  df2,
+  by,
+  method = "levenshtein",
+  max_distance = 1,
+  distance_col = NULL,
+  q = NULL,
+  max_prefix = 0,
+  prefix_weight = 0,
+  nthread = NULL
+)
 }
 \arguments{
 \item{df1}{A data frame to join from (left table).}
@@ -118,6 +132,7 @@ or a named list like \code{list(col1 = "col2")}.}
 \item \code{"right"}: all rows from \code{df2}, unmatched rows filled with NAs.
 \item \code{"full"}: all rows from both \code{df1} and \code{df2}.
 \item \code{"anti"}: rows from \code{df1} not matched in \code{df2}.
+\item \code{"semi"}: rows from \code{df1} that matched with one or more matches in \code{df2}.
 }}
 
 \item{max_distance}{A numeric threshold for allowable string distance or dissimilarity (lower is stricter).}
@@ -135,6 +150,8 @@ or a named list like \code{list(col1 = "col2")}.}
 \value{
 A data frame with fuzzy-matched rows depending on the join type. See individual functions like \code{fozzie_string_inner_join()} for examples.
 If \code{distance_col} is specified, an additional numeric column is included.
+
+See \code{\link[=fozzie_string_join]{fozzie_string_join()}}
 
 See \code{\link[=fozzie_string_join]{fozzie_string_join()}}
 
