@@ -58,10 +58,11 @@ fozzie_string_join <- function(
   by <- normalize_by(df1, df2, by)
 
   # Run Rust function and return
-  fozzie_string_join_rs(
+  tmp <- fozzie_string_join_rs(
     df1, df2, by, method, how,
     max_distance, distance_col, q, max_prefix, prefix_weight, nthread
   )
+  data.frame(tmp)
 }
 
 #' @rdname fozzie_string_join_family

@@ -3,6 +3,7 @@ pub mod jaro_winkler;
 pub mod joinmethod;
 pub mod ngram;
 
+use crate::merge::{dispatch_join, DistanceData};
 use crate::string::edit::{
     damerau_levenshtein::DamerauLevenshtein, hamming::Hamming, lcs::LCSStr,
     levenshtein::Levenshtein, osa::OSA, EditDistance,
@@ -11,10 +12,25 @@ use crate::string::jaro_winkler::JaroWinkler;
 use crate::string::joinmethod::get_join_method;
 use crate::string::ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
 use crate::utils::get_pool;
-use crate::Merge;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use extendr_api::prelude::*;
+
+fn extract_keys(by: &List) -> Result<Vec<(String, String)>> {
+    by.iter()
+        .map(|(left_key, val)| {
+            let right_keys = val
+                .as_string_vector()
+                .ok_or_else(|| anyhow!("Right key for '{}' is not a string vector", left_key))?;
+
+            let right_key = right_keys
+                .get(0)
+                .ok_or_else(|| anyhow!("Right key vector for '{}' is empty", left_key))?;
+
+            Ok((left_key.to_string(), right_key.clone()))
+        })
+        .collect()
+}
 
 pub fn string_join(
     df1: List,
@@ -28,16 +44,9 @@ pub fn string_join(
     max_prefix: Option<i32>,
     prefix_weight: Option<f64>,
     nthread: Option<usize>,
-) -> Result<Robj> {
-    let keys: Vec<(String, String)> = by
-        .iter()
-        .map(|(left_key, val)| {
-            let right_key = val.as_string_vector().expect("lul");
-            (left_key.to_string(), right_key[0].clone())
-        })
-        .collect();
-
-    let pool = get_pool(nthread);
+) -> Result<List> {
+    let keys: Vec<(String, String)> = extract_keys(&by)?;
+    let pool = get_pool(nthread)?;
     let (left_key, right_key) = &keys[0];
 
     let qz = match q {
@@ -69,14 +78,17 @@ pub fn string_join(
         dists.push(d);
     }
     let out: List = if keys.len() == 1 {
-        let joined = match how.as_str() {
-            "inner" => Merge::inner_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
-            "left" => Merge::left_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
-            "right" => Merge::right_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
-            "anti" => Merge::anti(&df1, idxs1),
-            "full" => Merge::full_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
-            _ => panic!("Problem with join logic!"),
-        };
+        let dists = DistanceData::Single(&dists);
+        let joined = dispatch_join(
+            how.as_str(),
+            &df1,
+            &df2,
+            idxs1,
+            idxs2,
+            distance_col,
+            dists,
+            by,
+        );
         joined
     } else {
         let mut dists = vec![dists];
@@ -95,20 +107,23 @@ pub fn string_join(
                 max_prefix,
                 prefix_weight,
                 &pool,
-            )
-            .expect("ruhoh");
+            )?
         }
-        let joined = match how.as_str() {
-            "inner" => Merge::inner(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
-            "left" => Merge::left(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
-            "right" => Merge::right(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
-            "anti" => Merge::anti(&df1, idxs1),
-            "full" => Merge::full(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
-            _ => panic!("I got 99 problems and a join is one"),
-        };
+
+        let dists = DistanceData::Matrix(&dists);
+        let joined = dispatch_join(
+            how.as_str(),
+            &df1,
+            &df2,
+            idxs1,
+            idxs2,
+            distance_col,
+            dists,
+            by,
+        );
         joined
     };
-    Ok(data_frame!(out))
+    Ok(out)
 }
 
 pub fn difference_pairs(
@@ -128,11 +143,25 @@ pub fn difference_pairs(
     let lk = by.0.as_str();
     let rk = by.1.as_str();
 
-    let vec1_binding = df1.dollar(lk).expect("lul").slice(idxs1).expect("ruhroh");
-    let vec1: Vec<&str> = vec1_binding.as_str_vector().expect("ohmy");
+    let vec1_binding = df1
+        .dollar(lk)
+        .map_err(|_| anyhow!("Missing column '{}' in df1", lk))?
+        .slice(idxs1)
+        .map_err(|_| anyhow!("Failed to slice df1 column '{}'", lk))?;
 
-    let vec2_binding = df2.dollar(rk).expect("lul").slice(idxs2).expect("ruhroh");
-    let vec2: Vec<&str> = vec2_binding.as_str_vector().expect("ohmy");
+    let vec1: Vec<&str> = vec1_binding
+        .as_str_vector()
+        .ok_or_else(|| anyhow!("Failed to convert df1 column '{}' to string vector", lk))?;
+
+    let vec2_binding = df2
+        .dollar(rk)
+        .map_err(|_| anyhow!("Missing column '{}' in df2", rk))?
+        .slice(idxs2)
+        .map_err(|_| anyhow!("Failed to slice df2 column '{}'", rk))?;
+
+    let vec2: Vec<&str> = vec2_binding
+        .as_str_vector()
+        .ok_or_else(|| anyhow!("Failed to convert df2 column '{}' to string vector", rk))?;
 
     let join_method = get_join_method(method, max_distance, q, prefix_weight, max_prefix)?;
     let (idxs0, newdist) = join_method.compare_pairs(&vec1, &vec2, pool)?;

@@ -83,7 +83,7 @@ impl JoinMethod {
                     *max_prefix,
                     pool,
                 ),
-            };
+            }?;
 
         Ok(result)
     }

@@ -50,12 +50,12 @@ pub trait QGramDistance: Send + Sync {
         max_distance: f64,
         q: usize,
         pool: &ThreadPool,
-    ) -> Vec<(usize, usize, f64)> {
-        let map1 = robj_index_map(&left, &left_key);
+    ) -> anyhow::Result<Vec<(usize, usize, f64)>> {
+        let map1 = robj_index_map(&left, &left_key)?;
 
         // This map uses qgrams as keys and keeps track of both frequencies
         // and the number of occurrences of each qgram
-        let map2_qgrams = strvec_to_qgram_map(right, right_key, q);
+        let map2_qgrams = strvec_to_qgram_map(right, right_key, q)?;
 
         let idxs: Vec<(usize, usize, f64)> = pool.install(|| {
             map1.par_iter()
@@ -66,7 +66,7 @@ pub trait QGramDistance: Send + Sync {
                 .flatten()
                 .collect()
         });
-        idxs
+        Ok(idxs)
     }
 
     fn compare_one_to_many(

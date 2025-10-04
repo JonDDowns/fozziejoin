@@ -1,4 +1,4 @@
-use crate::utils::get_pool;
+use anyhow::{anyhow, Result};
 use core::f64;
 use extendr_api::prelude::*;
 
@@ -10,9 +10,10 @@ pub mod utils;
 
 use crate::difference::{difference_join, difference_pairs};
 use crate::distance::fuzzy_indices_dist;
+use crate::merge::dispatch_join;
+use crate::merge::DistanceData;
 use crate::string::string_join;
-
-use merge::Merge;
+use crate::utils::get_pool;
 
 /// @export
 #[extendr]
@@ -28,7 +29,7 @@ pub fn fozzie_string_join_rs(
     max_prefix: Option<i32>,
     prefix_weight: Option<f64>,
     nthread: Option<usize>,
-) -> Robj {
+) -> Result<List> {
     let result = string_join(
         df1,
         df2,
@@ -41,14 +42,9 @@ pub fn fozzie_string_join_rs(
         max_prefix,
         prefix_weight,
         nthread,
-    );
-    match result {
-        Ok(obj) => obj,
-        Err(e) => {
-            rprintln!("Error in fozzie_string_join_rs: {}", e);
-            Robj::from(format!("Error: {}", e))
-        }
-    }
+    )
+    .map_err(|e| anyhow!("Error in string join: {e}!"))?;
+    Ok(result)
 }
 
 /// @export
@@ -61,56 +57,67 @@ pub fn fozzie_difference_join_rs(
     max_distance: f64,
     distance_col: Option<String>,
     nthread: Option<usize>,
-) -> List {
-    let pool = get_pool(nthread);
+) -> Result<List> {
+    let pool = get_pool(nthread)?;
 
     let keys: Vec<(String, String)> = by
         .iter()
         .map(|(left_key, val)| {
-            let right_key = val.as_string_vector().expect("lul");
-            (left_key.to_string(), right_key[0].clone())
+            let right_key = val
+                .as_string_vector()
+                .ok_or_else(|| anyhow!("Missing string vector for key '{}'", left_key))?;
+            Ok((left_key.to_string(), right_key[0].clone()))
         })
-        .collect();
+        .collect::<Result<_>>()?;
 
-    let (mut idxs1, mut idxs2, dists): (Vec<usize>, Vec<usize>, Vec<f64>) =
-        difference_join(&df1, &df2, keys[0].clone(), max_distance, &pool).expect("lul");
+    let (mut idxs1, mut idxs2, dists) =
+        difference_join(&df1, &df2, keys[0].clone(), max_distance, &pool)
+            .map_err(|e| anyhow!("Failed initial difference join: {}", e))?;
 
     let out: List = if keys.len() == 1 {
-        let joined = match how.as_str() {
-            "inner" => Merge::inner_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
-            "left" => Merge::left_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
-            "right" => Merge::right_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
-            "anti" => Merge::anti(&df1, idxs1),
-            "full" => Merge::full_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
-            _ => panic!("Problem with join logic!"),
-        };
-        joined
+        let dists = DistanceData::Single(&dists);
+        dispatch_join(
+            how.as_str(),
+            &df1,
+            &df2,
+            idxs1,
+            idxs2,
+            distance_col,
+            dists,
+            by,
+        )
     } else {
         let mut dists = vec![dists];
-        for bypair in keys[1..].iter() {
-            (idxs1, idxs2, dists) = difference_pairs(
+        for bypair in &keys[1..] {
+            let (a, b, c) = difference_pairs(
                 &df1,
                 &idxs1,
                 &df2,
                 &idxs2,
-                &bypair,
+                bypair,
                 &dists,
                 max_distance,
                 &pool,
             )
-            .expect("ruhoh");
+            .map_err(|e| anyhow!("Failed difference_pairs for {:?}: {}", bypair, e))?;
+            idxs1 = a;
+            idxs2 = b;
+            dists = c;
         }
-        let joined = match how.as_str() {
-            "inner" => Merge::inner(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
-            "left" => Merge::left(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
-            "right" => Merge::right(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
-            "anti" => Merge::anti(&df1, idxs1),
-            "full" => Merge::full(&df1, &df2, idxs1, idxs2, distance_col, &dists, by),
-            _ => panic!("I got 99 problems and a join is one"),
-        };
-        joined
+        let dists = DistanceData::Matrix(&dists);
+        dispatch_join(
+            how.as_str(),
+            &df1,
+            &df2,
+            idxs1,
+            idxs2,
+            distance_col,
+            dists,
+            by,
+        )
     };
-    out
+
+    Ok(out)
 }
 
 /// @export
@@ -124,29 +131,23 @@ pub fn fozzie_distance_join_rs(
     max_distance: f64,
     distance_col: Option<String>,
     nthread: Option<usize>,
-) -> Robj {
-    let pool = get_pool(nthread);
+) -> Result<List> {
+    let pool = get_pool(nthread)?;
 
-    let result = fuzzy_indices_dist(&df1, &df2, &by, &method, max_distance, &pool);
-    let (idxs1, idxs2, dists) = match result {
-        Ok(obj) => obj,
-        Err(e) => {
-            rprintln!("Error in fozzie_string_join_rs: {}", e);
-            return Robj::from(format!("Error: {}", e));
-        }
-    };
-
-    let joined = match how.as_str() {
-        "inner" => Merge::inner_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
-        "left" => Merge::left_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
-        "right" => Merge::right_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
-        "anti" => Merge::anti(&df1, idxs1),
-        "full" => Merge::full_single(&df1, &df2, idxs1, idxs2, distance_col, &dists),
-        _ => {
-            return Robj::from(format!("Error in dataframe join logic"));
-        }
-    };
-    Robj::from(joined)
+    let (idxs1, idxs2, dists) = fuzzy_indices_dist(&df1, &df2, &by, &method, max_distance, &pool)
+        .map_err(|e| anyhow!("Error when finding fuzzy matches: {e}"))?;
+    let dists = DistanceData::Single(&dists);
+    let joined = dispatch_join(
+        how.as_str(),
+        &df1,
+        &df2,
+        idxs1,
+        idxs2,
+        distance_col,
+        dists,
+        by,
+    );
+    Ok(joined)
 }
 
 // Export the function to R

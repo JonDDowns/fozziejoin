@@ -1,4 +1,6 @@
-use crate::merge::{build_distance_columns, build_single_distance_column, subset_and_label, Merge};
+use crate::merge::{
+    build_distance_columns, build_single_distance_column, subset_and_label, DistanceData, Merge,
+};
 use extendr_api::prelude::*;
 use rustc_hash::FxHashSet;
 
@@ -50,37 +52,26 @@ impl Merge {
         idx1: Vec<usize>,
         idx2: Vec<usize>,
         distance_col: Option<String>,
-        dist: &Vec<Vec<f64>>,
+        dist: DistanceData,
         by: List,
     ) -> List {
         let (mut names, mut values) = merge_and_label_with_suffix(&df1, &idx1, &df2, &idx2);
-        if let Some(colname) = distance_col {
-            let (dist_names, dist_cols) = build_distance_columns(dist, &by, &colname);
-            names.extend(dist_names);
-            values.extend(dist_cols);
-        }
-
-        let out = List::from_names_and_values(names, values).unwrap();
-        out
-    }
-
-    pub fn inner_single(
-        df1: &List,
-        df2: &List,
-        idx1: Vec<usize>,
-        idx2: Vec<usize>,
-        distance_col: Option<String>,
-        dist: &Vec<f64>,
-    ) -> List {
-        let (mut names, mut values) = merge_and_label_with_suffix(&df1, &idx1, &df2, &idx2);
 
         if let Some(colname) = distance_col {
-            let (name, col) = build_single_distance_column(dist, &colname);
-            names.push(name);
-            values.push(col);
+            match dist {
+                DistanceData::Single(vec) => {
+                    let (name, col) = build_single_distance_column(vec, &colname);
+                    names.push(name);
+                    values.push(col);
+                }
+                DistanceData::Matrix(mat) => {
+                    let (dist_names, dist_cols) = build_distance_columns(mat, &by, &colname);
+                    names.extend(dist_names);
+                    values.extend(dist_cols);
+                }
+            }
         }
 
-        let out = List::from_names_and_values(names, values).unwrap();
-        out
+        List::from_names_and_values(names, values).unwrap()
     }
 }

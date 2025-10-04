@@ -105,21 +105,25 @@ pub fn difference_pairs(
     let lk = by.0.as_str();
     let rk = by.1.as_str();
 
-    let vec1: Vec<f64> = df1
+    let vec1_binding = df1
         .dollar(lk)
-        .expect("lul")
+        .map_err(|_| anyhow!("Missing column '{}' in df1", lk))?
         .slice(idxs1)
-        .expect("ruhroh")
-        .as_real_vector()
-        .expect("ohmy");
+        .map_err(|_| anyhow!("Failed to slice df1 column '{}'", lk))?;
 
-    let vec2: Vec<f64> = df2
-        .dollar(rk)
-        .expect("lul")
-        .slice(idxs2)
-        .expect("ruhroh")
+    let vec1: Vec<f64> = vec1_binding
         .as_real_vector()
-        .expect("ohmy");
+        .ok_or_else(|| anyhow!("Issue converting df1 column '{}' to numeric", lk))?;
+
+    let vec2_binding = df2
+        .dollar(rk)
+        .map_err(|_| anyhow!("Missing column '{}' in df1", rk))?
+        .slice(idxs2)
+        .map_err(|_| anyhow!("Failed to slice df1 column '{}'", rk))?;
+
+    let vec2: Vec<f64> = vec2_binding
+        .as_real_vector()
+        .ok_or_else(|| anyhow!("Issue converting df2 column '{}' to numeric", rk))?;
 
     let threshold = max_distance + f64::EPSILON;
 

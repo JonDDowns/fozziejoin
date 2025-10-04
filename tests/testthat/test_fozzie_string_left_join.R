@@ -10,7 +10,7 @@ testthat::test_that("Basic left join with Hamming distance works", {
 
   expected <- data.frame(
     Name.x = c("Bob", "Alice"),
-    Score.x = c(85, 90),
+    Score = c(85, 90),
     Name.y = c("Rob", NA)
   )
 

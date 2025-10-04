@@ -31,35 +31,41 @@ pub fn fuzzy_indices_dist(
     let keys: Vec<(String, String)> = by
         .iter()
         .map(|(left_key, val)| {
-            let right_key = val.as_string_vector().expect("lul");
-            (left_key.to_string(), right_key[0].clone())
+            let right_key = val
+                .as_string_vector()
+                .ok_or_else(|| anyhow!("Missing or invalid right key for '{}'", left_key))?;
+            Ok((left_key.to_string(), right_key[0].clone()))
         })
-        .collect();
+        .collect::<Result<_>>()?;
 
     let distmetric = DistanceMetric::new(method)?;
 
-    let mut left_vecs: Vec<Vec<f64>> = vec![];
-    let mut right_vecs: Vec<Vec<f64>> = vec![];
-    for (left_key, right_key) in keys.iter() {
+    let mut left_vecs = Vec::new();
+    let mut right_vecs = Vec::new();
+
+    for (left_key, right_key) in &keys {
         let leftvec = df1
             .dollar(left_key)
-            .expect("Uhoh!")
+            .map_err(|_| anyhow!("Column '{}' not found in df1", left_key))?
             .as_real_vector()
-            .expect("Bad left key");
+            .ok_or_else(|| anyhow!("Column '{}' in df1 is not numeric", left_key))?;
         left_vecs.push(leftvec);
+
         let rightvec = df2
             .dollar(right_key)
-            .expect("Uhoh!")
+            .map_err(|_| anyhow!("Column '{}' not found in df2", right_key))?
             .as_real_vector()
-            .expect("Bad right key");
+            .ok_or_else(|| anyhow!("Column '{}' in df2 is not numeric", right_key))?;
         right_vecs.push(rightvec);
     }
+
     let left_rows = zip_columns(&left_vecs);
     let right_rows = zip_columns(&right_vecs);
 
-    let (idxs1, idxs2, dists): (Vec<usize>, Vec<usize>, Vec<f64>) =
-        filtered_distances(&left_rows, &right_rows, max_distance, distmetric, &pool)?;
-    return Ok((idxs1, idxs2, dists));
+    let (idxs1, idxs2, dists) =
+        filtered_distances(&left_rows, &right_rows, max_distance, distmetric, pool)?;
+
+    Ok((idxs1, idxs2, dists))
 }
 
 #[derive(Debug, Clone, Copy)]

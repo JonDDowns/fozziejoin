@@ -7,6 +7,26 @@ pub mod inner;
 pub mod left;
 pub mod right;
 
+pub fn dispatch_join(
+    how: &str,
+    df1: &List,
+    df2: &List,
+    idxs1: Vec<usize>,
+    idxs2: Vec<usize>,
+    distance_col: Option<String>,
+    dist: DistanceData,
+    by: List,
+) -> List {
+    match how {
+        "inner" => Merge::inner(df1, df2, idxs1, idxs2, distance_col, dist, by),
+        "left" => Merge::left(df1, df2, idxs1, idxs2, distance_col, dist, by),
+        "right" => Merge::right(df1, df2, idxs1, idxs2, distance_col, dist, by),
+        "full" => Merge::full(df1, df2, idxs1, idxs2, distance_col, dist, by),
+        "anti" => Merge::anti(df1, idxs1),
+        _ => panic!("Unknown join type: {}", how),
+    }
+}
+
 /// Combine two Robj vectors of the same type into one.
 /// Preserves all attributes from `a`, including class, levels, label, etc.
 pub fn combine_robj(a: &Robj, b: &Robj) -> Result<Robj> {
@@ -111,4 +131,9 @@ pub fn pad_column(col: &Robj, pad_len: usize) -> Robj {
         Rtype::Strings => Robj::from(vec![Rstr::na(); pad_len]),
         _ => Robj::from(vec![Robj::from(()); pad_len]),
     }
+}
+
+pub enum DistanceData<'a> {
+    Single(&'a Vec<f64>),
+    Matrix(&'a Vec<Vec<f64>>),
 }
