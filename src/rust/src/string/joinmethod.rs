@@ -31,6 +31,7 @@ pub enum JoinMethod {
         prefix_weight: f64,
         max_prefix: usize,
     },
+    Soundex {},
 }
 
 impl JoinMethod {
@@ -83,6 +84,9 @@ impl JoinMethod {
                     *max_prefix,
                     pool,
                 ),
+                JoinMethod::Soundex {} => {
+                    Soundex.fuzzy_indices(left, left_key, right, right_key, pool)
+                }
             }?;
 
         Ok(result)
@@ -133,6 +137,7 @@ impl JoinMethod {
                 *max_prefix,
                 pool,
             )),
+            JoinMethod::Soundex {} => Soundex.compare_pairs(left, right, pool),
         };
 
         result
@@ -170,6 +175,8 @@ pub fn get_join_method(
                 .ok_or_else(|| anyhow::anyhow!("Must provide `prefix_weight`"))?,
             max_prefix: max_prefix.ok_or_else(|| anyhow::anyhow!("Must provide `max_prefix`"))?,
         }),
+        "soundex" => Ok(JoinMethod::Soundex {}),
+
         _ => Err(anyhow::anyhow!("Unsupported method `{}`", method)),
     }
 }

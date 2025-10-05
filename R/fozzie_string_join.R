@@ -19,6 +19,7 @@
 #'   - `"jaccard"`: Jaccard similarity (requires `q`).
 #'   - `"jaro"`: Jaro similarity.
 #'   - `"jaro_winkler"` or `"jw"`: Jaro-Winkler similarity.
+#'   - `"soundex"`: Soundex codes based on the National Archives standard.
 #' @param how A string specifying the join mode. One of:
 #'   - `"inner"`: matched pairs only.
 #'   - `"left"`: all rows from `df1`, unmatched rows filled with NAs.
@@ -70,7 +71,7 @@ fozzie_string_join <- function(
 #' @return See [fozzie_string_join()]
 #' @export
 fozzie_string_inner_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     method = "levenshtein",
     max_distance = 1,
     distance_col = NULL,
@@ -95,7 +96,7 @@ fozzie_string_inner_join <- function(
 #' @return See [fozzie_string_join()]
 #' @export
 fozzie_string_left_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     method = "levenshtein",
     max_distance = 1,
     distance_col = NULL,
@@ -120,7 +121,7 @@ fozzie_string_left_join <- function(
 #' @return See [fozzie_string_join()]
 #' @export
 fozzie_string_right_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     method = "levenshtein",
     max_distance = 1,
     distance_col = NULL,
@@ -145,7 +146,7 @@ fozzie_string_right_join <- function(
 #' @return See [fozzie_string_join()]
 #' @export
 fozzie_string_anti_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     method = "levenshtein",
     max_distance = 1,
     distance_col = NULL,
@@ -170,7 +171,7 @@ fozzie_string_anti_join <- function(
 #' @return See [fozzie_string_join()]
 #' @export
 fozzie_string_full_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     method = "levenshtein",
     max_distance = 1,
     distance_col = NULL,
@@ -195,7 +196,7 @@ fozzie_string_full_join <- function(
 #' @return See [fozzie_string_join()]
 #' @export
 fozzie_string_semi_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     method = "levenshtein",
     max_distance = 1,
     distance_col = NULL,

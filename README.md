@@ -184,6 +184,13 @@ Below are some behavior changes that we do not currently plan to address.
     - `useBytes`
     - `weight`
 
+
+- `fuzzyjoin::interval_join` uses `IRanges` as a backend. When we implement a `fozziejoin` equivalent, it will behave more like `data.table::foverlaps`. Mainly, we think **decimal overlaps** are important to support.
+
+- `soundex` implementations differ slightly.
+    - Our implementation considers multiple encodings in the case of prefixes prefixes, as is specified in the [National Archives Standard](https://www.archives.gov/research/census/soundex).
+    - How consecutive similar letters and consonant separators behave is implemented differently. "Coca Cola" would match to "cuckoo" only in our system, while "overshaddowed" and "overwrought" would only match in theirs.
+
 ## Acknowledgements
 
 - The `extendr` team. This project would not be possible without their great project.

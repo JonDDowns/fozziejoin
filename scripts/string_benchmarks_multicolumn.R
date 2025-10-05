@@ -5,7 +5,7 @@ library(fuzzyjoin)
 library(fozziejoin)
 library(qdapDictionaries)
 
-# Benchmark configurations
+# These are all the benchmarks we may wish to run
 params <- list(
   list(method = "osa", mode = "inner", max_dist = 1, q = 0),
   list(method = "lv", mode = "inner", max_dist = 1, q = 0),
@@ -15,7 +15,11 @@ params <- list(
   list(method = "qgram", mode = "inner", max_dist = 2, q = 2),
   list(method = "cosine", mode = "inner", max_dist = 0.9, q = 2),
   list(method = "jaccard", mode = "inner", max_dist = 0.9, q = 2),
-  list(method = "jw", mode = "inner", max_dist = 0.9, q = 0)
+  list(method = "jw", mode = "inner", max_dist = 0.9, q = 0),
+
+  # WARNING:
+  # Soundex joins are similar but NOT identical
+  list(method = "soundex", mode = "inner", max_dist = 0.5, q = 0)
 )
 
 # Optional method filtering via command line
@@ -51,9 +55,9 @@ run_bench <- function(method, mode, max_dist, q = NA, nsamp, seed = 2016) {
     times = 10
   )
 
-  # Compare outputs
+  # Compare outputs (soundex not expected to be identical)
   fuzzy <- as.data.frame(fuzzy)
-  if (!isTRUE(all.equal(fuzzy, fozzie))) {
+  if (!isTRUE(all.equal(fuzzy, fozzie)) & method != "soundex") {
     cat("Mismatch detected:\n")
     print(all.equal(fuzzy, fozzie))
   }

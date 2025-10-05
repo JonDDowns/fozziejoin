@@ -2,6 +2,7 @@ pub mod edit;
 pub mod jaro_winkler;
 pub mod joinmethod;
 pub mod ngram;
+pub mod soundex;
 
 use crate::merge::{dispatch_join, DistanceData};
 use crate::string::edit::{
@@ -11,6 +12,7 @@ use crate::string::edit::{
 use crate::string::jaro_winkler::JaroWinkler;
 use crate::string::joinmethod::get_join_method;
 use crate::string::ngram::{cosine::Cosine, jaccard::Jaccard, qgram::QGram, QGramDistance};
+use crate::string::soundex::Soundex;
 use crate::utils::get_pool;
 
 use anyhow::{anyhow, Result};

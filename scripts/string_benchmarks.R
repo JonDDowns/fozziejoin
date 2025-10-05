@@ -17,7 +17,11 @@ params <- list(
   list(method = "qgram", mode = "inner", max_dist = 2, q = 2),
   list(method = "cosine", mode = "inner", max_dist = 0.9, q = 2),
   list(method = "jaccard", mode = "inner", max_dist = 0.9, q = 2),
-  list(method = "jw", mode = "inner", max_dist = 0.9, q = 0)
+  list(method = "jw", mode = "inner", max_dist = 0.9, q = 0),
+
+  # WARNING:
+  # Soundex joins are similar but NOT identical
+  list(method = "soundex", mode = "inner", max_dist = 0.5, q = 0)
 )
 
 # If running in script mode, use user input to set methods to call
@@ -64,8 +68,8 @@ run_bench <- function(method, mode, max_dist, q = NA, nsamp, seed = 2016) {
   # Get fuzzy df in same format as fozzie to do a direct comparison
   fuzzy <- data.frame(fuzzy)
 
-  # Confirm all results are the same
-  if (!isTRUE(all.equal(fuzzy, fozzie))) {
+  # Confirm all results are the same (soundex not expected to match exactly)
+  if (!isTRUE(all.equal(fuzzy, fozzie)) & !method == 'soundex') {
     print("Not all observations equal! differences")
     print(all.equal(fuzzy, fozzie))
   }
