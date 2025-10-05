@@ -28,7 +28,7 @@ fozzie_string_join(
 fozzie_string_inner_join(
   df1,
   df2,
-  by,
+  by = NULL,
   method = "levenshtein",
   max_distance = 1,
   distance_col = NULL,
@@ -41,7 +41,7 @@ fozzie_string_inner_join(
 fozzie_string_left_join(
   df1,
   df2,
-  by,
+  by = NULL,
   method = "levenshtein",
   max_distance = 1,
   distance_col = NULL,
@@ -54,7 +54,7 @@ fozzie_string_left_join(
 fozzie_string_right_join(
   df1,
   df2,
-  by,
+  by = NULL,
   method = "levenshtein",
   max_distance = 1,
   distance_col = NULL,
@@ -67,7 +67,7 @@ fozzie_string_right_join(
 fozzie_string_anti_join(
   df1,
   df2,
-  by,
+  by = NULL,
   method = "levenshtein",
   max_distance = 1,
   distance_col = NULL,
@@ -80,7 +80,7 @@ fozzie_string_anti_join(
 fozzie_string_full_join(
   df1,
   df2,
-  by,
+  by = NULL,
   method = "levenshtein",
   max_distance = 1,
   distance_col = NULL,
@@ -93,7 +93,7 @@ fozzie_string_full_join(
 fozzie_string_semi_join(
   df1,
   df2,
-  by,
+  by = NULL,
   method = "levenshtein",
   max_distance = 1,
   distance_col = NULL,
@@ -123,6 +123,7 @@ or a named list like \code{list(col1 = "col2")}.}
 \item \code{"jaccard"}: Jaccard similarity (requires \code{q}).
 \item \code{"jaro"}: Jaro similarity.
 \item \code{"jaro_winkler"} or \code{"jw"}: Jaro-Winkler similarity.
+\item \code{"soundex"}: Soundex codes based on the National Archives standard.
 }}
 
 \item{how}{A string specifying the join mode. One of:
