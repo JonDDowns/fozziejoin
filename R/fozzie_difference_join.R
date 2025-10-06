@@ -52,7 +52,7 @@ fozzie_difference_join <- function(
 #' @rdname fozzie_difference_join_family
 #' @export
 fozzie_difference_inner_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     max_distance = 1,
     distance_col = NULL,
     nthread = NULL) {
@@ -68,7 +68,7 @@ fozzie_difference_inner_join <- function(
 #' @rdname fozzie_difference_join_family
 #' @export
 fozzie_difference_left_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     max_distance = 1,
     distance_col = NULL,
     nthread = NULL) {
@@ -84,7 +84,7 @@ fozzie_difference_left_join <- function(
 #' @rdname fozzie_difference_join_family
 #' @export
 fozzie_difference_right_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     max_distance = 1,
     distance_col = NULL,
     nthread = NULL) {
@@ -100,7 +100,7 @@ fozzie_difference_right_join <- function(
 #' @rdname fozzie_difference_join_family
 #' @export
 fozzie_difference_anti_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     max_distance = 1,
     distance_col = NULL,
     nthread = NULL) {
@@ -116,7 +116,7 @@ fozzie_difference_anti_join <- function(
 #' @rdname fozzie_difference_join_family
 #' @export
 fozzie_difference_full_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     max_distance = 1,
     distance_col = NULL,
     nthread = NULL) {
@@ -132,7 +132,7 @@ fozzie_difference_full_join <- function(
 #' @rdname fozzie_difference_join_family
 #' @export
 fozzie_difference_semi_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     max_distance = 1,
     distance_col = NULL,
     nthread = NULL) {

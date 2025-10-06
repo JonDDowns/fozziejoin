@@ -79,3 +79,16 @@ test_that("multi-column left difference join matches rows across multiple keys",
   expect_true(all(abs(result$x.x[1:3] - result$x.y[1:3]) <= 0.15))
   expect_true(all(abs(result$y.x[1:3] - result$y.y[1:3]) <= 0.15))
 })
+
+test_that("inner join skips rows with NA values", {
+  df1 <- data.frame(x = c(1.0, NA, 3.0))
+  df2 <- data.frame(x = c(1.05, 2.0, NA))
+
+  result <- fozzie_difference_inner_join(df1, df2, by = c("x"), max_distance = 0.1)
+
+  # Only (1.0, 1.05) and (3.0, NA) are possible, but NA should be skipped
+  expect_equal(nrow(result), 1)
+  expect_equal(result$x.x, 1.0)
+  expect_equal(result$x.y, 1.05)
+})
+

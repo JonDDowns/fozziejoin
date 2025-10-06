@@ -14,7 +14,7 @@
 fozzie_distance_join(
   df1,
   df2,
-  by,
+  by = NULL,
   how = "inner",
   max_distance = 1,
   method = "manhattan",
@@ -25,7 +25,7 @@ fozzie_distance_join(
 fozzie_distance_inner_join(
   df1,
   df2,
-  by,
+  by = NULL,
   max_distance = 1,
   method = "manhattan",
   distance_col = NULL,
@@ -35,7 +35,7 @@ fozzie_distance_inner_join(
 fozzie_distance_left_join(
   df1,
   df2,
-  by,
+  by = NULL,
   max_distance = 1,
   method = "manhattan",
   distance_col = NULL,
@@ -45,7 +45,7 @@ fozzie_distance_left_join(
 fozzie_distance_right_join(
   df1,
   df2,
-  by,
+  by = NULL,
   max_distance = 1,
   method = "manhattan",
   distance_col = NULL,
@@ -55,7 +55,7 @@ fozzie_distance_right_join(
 fozzie_distance_full_join(
   df1,
   df2,
-  by,
+  by = NULL,
   max_distance = 1,
   method = "manhattan",
   distance_col = NULL,
@@ -65,7 +65,7 @@ fozzie_distance_full_join(
 fozzie_distance_anti_join(
   df1,
   df2,
-  by,
+  by = NULL,
   max_distance = 1,
   method = "manhattan",
   distance_col = NULL,
@@ -75,7 +75,7 @@ fozzie_distance_anti_join(
 fozzie_distance_semi_join(
   df1,
   df2,
-  by,
+  by = NULL,
   max_distance = 1,
   method = "manhattan",
   distance_col = NULL,

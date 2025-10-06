@@ -14,6 +14,7 @@ Currently, the following function families are available:
 - `fozzie_string_join` 
 - `fozzie_difference_join`
 - `fozzie_distance_join`
+- `fozzie_interval_join`
 
 These function families include related functions, such as 
 `fozzie_string_inner_join`.
@@ -30,13 +31,14 @@ x86_64-w64-mingw32/64) and Linux (R 4.5.1, x86-64-pc-linux-gnu platform).
 
 ### Requirements
 
-R 4.2 or greater is required for all installations. R 4.5.0 is preferred.
+R 4.2 or greater is required for all installations. R 4.5.0 or greater is preferred.
 
 On Linux or to build from source, you will need these additional dependencies:
 
 - Cargo, the Rust package manager
 - Rustc
 - xz
+- `devtools`: The installation instructions assume you have this package for source installs. `R CMD INSTALL` or even `install.packages()` should also work if you want to avoid this dependency.
 
 To run the examples in the README or benchmarking scripts, the following are
 required:
@@ -77,14 +79,7 @@ you must use the **GNU Rust toolchain**, not MSVC. This is because R is built
 with GCC (via Rtools), and Rust must match that ABI for compatibility.
 This assumes you already have Rust installed.
 
-1. Clone the repo and change into it
-
-```sh
-git clone https://github.com/JonDDowns/fozziejoin.git
-cd fozziejoin
-```
-
-2. Set the default Rust toolchain to GNU:
+1. Set the default Rust toolchain to GNU:
 
 ```sh
 # Install the GNU toolchain if needed
@@ -93,12 +88,14 @@ cd fozziejoin
 rustup override set stable-x86_64-pc-windows-gnu
 ```
 
-3. Install the package:
+2. Install the latest build from GitHub
 
-```r
-devtools::install()
-# Or install directly from GitHub:
-# devtools::install_github("JonDDowns/fozziejoin")
+```sh
+Rscript -e 'devtools::install_github("JonDDowns/fozziejoin")'
+# Or, clone and install locally
+# git clone https://github.com/JonDDowns/fozziejoin.git
+# cd fozziejoin
+# Rscript.exe -e "devtools::install()"
 ```
 
 #### From binary (Windows only)
@@ -154,17 +151,24 @@ fozzie <- fozzie_string_join(
 
 ## Benchmarks
 
-To date, `fozziejoin` has been benchmarked on Windows and Linux.
-Currently all string distance algorithms except for `soundex` joins have been
-implemented. As of v0.0.7, `fozziejoin` beats the equivalent `fuzzyjoin`
-benchmark in every instance while producing identical results. The highest
-observed performance gains come from Linux systems, presumably due to the
-relative efficiency of parallelization via `rayon`. All benchmark scripts are
-located [in the scripts subfolder](./scripts/benchmarks.R).
+[TODO] Start including all benchmarks, not just string distance.
+
+To date, `fozziejoin` has been benchmarked on Windows and Linux. As of v0.0.7,
+`fozziejoin` beats the equivalent `fuzzyjoin` benchmark in every instance.
+Results are identical for all cases except `soundex`. The largest observed
+performance gains come from Linux systems, presumably due to the relative
+efficiency of parallelization via `rayon`. All benchmark scripts are located
+[in the scripts subfolder](./scripts/).
 
 [![Linux benchmark results](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Linux.svg)](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Linux.svg)
 
 [![Windows benchmark results](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Windows.svg)](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Windows.svg)
+
+These benchmarks are generous to `fuzzyjoin`, primarily because our
+implementation deduplicates strings before calculating distances. Thus,
+`fozziejoin`'s performance advantage should be larger in any cases where many
+duplicate values exist in either dataset. Joins on first and last names are a
+prime example of this.
 
 ## Known behavior changes relative to `fuzzyjoin`
 
@@ -174,18 +178,22 @@ with `fuzzyjoin` behavior are listed in [this GH issue](https://github.com/JonDD
 Please submit a GitHub issue if there are features you'd like to see! We will
 prioritize feature support based on community feedback.
 
-Below are some behavior changes that we do not currently plan to address.
+Below are some known differences in behavior that we do not currently plan to
+address.
 
-- `fozziejoin` allows `NA` values on the join columns specified for string distance joins. `fuzzyjoin` would throw an error. This change allows `NA` values to persist in left, right, anti, semi, and full joins. Two `NA` values are not considered a match.
+- `fozziejoin` allows `NA` values on the join columns specified for string distance joins. `fuzzyjoin` would throw an error. This change allows `NA` values to persist in left, right, anti, semi, and full joins. Two `NA` values are not considered a match. We find this behavior more desirable in the case of fuzzy joins.
 
-- The prefix scaling factor for Jaro-Winkler distance (`max_prefix`) is an integer representing a fixed number of characters. The analagous `stringdist` parameter, `bt`, was a proportion of string length.
+- The prefix scaling factor for Jaro-Winkler distance (`max_prefix`) is an integer limiting the number of prefix characters used to boost similarity. In contrast, the analogous `stringdist` parameter `bt` is a proportion of the string length, making the prefix contribution relative rather than fixed.
 
 - Some `stringdist` arguments are not supported. Implementation is challenging, but not impossible. We could prioritize their inclusion if user demand were sufficient:
     - `useBytes`
     - `weight`
+    - `useNames` is not relevant to the final output of the fuzzy join. There is no need to implement this.
 
-
-- `fuzzyjoin::interval_join` uses `IRanges` as a backend. When we implement a `fozziejoin` equivalent, it will behave more like `data.table::foverlaps`. Mainly, we think **decimal overlaps** are important to support.
+- For interval joins, we allow for both `real` and `integer` join types!
+    - The integer mode is designed to match the behavior of IRanges, which is used in `fuzzyjoin`. You will need to coerce the join columns to integers to enable this mode.
+    - The `real` mode behaves more like `data.table`'s `foverlaps`.
+    - An `auto` mode (default) will determine the method to use based on the input column type
 
 - `soundex` implementations differ slightly.
     - Our implementation considers multiple encodings in the case of prefixes prefixes, as is specified in the [National Archives Standard](https://www.archives.gov/research/census/soundex).
