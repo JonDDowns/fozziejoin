@@ -69,7 +69,7 @@ run_bench <- function(method, mode, max_dist, q = NA, nsamp, seed = 2016) {
   fuzzy <- data.frame(fuzzy)
 
   # Confirm all results are the same (soundex not expected to match exactly)
-  if (!isTRUE(all.equal(fuzzy, fozzie)) & !method == 'soundex') {
+  if (!isTRUE(all.equal(fuzzy, fozzie)) & !method == "soundex") {
     print("Not all observations equal! differences")
     print(all.equal(fuzzy, fozzie))
   }

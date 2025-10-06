@@ -4,12 +4,15 @@ use extendr_api::prelude::*;
 
 pub mod difference;
 pub mod distance;
+pub mod interval;
 pub mod merge;
 pub mod string;
 pub mod utils;
 
 use crate::difference::{difference_join, difference_pairs};
 use crate::distance::fuzzy_indices_dist;
+use crate::interval::integer::fuzzy_indices_interval_int;
+use crate::interval::real::fuzzy_indices_interval_real;
 use crate::merge::dispatch_join;
 use crate::merge::DistanceData;
 use crate::string::string_join;
@@ -150,10 +153,48 @@ pub fn fozzie_distance_join_rs(
     Ok(joined)
 }
 
+/// @export
+#[extendr]
+pub fn fozzie_interval_join_rs(
+    df1: List,
+    df2: List,
+    by: List,
+    how: String,
+    overlap_type: String,
+    maxgap: f64,
+    minoverlap: f64,
+    interval_mode: &str,
+    nthread: Option<usize>,
+) -> Result<List> {
+    let pool = get_pool(nthread)?;
+
+    let (idxs1, idxs2) = match interval_mode {
+        "real" => {
+            fuzzy_indices_interval_real(&df1, &df2, &by, &overlap_type, maxgap, minoverlap, &pool)
+        }
+        "int" | "integer" => fuzzy_indices_interval_int(
+            &df1,
+            &df2,
+            &by,
+            &overlap_type,
+            maxgap as i32,
+            minoverlap as i32,
+            &pool,
+        ),
+
+        _ => panic!("Uhoh!"),
+    }
+    .map_err(|e| anyhow!("Error when finding fuzzy matches: {e}"))?;
+    let dists = DistanceData::Single(&vec![]);
+    let joined = dispatch_join(how.as_str(), &df1, &df2, idxs1, idxs2, None, dists, by);
+    Ok(joined)
+}
+
 // Export the function to R
 extendr_module! {
     mod fozziejoin;
     fn fozzie_string_join_rs;
     fn fozzie_difference_join_rs;
     fn fozzie_distance_join_rs;
+    fn fozzie_interval_join_rs;
 }

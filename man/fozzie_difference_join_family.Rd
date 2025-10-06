@@ -24,7 +24,7 @@ fozzie_difference_join(
 fozzie_difference_inner_join(
   df1,
   df2,
-  by,
+  by = NULL,
   max_distance = 1,
   distance_col = NULL,
   nthread = NULL
@@ -33,7 +33,7 @@ fozzie_difference_inner_join(
 fozzie_difference_left_join(
   df1,
   df2,
-  by,
+  by = NULL,
   max_distance = 1,
   distance_col = NULL,
   nthread = NULL
@@ -42,7 +42,7 @@ fozzie_difference_left_join(
 fozzie_difference_right_join(
   df1,
   df2,
-  by,
+  by = NULL,
   max_distance = 1,
   distance_col = NULL,
   nthread = NULL
@@ -51,7 +51,7 @@ fozzie_difference_right_join(
 fozzie_difference_anti_join(
   df1,
   df2,
-  by,
+  by = NULL,
   max_distance = 1,
   distance_col = NULL,
   nthread = NULL
@@ -60,7 +60,7 @@ fozzie_difference_anti_join(
 fozzie_difference_full_join(
   df1,
   df2,
-  by,
+  by = NULL,
   max_distance = 1,
   distance_col = NULL,
   nthread = NULL
@@ -69,7 +69,7 @@ fozzie_difference_full_join(
 fozzie_difference_semi_join(
   df1,
   df2,
-  by,
+  by = NULL,
   max_distance = 1,
   distance_col = NULL,
   nthread = NULL

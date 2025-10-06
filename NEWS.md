@@ -2,6 +2,10 @@
 
 - Distance joins now available.
 - Semi join type added.
+- Interval joins added, with three "interval_mode"'s:
+    - `integer`: integer-based join types, with behavior designed to emulate IRanges findOverlaps. Importantly, [1, 2] and [3, 4] would be considered overlapping in this case.
+    - `real`: real number joins, where there must be some continuous overlap between ranges to be considered matching.
+    - `auto`: behavior determined by the input column types.
 - The `by` function should now better resemble the `fuzzyjoin` implementation. Notes have been added to the internal function signature to acknowledge their contribution.
 - Performance improvements.
     - Rust code now uses FxHashMap and FxHashSet universally.
@@ -11,7 +15,6 @@
     - Most areas of the code now gracefully return an error to R instead of panicking.
     - The areas where panics still might happen aren't known to throw errors, but I'd still like to properly handle them in the future.
 - Now using `styler` to be more style guide compliant.
-- Fixed bug with the implementation for `by` arguments to join functions.
 
 # fozziejoin 0.0.8
 

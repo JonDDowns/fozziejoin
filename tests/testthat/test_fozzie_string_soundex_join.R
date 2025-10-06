@@ -49,4 +49,3 @@ test_that("Soundex join returns expected columns", {
 
   expect_equal(sort(names(result)), sort(c("name.x", "name.y")))
 })
-

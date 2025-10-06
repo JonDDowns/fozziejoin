@@ -32,7 +32,7 @@
 #' @name fozzie_distance_join_family
 #' @export
 fozzie_distance_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     how = "inner",
     max_distance = 1,
     method = "manhattan",
@@ -53,7 +53,7 @@ fozzie_distance_join <- function(
 #' @rdname fozzie_distance_join_family
 #' @export
 fozzie_distance_inner_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     max_distance = 1,
     method = "manhattan",
     distance_col = NULL,
@@ -71,7 +71,7 @@ fozzie_distance_inner_join <- function(
 #' @rdname fozzie_distance_join_family
 #' @export
 fozzie_distance_left_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     max_distance = 1,
     method = "manhattan",
     distance_col = NULL,
@@ -89,7 +89,7 @@ fozzie_distance_left_join <- function(
 #' @rdname fozzie_distance_join_family
 #' @export
 fozzie_distance_right_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     max_distance = 1,
     method = "manhattan",
     distance_col = NULL,
@@ -107,7 +107,7 @@ fozzie_distance_right_join <- function(
 #' @rdname fozzie_distance_join_family
 #' @export
 fozzie_distance_full_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     max_distance = 1,
     method = "manhattan",
     distance_col = NULL,
@@ -125,7 +125,7 @@ fozzie_distance_full_join <- function(
 #' @rdname fozzie_distance_join_family
 #' @export
 fozzie_distance_anti_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     max_distance = 1,
     method = "manhattan",
     distance_col = NULL,
@@ -143,7 +143,7 @@ fozzie_distance_anti_join <- function(
 #' @rdname fozzie_distance_join_family
 #' @export
 fozzie_distance_semi_join <- function(
-    df1, df2, by,
+    df1, df2, by = NULL,
     max_distance = 1,
     method = "manhattan",
     distance_col = NULL,
