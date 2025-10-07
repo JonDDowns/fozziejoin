@@ -2,7 +2,7 @@
 #'
 #' `fozzie_interval_join()` and its directional variants (`fozzie_interval_inner_join()`, `fozzie_interval_left_join()`, etc.)
 #' enable approximate matching of interval columns in two data frames based on overlap logic.
-#' These joins are analogous to `data.table::foverlaps`, but implemented in Rust for performance.
+#' These joins are conceptually similar to `data.table::foverlaps()` and Bioconductor's `IRanges::findOverlaps()`, supporting both continuous and discrete interval semantics.
 #'
 #' @param df1 A data frame to join from (left table).
 #' @param df2 A data frame to join to (right table).
@@ -21,6 +21,10 @@
 #'   - `"end"`: left end within right.
 #' @param maxgap Maximum allowed gap between intervals (non-negative).
 #' @param minoverlap Minimum required overlap length (non-negative).
+#' @param interval_mode A string specifying how interval boundaries should be interpreted. One of:
+#'   - `"auto"`: automatically infer mode based on column types.
+#'   - `"real"`: treat interval boundaries as continuous numeric values (e.g., `double`). Overlaps are computed using strict inequality and floating-point arithmetic.
+#'   - `"integer"`: treat interval boundaries as discrete integer ranges. This mode behaves similarly to Bioconductor's `IRanges` — intervals are inclusive and defined over integer coordinates, so `[start, end]` includes both endpoints. This affects how overlaps, gaps, and minimum overlap lengths are calculated, especially when `maxgap` or `minoverlap` are used.
 #' @param nthread Optional integer to specify number of threads for parallelization.
 #'
 #' @return A data frame with approximately matched rows depending on the join type.
@@ -45,8 +49,8 @@ fozzie_interval_join <- function(
 
   interval_mode <- match.arg(interval_mode)
 
+  # In auto mode, infer mode based on column types
   if (interval_mode == "auto") {
-    # Infer mode based on column types
     all_cols <- c(names(by), unlist(by))
     all_types <- sapply(all_cols, function(col) {
       c(typeof(df1[[col]]), typeof(df2[[col]]))

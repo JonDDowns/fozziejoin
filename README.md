@@ -4,7 +4,7 @@
 > APIs may change, and installing from source requires the Rust toolchain.
 
 `fozziejoin` is an R package that performs fast fuzzy joins using Rust as a
-backend. It is meant to be a performance-minded version of the
+backend. It is a performance-minded re-imagining of the very popular
 [`fuzzyjoin` package]( https://CRAN.R-project.org/package=fuzzyjoin).
 Performance improvements relative to `fuzzyjoin` can be significant, especially
 for string distance joins. See the [benchmarks](#Benchmarks) for more details.
@@ -15,6 +15,8 @@ Currently, the following function families are available:
 - `fozzie_difference_join`
 - `fozzie_distance_join`
 - `fozzie_interval_join`
+- `fozzie_temporal_join`
+- `fozzie_temporal_interval_join`
 
 These function families include related functions, such as 
 `fozzie_string_inner_join`.

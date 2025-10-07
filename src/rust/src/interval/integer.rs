@@ -99,6 +99,9 @@ pub fn fuzzy_indices_interval_int(
                     .iter()
                     .enumerate()
                     .filter_map(move |(j, (rs, re))| {
+                        // Query: (ls, le), Subject: (rs, re)
+
+                        // Compute gap: number of positions between intervals (exclusive)
                         let gap = if le < rs {
                             rs - le - 1
                         } else if re < ls {
@@ -107,16 +110,23 @@ pub fn fuzzy_indices_interval_int(
                             0
                         };
 
-                        let overlap_len = (le.min(re) - ls.max(rs)).max(0);
+                        // Compute overlap length: number of shared positions (inclusive)
+                        let overlap_len = (le.min(re) - ls.max(rs) + 1).max(0);
 
-                        let overlaps = match overlap_type {
-                            OverlapType::Any => ls <= re && le >= rs,
-                            OverlapType::Within => ls <= rs && re <= le,
-                            OverlapType::Start => ls == rs,
-                            OverlapType::End => le == re,
+                        // Apply fuzzy matching constraints
+                        if gap > maxgap || overlap_len < minoverlap {
+                            return None;
+                        }
+
+                        // Apply semantic constraint
+                        let semantic_match = match overlap_type {
+                            OverlapType::Any => true, // already handled by gap/overlap
+                            OverlapType::Within => *ls >= rs - maxgap && *le <= re + maxgap,
+                            OverlapType::Start => (ls - rs).abs() <= maxgap,
+                            OverlapType::End => (le - re).abs() <= maxgap,
                         };
 
-                        if overlaps && gap <= maxgap && overlap_len >= minoverlap {
+                        if semantic_match {
                             Some((i + 1, j + 1))
                         } else {
                             None

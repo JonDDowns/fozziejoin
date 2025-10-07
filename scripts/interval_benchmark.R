@@ -1,5 +1,6 @@
 library(microbenchmark)
-library(fozziejoin)
+#library(fozziejoin)
+devtools::load_all()
 library(fuzzyjoin)
 library(data.table)
 set.seed(42)
@@ -43,13 +44,6 @@ for (size in sizes) {
       maxgap = 0L,
       minoverlap = 0L,
       interval_mode = "integer"
-    ),
-    foverlaps = fover <- foverlaps(
-      dt1, dt2,
-      by.x = c("start1", "end1"),
-      by.y = c("start2", "end2"),
-      type = "any",
-      nomatch = 0L
     ),
     times = 10
   )
