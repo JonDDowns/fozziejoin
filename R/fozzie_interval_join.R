@@ -75,7 +75,8 @@ fozzie_interval_join <- function(
     interval_mode = interval_mode,
     nthread = nthread
   )
-  data.frame(tmp)
+
+  convert_output(df1, df2, tmp)
 }
 
 #' @rdname fozzie_interval_join_family

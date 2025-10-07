@@ -114,8 +114,7 @@ fozzie_temporal_interval_join <- function(
     interval_mode = "real",
     nthread = nthread
   )
-
-  data.frame(tmp)
+  convert_output(df1, df2, tmp)
 }
 
 #' @rdname fozzie_temporal_interval_join_family

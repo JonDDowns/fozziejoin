@@ -47,7 +47,7 @@ fozzie_distance_join <- function(
     distance_col = distance_col,
     nthread = nthread
   )
-  data.frame(tmp)
+  convert_output(df1, df2, tmp)
 }
 
 #' @rdname fozzie_distance_join_family

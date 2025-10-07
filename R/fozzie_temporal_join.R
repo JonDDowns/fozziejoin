@@ -103,7 +103,7 @@ fozzie_temporal_join <- function(
     nthread = nthread
   )
 
-  data.frame(result)
+  convert_output(df1, df2, result)
 }
 
 #' @rdname fozzie_temporal_join_family

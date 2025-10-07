@@ -2,6 +2,9 @@
 
 - Distance joins now available.
 - Semi join type added.
+- If one of the input dataframes is a `tibble`, the output result will now be a `tibble`.
+    - This is necessary to handle some of the functionalities present in `tibble` but not in `data.frame`.
+    - `tibble` is now a suggested import.
 - Interval joins added, with three "interval_mode"'s:
     - `integer`: integer-based join types, with behavior designed to emulate IRanges findOverlaps. Importantly, [1, 2] and [3, 4] would be considered overlapping in this case.
     - `real`: real number joins, where there must be some continuous overlap between ranges to be considered matching.
