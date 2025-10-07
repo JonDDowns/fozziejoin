@@ -175,10 +175,9 @@ prime example of this.
 ## Known behavior changes relative to `fuzzyjoin`
 
 While `fozziejoin` is heavily inspired by `fuzzyjoin`, it does not seek to
-replicate it's behavior entirely. A list of planned changes to better align
-with `fuzzyjoin` behavior are listed in [this GH issue](https://github.com/JonDDowns/fozziejoin/issues/5).
-Please submit a GitHub issue if there are features you'd like to see! We will
-prioritize feature support based on community feedback.
+replicate it's behavior entirely. Please submit a GitHub issue if there are
+features you'd like to see! We will prioritize feature support based on
+community feedback.
 
 Below are some known differences in behavior that we do not currently plan to
 address.
