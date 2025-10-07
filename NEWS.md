@@ -1,4 +1,4 @@
-# fozziejoin 0.0.9 (WORKING)
+# fozziejoin 0.0.9
 
 - Distance joins now available.
 - Semi join type added.
