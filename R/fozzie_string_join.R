@@ -64,7 +64,7 @@ fozzie_string_join <- function(
     df1, df2, by, method, how,
     max_distance, distance_col, q, max_prefix, prefix_weight, nthread
   )
-  data.frame(tmp)
+  convert_output(df1, df2, tmp)
 }
 
 #' @rdname fozzie_string_join_family

@@ -76,17 +76,32 @@ pub fn difference_join(
         .dollar(lk)
         .map_err(|_| anyhow!("Column `{}` not found in df1", lk))?;
 
-    let vec1 = left_col
-        .as_real_vector()
-        .ok_or_else(|| anyhow!("Column `{}` in df1 is not a numeric vector", lk))?;
+    let vec1: Vec<f64> = if let Some(v) = left_col.as_real_vector() {
+        v.to_vec()
+    } else if let Some(v) = left_col.as_integer_vector() {
+        v.iter().map(|&x| x as f64).collect()
+    } else {
+        return Err(anyhow!(
+            "Column `{}` in df1 is not numeric (integer or double)",
+            lk
+        ));
+    };
 
     let right_col = df2
         .dollar(rk)
         .map_err(|_| anyhow!("Column `{}` not found in df2", rk))?;
+    use extendr_api::prelude::*;
 
-    let vec2 = right_col
-        .as_real_vector()
-        .ok_or_else(|| anyhow!("Column `{}` in df2 is not a numeric vector", rk))?;
+    let vec2: Vec<f64> = if let Some(v) = right_col.as_real_vector() {
+        v.to_vec()
+    } else if let Some(v) = left_col.as_integer_vector() {
+        v.iter().map(|&x| x as f64).collect()
+    } else {
+        return Err(anyhow!(
+            "Column `{}` in df1 is not numeric (integer or double)",
+            lk
+        ));
+    };
 
     let (idxs1, idxs2, dists) = fuzzy_indices_diff(vec1, vec2, max_distance, &pool);
     Ok((idxs1, idxs2, dists))
@@ -111,9 +126,16 @@ pub fn difference_pairs(
         .slice(idxs1)
         .map_err(|_| anyhow!("Failed to slice df1 column '{}'", lk))?;
 
-    let vec1: Vec<f64> = vec1_binding
-        .as_real_vector()
-        .ok_or_else(|| anyhow!("Issue converting df1 column '{}' to numeric", lk))?;
+    let vec1: Vec<f64> = if let Some(v) = vec1_binding.as_real_vector() {
+        v.to_vec()
+    } else if let Some(v) = vec1_binding.as_integer_vector() {
+        v.iter().map(|&x| x as f64).collect()
+    } else {
+        return Err(anyhow!(
+            "Column `{}` in df1 is not numeric (integer or double)",
+            lk
+        ));
+    };
 
     let vec2_binding = df2
         .dollar(rk)
@@ -121,9 +143,16 @@ pub fn difference_pairs(
         .slice(idxs2)
         .map_err(|_| anyhow!("Failed to slice df1 column '{}'", rk))?;
 
-    let vec2: Vec<f64> = vec2_binding
-        .as_real_vector()
-        .ok_or_else(|| anyhow!("Issue converting df2 column '{}' to numeric", rk))?;
+    let vec2: Vec<f64> = if let Some(v) = vec2_binding.as_real_vector() {
+        v.to_vec()
+    } else if let Some(v) = vec2_binding.as_integer_vector() {
+        v.iter().map(|&x| x as f64).collect()
+    } else {
+        return Err(anyhow!(
+            "Column `{}` in df1 is not numeric (integer or double)",
+            lk
+        ));
+    };
 
     let threshold = max_distance + f64::EPSILON;
 

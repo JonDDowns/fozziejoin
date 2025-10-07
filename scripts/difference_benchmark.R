@@ -4,15 +4,15 @@ library(fuzzyjoin)
 library(dplyr)
 set.seed(42)
 
-sizes <- c(5000, 10000, 20000)
+sizes <- c(5000, 10000, 20000, 31623)
 
 for (size in sizes) {
   print(paste("Millions of comparisons:", round(size^2 / 1e6, 2)))
-  df1 <- data.frame(
-    x = round(runif(size, min = 0, max = 100), 2)
+  df1 <- tibble::tibble(
+    x = runif(size, min = 0, max = 500)
   )
-  df2 <- data.frame(
-    x = round(runif(size, min = 0, max = 100), 2)
+  df2 <- tibble::tibble(
+    x = runif(size, min = 0, max = 500)
   )
   timing_results <- microbenchmark(
     fuzzy = fuzzy <- difference_join(
@@ -25,9 +25,6 @@ for (size in sizes) {
     ),
     times = 10
   )
-
-  # Get fuzzy df in same format as fozzie to do a direct comparison
-  fuzzy <- data.frame(fuzzy)
 
   # Confirm all results are the same
   if (!isTRUE(all.equal(fuzzy, fozzie))) {

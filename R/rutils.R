@@ -35,3 +35,13 @@ normalize_by <- function(df1, df2, by) {
 
   return(setNames(as.list(y), x))
 }
+
+convert_output <- function(left, right, out) {
+  is_tibble_input <- inherits(left, "tbl_df") || inherits(right, "tbl_df")
+  if (is_tibble_input) {
+    result <- tibble::as_tibble(out)
+  } else {
+    result <- as.data.frame(out)
+  }
+  result
+}
