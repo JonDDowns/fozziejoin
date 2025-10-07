@@ -29,8 +29,7 @@ test_that("temporal join works with Date columns and unit = 'days'", {
   expect_equal(as.integer(abs(result$date.y - result$date.x)), rep(1, 3))
 
   expect_error(fozzie_temporal_inner_join(
-        df1, df2, by = c(date = "date"), max_distance = 1, unit = "hours"
-    ))
-
+    df1, df2,
+    by = c(date = "date"), max_distance = 1, unit = "hours"
+  ))
 })
-

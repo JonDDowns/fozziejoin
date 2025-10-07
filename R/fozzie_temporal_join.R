@@ -46,7 +46,6 @@ fozzie_temporal_join <- function(
     unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
     distance_col = NULL,
     nthread = NULL) {
-
   unit <- match.arg(unit)
   by <- normalize_by(df1, df2, by)
 
@@ -63,7 +62,7 @@ fozzie_temporal_join <- function(
     }
 
     if (!(inherits(col1, "POSIXct") || inherits(col1, "Date")) ||
-        !(inherits(col2, "POSIXct") || inherits(col2, "Date"))) {
+      !(inherits(col2, "POSIXct") || inherits(col2, "Date"))) {
       stop(sprintf("Column '%s' must be of class 'Date' or 'POSIXct' in both data frames.", key))
     }
 
@@ -84,7 +83,7 @@ fozzie_temporal_join <- function(
     if (unit != "days") {
       stop("When joining on Date columns, unit must be 'days'.")
     }
-    max_distance_final <- max_distance  # already in days
+    max_distance_final <- max_distance # already in days
   } else {
     # Time unit multipliers to seconds
     unit_multipliers <- c(
@@ -214,4 +213,3 @@ fozzie_temporal_semi_join <- function(
     nthread = nthread
   )
 }
-

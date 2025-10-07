@@ -134,10 +134,14 @@ enable approximate matching of time-based intervals in two data frames using con
 All interval columns must be of the same type — either \code{Date} or \code{POSIXct} — across both data frames. Mixed types are not supported. Overlaps are computed using real-valued time semantics, allowing for fractional gaps and overlaps. This is useful for calendar intervals (\code{Date}) as well as precise timestamp ranges (\code{POSIXct}).
 }
 \examples{
-df1 <- data.frame(start = as.Date(c("2023-01-01", "2023-01-05")),
-                  end   = as.Date(c("2023-01-03", "2023-01-07")))
-df2 <- data.frame(start = as.Date(c("2023-01-02", "2023-01-06")),
-                  end   = as.Date(c("2023-01-04", "2023-01-08")))
+df1 <- data.frame(
+  start = as.Date(c("2023-01-01", "2023-01-05")),
+  end = as.Date(c("2023-01-03", "2023-01-07"))
+)
+df2 <- data.frame(
+  start = as.Date(c("2023-01-02", "2023-01-06")),
+  end = as.Date(c("2023-01-04", "2023-01-08"))
+)
 
 fozzie_temporal_interval_inner_join(
   df1, df2,

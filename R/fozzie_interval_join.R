@@ -34,6 +34,10 @@
 #' df2 <- data.frame(start = c(2, 6), end = c(4, 8))
 #'
 #' fozzie_interval_inner_join(df1, df2, by = list(start = "start", end = "end"), overlap_type = "any")
+#' @note
+#' When `interval_mode = "real"`, interval boundaries are treated as continuous values and matched using floating-point arithmetic.
+#' Due to precision limitations, a small threshold (typically around `1e-6`) is internally added to the query range to ensure adjacent or near-touching intervals are considered for matching.
+#' This is especially relevant for timestamp-based joins, where intervals like `[14:00:00, 14:00:01]` and `[13:00:00, 14:00:00]` may fail to match unless a sufficient `maxgap` or internal epsilon is applied.
 #'
 #' @name fozzie_interval_join_family
 #' @export

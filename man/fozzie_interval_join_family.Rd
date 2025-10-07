@@ -135,10 +135,14 @@ A data frame with approximately matched rows depending on the join type.
 enable approximate matching of interval columns in two data frames based on overlap logic.
 These joins are conceptually similar to \code{data.table::foverlaps()} and Bioconductor's \code{IRanges::findOverlaps()}, supporting both continuous and discrete interval semantics.
 }
+\note{
+When \code{interval_mode = "real"}, interval boundaries are treated as continuous values and matched using floating-point arithmetic.
+Due to precision limitations, a small threshold (typically around \code{1e-6}) is internally added to the query range to ensure adjacent or near-touching intervals are considered for matching.
+This is especially relevant for timestamp-based joins, where intervals like \verb{[14:00:00, 14:00:01]} and \verb{[13:00:00, 14:00:00]} may fail to match unless a sufficient \code{maxgap} or internal epsilon is applied.
+}
 \examples{
 df1 <- data.frame(start = c(1, 5), end = c(3, 7))
 df2 <- data.frame(start = c(2, 6), end = c(4, 8))
 
 fozzie_interval_inner_join(df1, df2, by = list(start = "start", end = "end"), overlap_type = "any")
-
 }

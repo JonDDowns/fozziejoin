@@ -29,10 +29,14 @@
 #' @return A data frame with approximately matched rows depending on the join type.
 #'
 #' @examples
-#' df1 <- data.frame(start = as.Date(c("2023-01-01", "2023-01-05")),
-#'                   end   = as.Date(c("2023-01-03", "2023-01-07")))
-#' df2 <- data.frame(start = as.Date(c("2023-01-02", "2023-01-06")),
-#'                   end   = as.Date(c("2023-01-04", "2023-01-08")))
+#' df1 <- data.frame(
+#'   start = as.Date(c("2023-01-01", "2023-01-05")),
+#'   end = as.Date(c("2023-01-03", "2023-01-07"))
+#' )
+#' df2 <- data.frame(
+#'   start = as.Date(c("2023-01-02", "2023-01-06")),
+#'   end = as.Date(c("2023-01-04", "2023-01-08"))
+#' )
 #'
 #' fozzie_temporal_interval_inner_join(
 #'   df1, df2,
@@ -52,7 +56,6 @@ fozzie_temporal_interval_join <- function(
     minoverlap = 0,
     unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
     nthread = NULL) {
-
   unit <- match.arg(unit)
   by <- normalize_by(df1, df2, by)
 
@@ -69,7 +72,7 @@ fozzie_temporal_interval_join <- function(
     }
 
     if (!(inherits(col1, "POSIXct") || inherits(col1, "Date")) ||
-        !(inherits(col2, "POSIXct") || inherits(col2, "Date"))) {
+      !(inherits(col2, "POSIXct") || inherits(col2, "Date"))) {
       stop(sprintf("Column '%s' must be of class 'Date' or 'POSIXct' in both data frames.", key))
     }
 

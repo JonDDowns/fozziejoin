@@ -1,12 +1,11 @@
 #' @export
 fozzie_date_join <- function(
-  df1, df2,
-  by = NULL,
-  how = "inner",
-  max_distance = 1,
-  distance_col = NULL,
-  nthread = NULL
-) {
+    df1, df2,
+    by = NULL,
+    how = "inner",
+    max_distance = 1,
+    distance_col = NULL,
+    nthread = NULL) {
   by <- normalize_by(df1, df2, by)
 
   # Validate that all join columns are Date class
@@ -30,4 +29,3 @@ fozzie_date_join <- function(
 
   data.frame(tmp)
 }
-
