@@ -25,17 +25,21 @@ jobs:
           toolchain: stable
           profile: minimal
           override: true
-
+    
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libclang-dev
+          sudo apt-get install -y libclang-dev libcurl4-openssl-dev libssl-dev libxml2-dev build-essential
 
       - name: Install R dependencies
-        run: |
-          Rscript -e 'install.packages("devtools", repos = "https://cloud.r-project.org")'
-          Rscript -e 'install.packages(c("dplyr", "tidyr", "ggplot2", "microbenchmark", "fuzzyjoin", "qdapDictionaries"), repos = "https://cloud.r-project.org")'
-          Rscript -e 'devtools::install_local(".")'
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::remotes
+          needs: check
+
+      - name: Install local package
+        run: Rscript -e 'remotes::install_local(".", dependencies = TRUE)'
+
 
       - name: Run benchmarks
         run: Rscript scripts/string_benchmarks.R
