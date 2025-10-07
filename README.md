@@ -49,7 +49,8 @@ required:
 - `fuzzyjoin`
 - `qdapDictionaries`
 - `microbenchmark`
-
+- `tibble`
+ 
 ### Installation
 
 `fozziejoin` is currently under active development. The recommended
