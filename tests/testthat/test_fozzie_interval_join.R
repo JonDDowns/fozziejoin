@@ -2,12 +2,17 @@ test_that("inner interval join returns overlapping rows", {
   df1 <- data.frame(start = c(1, 5, 10, 30, 15), end = c(3, 7, 12, 32, 25))
   df2 <- data.frame(start = c(2, 6, 11, 33, 100), end = c(4, 8, 13, 35, 125))
 
+  all <- merge(df1, df2, by=NULL)
+  overlap <- with(all, (start.x <= end.y & start.y <= end.x))
+  expected <- all[overlap,]
+  rownames(expected) <- NULL
+
   result <- fozzie_interval_join(
     df1, df2,
     by = c("start" = "start", "end" = "end"),
     interval_mode = "real"
   )
-  expect_equal(nrow(result), 3)
+  expect_identical(result, expected)
 })
 
 test_that("left interval join includes all rows from df1", {
@@ -50,7 +55,7 @@ test_that("overlap_type = 'within' only matches fully contained intervals", {
   df2 <- data.frame(start = c(2, 6), end = c(9, 6.5))
 
   result <- fozzie_interval_join(df1, df2, by = c(start = "start", end = "end"), overlap_type = "within")
-  expect_equal(nrow(result), 3)
+  expect_equal(nrow(result), 1)
 })
 
 test_that("overlap_type = 'start' only matches overlapping starts", {
@@ -88,9 +93,8 @@ test_that("minoverlap filters out short overlaps", {
 test_that("interval_mode = 'integer' works with integer columns", {
   df1 <- data.frame(start = c(1L, 5L), end = c(3L, 7L))
   df2 <- data.frame(start = c(2L, 6L), end = c(4L, 8L))
-
-  result <- fozzie_interval_join(df1, df2, by = c(start = "start", end = "end"), interval_mode = "integer")
-  expect_equal(nrow(result), 2)
+  result <- fozzie_interval_join(df1, df2, by = c(start = "start", end = "end"), interval_mode = "integer", maxgap = 0)
+  expect_equal(nrow(result), 3)
 })
 
 test_that("interval_mode = 'real' works with numeric columns", {

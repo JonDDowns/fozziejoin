@@ -91,4 +91,3 @@ test_that("inner join skips rows with NA values", {
   expect_equal(result$x.x, 1.0)
   expect_equal(result$x.y, 1.05)
 })
-

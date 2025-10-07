@@ -118,6 +118,13 @@ fozzie_interval_semi_join(
 
 \item{minoverlap}{Minimum required overlap length (non-negative).}
 
+\item{interval_mode}{A string specifying how interval boundaries should be interpreted. One of:
+\itemize{
+\item \code{"auto"}: automatically infer mode based on column types.
+\item \code{"real"}: treat interval boundaries as continuous numeric values (e.g., \code{double}). Overlaps are computed using strict inequality and floating-point arithmetic.
+\item \code{"integer"}: treat interval boundaries as discrete integer ranges. This mode behaves similarly to Bioconductor's \code{IRanges} — intervals are inclusive and defined over integer coordinates, so \verb{[start, end]} includes both endpoints. This affects how overlaps, gaps, and minimum overlap lengths are calculated, especially when \code{maxgap} or \code{minoverlap} are used.
+}}
+
 \item{nthread}{Optional integer to specify number of threads for parallelization.}
 }
 \value{
@@ -126,12 +133,16 @@ A data frame with approximately matched rows depending on the join type.
 \description{
 \code{fozzie_interval_join()} and its directional variants (\code{fozzie_interval_inner_join()}, \code{fozzie_interval_left_join()}, etc.)
 enable approximate matching of interval columns in two data frames based on overlap logic.
-These joins are analogous to \code{data.table::foverlaps}, but implemented in Rust for performance.
+These joins are conceptually similar to \code{data.table::foverlaps()} and Bioconductor's \code{IRanges::findOverlaps()}, supporting both continuous and discrete interval semantics.
+}
+\note{
+When \code{interval_mode = "real"}, interval boundaries are treated as continuous values and matched using floating-point arithmetic.
+Due to precision limitations, a small threshold (typically around \code{1e-6}) is internally added to the query range to ensure adjacent or near-touching intervals are considered for matching.
+This is especially relevant for timestamp-based joins, where intervals like \verb{[14:00:00, 14:00:01]} and \verb{[13:00:00, 14:00:00]} may fail to match unless a sufficient \code{maxgap} or internal epsilon is applied.
 }
 \examples{
 df1 <- data.frame(start = c(1, 5), end = c(3, 7))
 df2 <- data.frame(start = c(2, 6), end = c(4, 8))
 
 fozzie_interval_inner_join(df1, df2, by = list(start = "start", end = "end"), overlap_type = "any")
-
 }

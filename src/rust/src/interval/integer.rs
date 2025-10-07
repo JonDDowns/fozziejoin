@@ -1,9 +1,9 @@
 use crate::interval::OverlapType;
 use anyhow::{anyhow, Result};
 use extendr_api::prelude::*;
+use interavl::IntervalTree;
 use rayon::prelude::*;
 use rayon::ThreadPool;
-use std::sync::Arc;
 
 pub fn fuzzy_indices_interval_int(
     df1: &List,
@@ -81,24 +81,32 @@ pub fn fuzzy_indices_interval_int(
 
     let overlap_type = OverlapType::new(overlap_type)?;
 
-    let right_intervals: Arc<Vec<(i32, i32)>> = Arc::new(
-        right_start
-            .iter()
-            .zip(right_end.iter())
-            .map(|(&s, &e)| (s, e))
-            .collect(),
-    );
+    // Build interval tree from df2
+    let mut tree: IntervalTree<i32, Vec<usize>> = IntervalTree::default();
+    for (j, (&rs, &re)) in right_start.iter().zip(right_end.iter()).enumerate() {
+        let rng = &(rs..(re + 1));
+        match tree.get_mut(&rng) {
+            Some(vec) => vec.push(j),
+            None => {
+                tree.insert(rng.clone(), vec![j]);
+            }
+        }
+    }
 
     pool.install(|| {
-        let results: Vec<(usize, usize)> = left_start
+        let mut results: Vec<(usize, usize)> = left_start
             .par_iter()
             .zip(left_end.par_iter())
             .enumerate()
-            .flat_map_iter(|(i, (ls, le))| {
-                right_intervals
-                    .iter()
-                    .enumerate()
-                    .filter_map(move |(j, (rs, re))| {
+            .flat_map_iter(|(i, (&ls, &le))| {
+                let query = (ls - maxgap - 1)..((maxgap + le) + 2);
+
+                tree.iter_overlaps(&query)
+                    .flat_map(move |(range, jvec)| {
+                        let mut idxs = vec![];
+                        let rs = range.start;
+                        let re = range.end - 1;
+
                         let gap = if le < rs {
                             rs - le - 1
                         } else if re < ls {
@@ -107,23 +115,29 @@ pub fn fuzzy_indices_interval_int(
                             0
                         };
 
-                        let overlap_len = (le.min(re) - ls.max(rs)).max(0);
+                        let overlap_len = (le.min(re) - ls.max(rs) + 1).max(0);
 
-                        let overlaps = match overlap_type {
-                            OverlapType::Any => ls <= re && le >= rs,
-                            OverlapType::Within => ls <= rs && re <= le,
-                            OverlapType::Start => ls == rs,
-                            OverlapType::End => le == re,
+                        if gap > maxgap || overlap_len < minoverlap {
+                            return None;
+                        }
+
+                        let semantic_match = match overlap_type {
+                            OverlapType::Any => true,
+                            OverlapType::Within => ls >= rs - maxgap && le <= re + maxgap,
+                            OverlapType::Start => (ls - rs).abs() <= maxgap,
+                            OverlapType::End => (le - re).abs() <= maxgap,
                         };
 
-                        if overlaps && gap <= maxgap && overlap_len >= minoverlap {
-                            Some((i + 1, j + 1))
-                        } else {
-                            None
+                        if semantic_match {
+                            jvec.iter().for_each(|j| idxs.push((i + 1, j + 1)));
                         }
+                        Some(idxs)
                     })
+                    .flatten()
+                    .collect::<Vec<_>>()
             })
             .collect();
+        results.sort_unstable();
 
         Ok((
             results.iter().map(|(i, _)| *i).collect(),

@@ -12,7 +12,9 @@ name = 'fozziejoin'
 [dependencies]
 anyhow = "1.0.100"
 extendr-api = "0.8.1"
+interavl = "0.3.0"
 itertools = "0.14.0"
+ordered-float = "5.1.0"
 rapidfuzz = "0.5.0"
 rayon = "1.10.0"
 rustc-hash = "2.1.1"
