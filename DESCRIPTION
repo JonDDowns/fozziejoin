@@ -1,11 +1,15 @@
 Package: fozziejoin
 Title: Performant Data Frame Joins with Inexact String Matching
 Version: 0.0.9
-Authors@R: 
-    person("Jon", "Downs", , "jon@jondowns.net", role = c("aut", "cre"))
+Authors@R:  c(
+    person("Jon", "Downs", , "jon@jondowns.net", role = c("aut", "cre")),
+    person(given = "The authors of the dependency Rust crates",
+             role = c("ctb", "cph"),
+             comment = "see inst/AUTHORS file for details")
+    )
 Description: Join dataframes and tibbles by inexact criteria, such as
     numeric difference and string distance.
-License: MIT + file LICENSE
+License: MIT + file LICENSE.md
 Depends: 
     R (>= 4.2)
 Imports: 
