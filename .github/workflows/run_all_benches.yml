@@ -1,0 +1,70 @@
+name: Benchmark fozziejoin
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'main' 
+      - 'workflow' 
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Install R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::remotes, any::tibble, any::fuzzyjoin, any::qdapDictionaries, any::microbenchmark, any::IRanges
+
+      - name: Install local package
+        run: Rscript -e 'remotes::install_local(".", dependencies = FALSE)'
+
+      - name: Run difference benchmarks
+        run: Rscript scripts/difference_benchmark.R
+
+      - name: Run distance benchmarks
+        run: Rscript scripts/distance_benchmark.R
+
+      - name: Run interval benchmarks
+        run: Rscript scripts/interval_benchmark.R
+
+      - name: Run string benchmarks
+        run: Rscript scripts/string_benchmark.R
+
+      - name: Upload string benchmark
+        uses: actions/upload-artifact@v4
+        with:
+          name: string-benchmark-data
+          path: outputs/latest_string_benchmark.csv
+
+      - name: Upload difference benchmark
+        uses: actions/upload-artifact@v4
+        with:
+          name: difference-benchmark-data
+          path: outputs/latest_difference_benchmark.csv
+
+      - name: Upload distance benchmark
+        uses: actions/upload-artifact@v4
+        with:
+          name: distance-benchmark-data
+          path: outputs/latest_distance_benchmark.csv
+
+      - name: Upload interval benchmark
+        uses: actions/upload-artifact@v4
+        with:
+          name: interval-benchmark-data
+          path: outputs/latest_interval_benchmark.csv
+

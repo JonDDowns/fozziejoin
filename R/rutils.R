@@ -3,10 +3,20 @@
 #' It supports character vectors, named lists, and automatic detection of shared column names when `by` is not specified.
 "%||%" <- function(x, y) if (is.null(x)) y else x
 
+#' Normalize Join Columns
+#'
 #' Join columns expect a named list, where names are left-hand columns to join
 #' on, and values are right-hand columns to join on. This function ensures a
 #' fuzzy-like syntax to the user while producing the correct output for the
-#' rust join utilities.
+#' Rust join utilities.
+#'
+#' @param df1 A data frame representing the left-hand side of the join.
+#' @param df2 A data frame representing the right-hand side of the join.
+#' @param by A named list or character vector specifying join columns. If NULL,
+#'   shared column names between df1 and df2 are used.
+#'
+#' @return A named list mapping left-hand columns to right-hand columns.
+#' @export
 normalize_by <- function(df1, df2, by) {
   # If no by provided, identify shared column names
   if (is.null(by)) {

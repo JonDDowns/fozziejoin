@@ -10,15 +10,27 @@
 #' @useDynLib fozziejoin, .registration = TRUE
 NULL
 
+#' @title Internal: String Join via Rust
+#' @description Internal function. Performs a string-based fuzzy join using Rust backend.
+#' @keywords internal
 #' @export
 fozzie_string_join_rs <- function(df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight, nthread) .Call(wrap__fozzie_string_join_rs, df1, df2, by, method, how, max_distance, distance_col, q, max_prefix, prefix_weight, nthread)
 
+#' @title Internal: Difference Join via Rust
+#' @description Internal function. Performs a difference-based fuzzy join using Rust backend.
+#' @keywords internal
 #' @export
 fozzie_difference_join_rs <- function(df1, df2, by, how, max_distance, distance_col, nthread) .Call(wrap__fozzie_difference_join_rs, df1, df2, by, how, max_distance, distance_col, nthread)
 
+#' @title Internal: Distance Join via Rust
+#' @description Internal function. Performs a distance-based fuzzy join using Rust backend.
+#' @keywords internal
 #' @export
 fozzie_distance_join_rs <- function(df1, df2, by, method, how, max_distance, distance_col, nthread) .Call(wrap__fozzie_distance_join_rs, df1, df2, by, method, how, max_distance, distance_col, nthread)
 
+#' @title Internal: Interval Join via Rust
+#' @description Internal function. Performs an interval-based fuzzy join using Rust backend.
+#' @keywords internal
 #' @export
 fozzie_interval_join_rs <- function(df1, df2, by, how, overlap_type, maxgap, minoverlap, interval_mode, nthread) .Call(wrap__fozzie_interval_join_rs, df1, df2, by, how, overlap_type, maxgap, minoverlap, interval_mode, nthread)
 

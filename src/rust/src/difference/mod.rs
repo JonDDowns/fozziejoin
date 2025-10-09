@@ -31,7 +31,7 @@ fn fuzzy_indices_diff(
         let mut rhs_indices = Vec::new();
         let mut distances = Vec::new();
 
-        indexed_vec1
+        let mut triples = indexed_vec1
             .par_iter()
             .flat_map_iter(|&(i_idx, x)| {
                 let center = (x / bucket_width).floor() as i64;
@@ -50,13 +50,14 @@ fn fuzzy_indices_diff(
                         })
                     })
             })
-            .collect::<Vec<_>>()
-            .into_iter()
-            .for_each(|(i, j, d)| {
-                lhs_indices.push(i);
-                rhs_indices.push(j);
-                distances.push(d);
-            });
+            .collect::<Vec<_>>();
+
+        triples.sort_by(|a, b| a.2.partial_cmp(&b.2).unwrap_or(std::cmp::Ordering::Equal));
+        triples.into_iter().for_each(|(i, j, d)| {
+            lhs_indices.push(i);
+            rhs_indices.push(j);
+            distances.push(d);
+        });
 
         (lhs_indices, rhs_indices, distances)
     })

@@ -18,6 +18,9 @@ use crate::merge::DistanceData;
 use crate::string::string_join;
 use crate::utils::get_pool;
 
+/// @title Internal: String Join via Rust
+/// @description Internal function. Performs a string-based fuzzy join using Rust backend.
+/// @keywords internal
 /// @export
 #[extendr]
 pub fn fozzie_string_join_rs(
@@ -50,6 +53,9 @@ pub fn fozzie_string_join_rs(
     Ok(result)
 }
 
+/// @title Internal: Difference Join via Rust
+/// @description Internal function. Performs a difference-based fuzzy join using Rust backend.
+/// @keywords internal
 /// @export
 #[extendr]
 pub fn fozzie_difference_join_rs(
@@ -123,6 +129,9 @@ pub fn fozzie_difference_join_rs(
     Ok(out)
 }
 
+/// @title Internal: Distance Join via Rust
+/// @description Internal function. Performs a distance-based fuzzy join using Rust backend.
+/// @keywords internal
 /// @export
 #[extendr]
 pub fn fozzie_distance_join_rs(
@@ -153,6 +162,9 @@ pub fn fozzie_distance_join_rs(
     Ok(joined)
 }
 
+/// @title Internal: Interval Join via Rust
+/// @description Internal function. Performs an interval-based fuzzy join using Rust backend.
+/// @keywords internal
 /// @export
 #[extendr]
 pub fn fozzie_interval_join_rs(
@@ -181,11 +193,12 @@ pub fn fozzie_interval_join_rs(
             minoverlap as i32,
             &pool,
         ),
-
         _ => panic!("Uhoh!"),
     }
     .map_err(|e| anyhow!("Error when finding fuzzy matches: {e}"))?;
-    let dists = DistanceData::Single(&vec![]);
+    let empty = vec![];
+    let dists = DistanceData::Single(&empty);
+
     let joined = dispatch_join(how.as_str(), &df1, &df2, idxs1, idxs2, None, dists, by);
     Ok(joined)
 }

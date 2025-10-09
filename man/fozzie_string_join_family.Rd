@@ -173,8 +173,14 @@ and similarity algorithms including Levenshtein, Jaro-Winkler, q-gram similarity
 df1 <- data.frame(name = c("Alice", "Bob", "Charlie"))
 df2 <- data.frame(name = c("Alicia", "Robert", "Charles"))
 
-fozzie_string_inner_join(df1, df2, by = c("name", "name"), method = "levenshtein", max_distance = 2)
-fozzie_string_left_join(df1, df2, by = c("name", "name"), method = "jw", max_distance = 0.2)
-fozzie_string_right_join(df1, df2, by = c("name", "name"), method = "cosine", q = 2, max_distance = 0.1)
+fozzie_string_inner_join(
+  df1, df2, by = c("name"), method = "levenshtein", max_distance = 2
+)
+fozzie_string_left_join(
+  df1, df2, by = c("name"), method = "jw", max_distance = 0.2
+)
+fozzie_string_right_join(
+  df1, df2, by = c("name"), method = "cosine", q = 2, max_distance = 0.1
+ )
 
 }

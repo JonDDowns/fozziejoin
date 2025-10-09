@@ -33,7 +33,7 @@
 #' df1 <- data.frame(start = c(1, 5), end = c(3, 7))
 #' df2 <- data.frame(start = c(2, 6), end = c(4, 8))
 #'
-#' fozzie_interval_inner_join(df1, df2, by = list(start = "start", end = "end"), overlap_type = "any")
+#' fozzie_interval_inner_join(df1, df2, by = c(start = "start", end = "end"), overlap_type = "any")
 #' @note
 #' When `interval_mode = "real"`, interval boundaries are treated as continuous values and matched using floating-point arithmetic.
 #' Due to precision limitations, a small threshold (typically around `1e-6`) is internally added to the query range to ensure adjacent or near-touching intervals are considered for matching.

@@ -2,16 +2,24 @@
 % Please edit documentation in R/rutils.R
 \name{normalize_by}
 \alias{normalize_by}
-\title{Join columns expect a named list, where names are left-hand columns to join
-on, and values are right-hand columns to join on. This function ensures a
-fuzzy-like syntax to the user while producing the correct output for the
-rust join utilities.}
+\title{Normalize Join Columns}
 \usage{
 normalize_by(df1, df2, by)
+}
+\arguments{
+\item{df1}{A data frame representing the left-hand side of the join.}
+
+\item{df2}{A data frame representing the right-hand side of the join.}
+
+\item{by}{A named list or character vector specifying join columns. If NULL,
+shared column names between df1 and df2 are used.}
+}
+\value{
+A named list mapping left-hand columns to right-hand columns.
 }
 \description{
 Join columns expect a named list, where names are left-hand columns to join
 on, and values are right-hand columns to join on. This function ensures a
 fuzzy-like syntax to the user while producing the correct output for the
-rust join utilities.
+Rust join utilities.
 }

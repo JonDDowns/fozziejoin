@@ -26,9 +26,9 @@
 #' df1 <- data.frame(x = c(1.0, 2.0, 3.0))
 #' df2 <- data.frame(x = c(1.05, 2.1, 2.95))
 #'
-#' fozzie_difference_inner_join(df1, df2, by = c("x", "x"), max_distance = 0.1)
-#' fozzie_difference_left_join(df1, df2, by = c("x", "x"), max_distance = 0.2)
-#' fozzie_difference_right_join(df1, df2, by = c("x", "x"), max_distance = 0.05)
+#' fozzie_difference_inner_join(df1, df2, by = c("x"), max_distance = 0.1)
+#' fozzie_difference_left_join(df1, df2, by = c("x"), max_distance = 0.2)
+#' fozzie_difference_right_join(df1, df2, by = c("x"), max_distance = 0.05)
 #'
 #' @name fozzie_difference_join_family
 #' @export
