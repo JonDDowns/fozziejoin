@@ -7,6 +7,8 @@ src/rust/vendor.tar.xz
 /outputs/*
 !/outputs/benchmark_plot_Linux.svg
 !/outputs/benchmark_plot_Windows.svg
+!/outputs/benchmark_plot_Windows.svg
+!/outputs/fozzie_bench_plot.png
 
 # History files
 .Rhistory
