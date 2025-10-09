@@ -1,0 +1,186 @@
+---
+title: "String Distance Benchmarking"
+author: "Jon Downs"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{String Distance Benchmarking}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+### Introduction
+
+This vignette presents a performance comparison between `fozzie_string_join()`
+and `fuzzyjoin::stringdist_join()` across several string distance algorithms.
+The goal is to demonstrate an easily digestible example of methods for the full
+suite of `fozziejoin` vs. `fuzzyjoin` benchmarks. 
+
+We benchmark the following methods:
+
+- Optimal String Alignment (`osa`)
+- Jaccard (`jaccard`)
+- Cosine (`cosine`)
+
+To conclude, we’ll highlight general considerations when benchmarking
+`fozziejoin` against `fuzzyjoin`, including differences in implementation,
+return types, and performance characteristics.
+
+For comprehensive benchmarking methods and results, please refer to:
+
+📂 [Benchmarking Scripts](https://github.com/JonDDowns/fozziejoin/tree/main/scripts)  
+📊 [Benchmarking Outputs](https://github.com/JonDDowns/fozziejoin/tree/main/outputs)  
+🔁 [Reproducible GitHub Workflow](https://github.com/JonDDowns/fozziejoin/blob/main/.github/workflows/run_all_benches.yml)
+
+---
+
+### Benchmark Setup
+
+We use the `qdapDictionaries::DICTIONARY` as our reference word list and
+`qdapDictionaries::misspellings` as the source of noisy input. Each method is
+tested at a sample size of 250.
+
+```{r}
+library(microbenchmark)
+library(fuzzyjoin)
+library(fozziejoin)
+library(qdapDictionaries)
+library(tibble)
+
+nsamp <- 100
+seed <- 2016
+
+params <- list(
+  list(method = "osa", mode = "inner", max_dist = 1, q = 0),
+  list(method = "jaccard", mode = "inner", max_dist = 0.5, q = 2),
+  list(method = "cosine", mode = "inner", max_dist = 0.5, q = 2)
+)
+
+data(misspellings)
+words <- as.data.frame(DICTIONARY)
+results <- data.frame()
+```
+
+```{r}
+for (p in params) {
+    param <- params[3]
+  set.seed(seed)
+  sub_misspellings <- misspellings[sample(seq_len(nrow(misspellings)), nsamp), ]
+
+  bench <- microbenchmark(
+    fuzzy = fuzzy <- stringdist_join(
+      sub_misspellings, words,
+      by = c(misspelling = "word"),
+      method = p$method, mode = p$mode,
+      max_dist = p$max_dist, q = p$q
+    ),
+    fozzie = fozzie <- fozzie_string_join(
+      sub_misspellings, words,
+      by = c(misspelling = "word"),
+      method = p$method, how = p$mode,
+      max_distance = p$max_dist, q = p$q
+    ),
+    times = 10
+  )
+
+  # Check for equal output
+  if (!isTRUE(all.equal(fuzzy, fozzie))) {
+    message("Mismatch detected for method: ", p$method)
+  }
+
+  # Convert benchmark results to df, append to running list
+  df <- as.data.frame(bench)
+  df$method <- p$method
+  df$n_comps <- nrow(sub_misspellings) * nrow(words)
+  df$os <- Sys.info()["sysname"]
+  results <- rbind(results, df)
+}
+```
+
+### Summary results
+
+We compute the average runtime (in milliseconds) and compare performance across
+methods and sample sizes.
+
+```{r}
+summary_stats <- aggregate(
+  time ~ expr + method + n_comps,
+  data = results,
+  FUN = function(x) mean(x)
+)
+
+summary_df <- data.frame(
+  expr = summary_stats$expr,
+  method = summary_stats$method,
+  n_comps = summary_stats$n_comps,
+  mean_time = summary_stats$time / 1e6
+)
+
+wide_df <- reshape(
+  summary_df,
+  idvar = c("n_comps", "method"),
+  timevar = "expr",
+  direction = "wide"
+)
+
+wide_df$mean_ratio <- wide_df$mean_time.fuzzy / wide_df$mean_time.fozzie
+
+clean_df <- tibble(wide_df[order(wide_df$method), c(
+  "method", "n_comps", "mean_time.fuzzy", "mean_time.fozzie", "mean_ratio"
+)])
+
+print(clean_df)
+```
+
+### Considerations when Benchmarking
+
+If you wish to perform your own benchmarks of `fozziejoin` and `fuzzyjoin`,
+please consider these factors that may influence your results.
+
+#### Multithreading
+
+All `fozziejoin` implementations currently support multithreading. In contrast,
+multithreading in `fuzzyjoin` is limited to specific cases. For example,
+`stringdist_join()` benefits from parallelism via the `stringdist` package,
+while functions like `difference_join()` remain single-threaded.
+
+As a result, `fozziejoin`'s relative performance advantage tends to increase
+with the number of available threads — especially on large datasets. Performance
+tends to be slightly worse on Windows than Unix systems due to the relatively
+efficiency of multithreading via `rayon`.
+
+#### Smart Search strategies
+
+`fozziejoin` uses algorithmic optimizations to reduce the number of comparisons
+required during fuzzy joins. In contrast, `fuzzyjoin` typically performs naive
+pairwise comparisons across all values. As a result, the relative performance
+of `fozziejoin` depends on the structure and distribution of the input data.
+
+In some cases, these methods could increase runtime, such as for very small
+datasets. Such slowdowns are typically negligible. Meanwhile, the potential
+performance gains can be dramatic, such as datasets where string values are
+duplicated many times.
+
+#### `fozzie_string_join`
+
+This function deduplicates strings on the left and right sides before computing
+string distances. As a result, `fozzie_string_join` becomes increasingly
+efficient when either input contains duplicate values. In contrast,
+`fuzzyjoin::stringdist_join()` performs comparisons across all rows, regardless
+of duplication.
+
+#### `fozzie_difference_join`
+
+This method bins right-hand values using a width equal to `max_distance`. Each
+left-hand value is then compared to at most three bins. The effectiveness of
+this strategy depends on the distribution of values and the chosen
+`max_distance`. When values are well-separated, binning drastically reduces
+comparisons, leading to faster joins than `fuzzyjoin`.
+
+#### `fozzie_interval_join`
+
+This join uses an Adelson-Velsky and Landis (AVL) tree to index intervals.
+Intervals that are more than `max_distance` units apart are excluded from
+evaluation. This pruning strategy avoids unnecessary comparisons and scales
+well with large datasets.
+

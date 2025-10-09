@@ -1,6 +1,6 @@
 Package: fozziejoin
 Title: Performant Data Frame Joins with Inexact String Matching
-Version: 0.0.9
+Version: 0.0.10
 Authors@R:  c(
     person("Jon", "Downs", , "jon@jondowns.net", role = c("aut", "cre")),
     person(given = "The authors of the dependency Rust crates",
@@ -9,20 +9,20 @@ Authors@R:  c(
     )
 Description: Join dataframes and tibbles by inexact criteria, such as
     numeric difference and string distance.
-License: MIT + file LICENSE.md
+License: MIT + file LICENSE
 Depends: 
     R (>= 4.2)
 Imports: 
     stats
 Suggests: 
     testthat (>= 3.0.0),
-    dplyr,
-    ggplot2,
     tibble,
     fuzzyjoin,
     qdapDictionaries,
     microbenchmark,
-    tidyr
+    babynames,
+    knitr,
+    rmarkdown
 Config/rextendr/version: 0.4.2
 Config/testthat/edition: 3
 Encoding: UTF-8
@@ -31,3 +31,5 @@ RoxygenNote: 7.3.3
 SystemRequirements: Cargo (Rust's package manager), rustc, xz
 LazyData: true
 Config/CodeOfConduct: https://github.com/JonDDowns/fozziejoin/blob/main/CODE_OF_CONDUCT.md
+VignetteBuilder: knitr
+
