@@ -128,9 +128,19 @@ unzip(temp_zip, exdir = extract_dir)
 
 #####  Extract the correct version for your system.
 
-Set the `fozzie_version` variable based on your setup. 
+Set the `fozzie_version` variable based on your setup. Currently, three build
+targets are produced. Choose the one most appropriate for your R version.
+Below are suggested versions to use:
+
+- R version 4.6.0 or higher: `r_4.6.0`
+- R versions 4.5.0 or higher: `r_4.5.1`
+- R versions 4.4.3 and before: `r_4.4.3`
 
 ```{r}
+# r_folder <- "r_4.6.0"
+# r_folder <- "r_4.4.3"
+r_folder <- "r_4.5.1"
+
 # Path to the correct subfolder
 pkg_path <- file.path(extract_dir, "fozziejoin_winbuilds_0.0.9", r_folder)
 
