@@ -192,24 +192,15 @@ fozzie <- fozzie_string_join(
 
 ## Benchmarks
 
-[TODO] Start including all benchmarks, not just string distance.
+Select benchmark comparisons are below. See [the scripts subfolder](./scripts/)
+and the [./.github/workflows/run_all_benches.yml](GitHub Actions Workflow)
+for the benchmarking implementation. More detailed methods will be
+added later via an R vignette. Linux users will observe the largest
+performance gains, presumably due to the relative efficiency of parallelization
+via `rayon`.
 
-To date, `fozziejoin` has been benchmarked on Windows and Linux. As of v0.0.7,
-`fozziejoin` beats the equivalent `fuzzyjoin` benchmark in every instance.
-Results are identical for all cases except `soundex`. The largest observed
-performance gains come from Linux systems, presumably due to the relative
-efficiency of parallelization via `rayon`. All benchmark scripts are located
-[in the scripts subfolder](./scripts/).
 
-[![Linux benchmark results](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Linux.svg)](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Linux.svg)
-
-[![Windows benchmark results](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Windows.svg)](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/benchmark_plot_Windows.svg)
-
-These benchmarks are generous to `fuzzyjoin`, primarily because our
-implementation deduplicates strings before calculating distances. Thus,
-`fozziejoin`'s performance advantage should be larger in any cases where many
-duplicate values exist in either dataset. Joins on first and last names are a
-prime example of this.
+[![Fozziejoin vs. fuzzyjoin runtime on select join methods](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/fozzie_bench_plot.png)](https://raw.githubusercontent.com/JonDDowns/fozziejoin/refs/heads/main/outputs/fozzie_bench_plot.png)
 
 ## Known behavior changes relative to `fuzzyjoin`
 
