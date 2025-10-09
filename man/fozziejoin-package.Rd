@@ -6,10 +6,15 @@
 \alias{fozziejoin-package}
 \title{fozziejoin: Performant Data Frame Joins with Inexact String Matching}
 \description{
-Dataframes can be joined based on inexact matching using Levenshtein edit distance and similar algorithms.
+Join dataframes and tibbles by inexact criteria, such as numeric difference and string distance.
 }
 \author{
 \strong{Maintainer}: Jon Downs \email{jon@jondowns.net}
+
+Other contributors:
+\itemize{
+  \item The authors of the dependency Rust crates (see inst/AUTHORS file for details) [contributor, copyright holder]
+}
 
 }
 \keyword{internal}

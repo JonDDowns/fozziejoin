@@ -22,8 +22,10 @@ normalize_by <- function(df1, df2, by) {
   if (is.null(by)) {
     shared <- intersect(names(df1), names(df2))
     if (length(shared) == 0) {
-      stop("No shared column names found between df1 and df2.")
+      stop("No shared column names found between df1 and df2.",
+            "Please specify join columns using the `by` parameter.")
     }
+    message("Joining by: ", utils::capture.output(dput(shared)))
     return(setNames(as.list(shared), shared))
   }
 

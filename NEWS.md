@@ -1,3 +1,19 @@
+# fozziejoin 0.0.10
+
+- Two vignettes added:
+    - General package overview
+    - Benchmarking sample and considerations
+- If `by = NULL`, the internal `common_by` function will now print the columns
+  used in the join.
+- License information updated to reflect author(s) of all imported Rust crates.
+  This seems necessary based on a review of other similar `extendr` packages.
+- Reproducible benchmark scripts
+    - GitHub Actions workflows are now used to create reproducible benchmarking
+      results.
+    - Benchmark scripts have minimized dependencies for faster workflow runs
+    - Benchmark test sample sizes have been downscaled to run on less powerful
+      hardware.
+
 # fozziejoin 0.0.9
 
 - Distance joins now available.

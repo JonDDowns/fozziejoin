@@ -1,0 +1,264 @@
+---
+title: "Fuzzy Matching with `fozziejoin`"
+author: "Jon Downs"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Fuzzy Matching with `fozziejoin`}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+### Introduction 
+
+Fuzzy matching is a powerful technique for joining datasets that contain noisy
+or inconsistent fields, such as names with typos, small differences in date
+or numeric value, or overlapping intervals. R users may be familiar with the
+`fuzzyjoin` package for such tasks. `fozziejoin` is a performance-minded
+alternative that supports fast, flexible fuzzy joins across multiple data types.
+While it is not a drop-in replacement for `fuzzyjoin`, we hope that the package
+feels familiar to longtime users.
+
+In this vignette, we demonstrate fuzzy joins using the following `fozziejoin`
+utilities:
+
+- `fozzie_string_join`
+- `fozzie_difference_join`
+- `fozzie_distance_join`
+- `fozzie_interval_join`
+- `fozzie_temporal_join`
+- `fozzie_temporal_interval_join`
+
+The goal is to broadly introduce the package to new users and showcase its
+capabilities.
+
+
+### String Distance joins
+
+To demonstrate string matching, we use the `babynames` dataset. We randomly
+sample 10 names and introduce a single-character mutation to simulate noisy
+input. 
+
+```{r}
+library(babynames)
+library(fozziejoin)
+library(tibble)
+
+# Seed for reproducibility
+set.seed(1337)
+
+# Restrict to names from years 2000 or later
+babynames <- babynames[babynames$year >= 2000, ]
+
+# Sample rows from babynames dataset
+sample_df <- babynames[sample(nrow(babynames), 10), 'name']
+
+# Mutate a single character in the 'name' field for sample
+mutate_char <- function(x) {
+  if (nchar(x) == 0) return(x)
+  pos <- sample(1:nchar(x), 1)
+  new_char <- sample(letters, 1)
+  substr(x, pos, pos) <- new_char
+  return(x)
+}
+sample_df$name <- sapply(sample_df$name, mutate_char)
+```
+
+Next, we attempt to join the modified names back to the original dataset
+using trigram-based Jaccard similarity. `fozziejoin` supports all the same
+string distance algorithms as `fuzzyjoin`, though some implementations
+(`soundex` and `jw`) differ slightly.
+
+```{r}
+fozzie <- fozzie_string_join(
+    babynames, sample_df, how='inner', method='jaccard', q=3,
+    by = c('name')
+)
+print(head(fozzie))
+print(nrow(fozzie))
+```
+
+Note the return type of the object is `tibble` in this case. If one or both
+input datasets are a `tibble`, a `tibble` is returned. Otherwise, a base
+`data.frame` is returned.
+
+```{r}
+# If both neither input is `tibble`, `data.frame` is returned.
+fozzie_df <- fozzie_string_join(
+    as.data.frame(babynames),
+    as.data.frame(sample_df),
+    how='inner',
+    method='jaccard',
+    q=3,
+    by = c('name')
+)
+head(fozzie_df)
+```
+
+### Difference and Distance joins
+
+`fozziejoin` also supports numeric-based fuzzy joins. These are useful for
+measurements, non-geometric coordinates, or scores.
+
+- **Difference joins** filter based on the absolute difference between columns,
+  evaluated individually.
+- **Distance joins** use multi-dimensional metrics like `"euclidean"` or
+  `"manhattan"` to evaluate all columns simultaneously.
+
+Most join functions allow you to return the fuzzy matching metric via the
+`distance_col` argument. When multiple distances are returned, the distance
+output columns will be named using the pattern 
+`{distance_col}_{left column name}_{right column name}`.
+
+```{r}
+# Simulate data
+size <- 1000
+df1 <- tibble(
+  x = round(runif(size, min = 0, max = 100), 2),
+  y = round(runif(size, min = 0, max = 100), 2)
+)
+df2 <- tibble(
+  x = round(runif(size, min = 0, max = 100), 2),
+  y = round(runif(size, min = 0, max = 100), 2)
+)
+```
+
+```{r}
+# Absolute difference join (per column)
+diff_join <- fozzie_difference_join(
+  df1, df2, max_distance=1, distance_col = 'diff'
+)
+print(head(diff_join))
+
+# Manhattan distance join (across all columns)
+dist_join <- fozzie_distance_join(
+  df1, df2, method='manhattan', max_distance=1, distance_col='dist'
+)
+print(head(dist_join))
+```
+
+### Interval Joins
+
+Interval joins allow you to match records based on overlapping ranges — useful for genomic intervals, time windows, or numeric spans. `fozziejoin` supports flexible interval matching with control over overlap behavior and precision.
+
+In this example, we simulate two datasets with randomly generated intervals and use `fozzie_interval_join()` to find overlapping pairs.
+
+```{r}
+size <- 1000
+
+# Simulate left data
+starts1 <- runif(size, min = 0, max = 500)
+ends1 <- starts1 + runif(size, min = 0, max = 10)
+df1 <- tibble(start = starts1, end = ends1)
+
+# Simulate right data
+starts2 <- runif(size, min = 0, max = 500)
+ends2 <- starts2 + runif(size, min = 0, max = 10)
+df2 <- tibble(start = starts2, end = ends2)
+
+# Perform interval join using real-valued ranges
+real_olaps <- fozzie_interval_join(
+  df1, df2,
+  by = c(start = "start", end = "end"),
+  how = "inner",
+  overlap_type = "any",
+  maxgap = 0,
+  minoverlap = 0,
+  interval_mode = "real"
+)
+```
+
+#### Interval Modes Explained
+
+- "integer" mode is designed for discrete, integer-based intervals — similar to
+  how the `IRanges` package handles genomic ranges. It assumes endpoints are
+  whole numbers and uses inclusive logic. As an example, [1, 9] would match to
+  [10, 11], as these ranges are touching in integer space.
+
+- "real" mode supports continuous numeric ranges — ideal for floating-point
+  values like scores or measurements. This mode behaves more like `foverlaps()`
+  from `data.table`, allowing precise control over overlap boundaries.
+
+If the user does not specify `interval_mode`, a mode is chosen automatically
+based on the input data. If all values are `integer`, then integer mode is used.
+Otherwise, `real` mode is used.
+
+### Temporal joins
+
+Temporal joins are also available via `fozzie_temporal_join` and
+`fozzie_temporal_interval_join`. Under the hood, they are an extension of the
+difference and interval joins. While these functions are designed to work with
+both `POSIX` timestamps and `Date` types, users may not mix and match. All join
+columns must be of the same type.
+
+For `POSIX` timestamps, users may specify
+distance by days, hours, minutes, seconds, ms, ns, or us). 
+
+```{r}
+df1 <- data.frame(time = as.POSIXct(c(
+  "2023-01-01 12:00:00", "2023-01-01 13:00:00"
+)))
+df2 <- data.frame(time = as.POSIXct(c(
+  "2023-01-01 12:00:05", "2023-01-01 14:00:00"
+)))
+
+result <- fozzie_temporal_inner_join(
+  df1, df2, by = c("time"), max_distance = 10, unit = "seconds"
+)
+print(head(result))
+```
+
+For `Date` class objects, the unit must be days. This is the default option.
+
+```{r, error=TRUE}
+# An error results if matching on `Date` with unit other than `days`
+df1$date <- as.Date(df1$time)
+df2$date <- as.Date(df2$time)
+result <- fozzie_temporal_inner_join(
+  df1, df2, by = c("date"), max_distance = 10, unit = "seconds"
+)
+```
+
+```{r}
+# Succeeds
+result <- fozzie_temporal_inner_join(
+  df1, df2, by = c("date"), max_distance = 10
+)
+```
+
+`fozzie_temporal_join` uses `interval_mode='real'` in all cases.
+
+```{r}
+df1 <- data.frame(
+  start = as.Date(c("2023-01-01", "2023-01-05")),
+  end = as.Date(c("2023-01-03", "2023-01-07"))
+)
+df2 <- data.frame(
+  start = as.Date(c("2023-01-02", "2023-01-06")),
+  end = as.Date(c("2023-01-04", "2023-01-08"))
+)
+
+result <- fozzie_temporal_interval_inner_join(
+  df1, df2,
+  by = c(start = "start", end = "end"),
+  overlap_type = "any",
+  maxgap = 0,
+  minoverlap = 0,
+  unit = "days"
+)
+
+head(result)
+```
+
+### Summary of `fozziejoin` Join Types
+
+| Join Type                       | Input Type(s)         | Matching Logic                            | Key Options / Notes                                     |
+|---------------------------------|-----------------------|-------------------------------------------|---------------------------------------------------------|
+| `fozzie_string_join`            | Character             | String similarity (e.g. cosine, hamming)  | `method`, `q`, `distance_col`                           |
+| `fozzie_difference_join`        | Numeric               | Absolute difference per column            | `max_distance`, `distance_col`                          |
+| `fozzie_distance_join`          | Numeric               | Euclidean or Manhattan distance           | `method`, `max_distance`, `distance_col`                |
+| `fozzie_interval_join`          | Ranges (start/end)    | Overlapping intervals                     | `overlap_type`, `maxgap`, `minoverlap`, `interval_mode` |
+| `fozzie_temporal_join`          | POSIXct / Date        | Time difference within unit               | `unit`, `max_distance`                                  |
+| `fozzie_temporal_interval_join` | POSIXct / Date ranges | Overlapping time intervals                | `unit`, `overlap_type`, `maxgap`, `minoverlap`          |
+
+
