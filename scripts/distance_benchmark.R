@@ -1,29 +1,29 @@
 library(microbenchmark)
 library(fozziejoin)
 library(fuzzyjoin)
-library(dplyr)
-set.seed(42)
+library(tibble)
 
-sizes <- c(5000, 10000, 20000)
+sizes <- c(1000, 5000, 10000)
+seed <- 1337
+
+results <- tibble()
 
 for (size in sizes) {
-  print(paste("Millions of comparisons:", round(size^2 / 1e6, 2)))
+  cat(sprintf("Running with size %d (%.2f million comparisons)\n", size, round(size^2 / 1e6, 2)))
+  set.seed(seed)
 
-  # Create 2–3 numeric columns
-  df1 <- data.frame(
+  df1 <- tibble(
     x = round(runif(size, min = 0, max = 100), 2),
     y = round(runif(size, min = 0, max = 100), 2)
   )
-  df2 <- data.frame(
+  df2 <- tibble(
     x = round(runif(size, min = 0, max = 100), 2),
     y = round(runif(size, min = 0, max = 100), 2)
   )
 
-  # Columns to match on
   match_cols <- c("x", "y")
 
-  # Run benchmark
-  timing_results <- microbenchmark(
+  bench <- microbenchmark(
     fuzzy = fuzzy <- distance_join(
       df1, df2,
       method = "manhattan",
@@ -43,25 +43,57 @@ for (size in sizes) {
     times = 10
   )
 
-  # Align column names for comparison
-  fuzzy <- data.frame(fuzzy)
-
-  # Confirm all results are the same
-  if (!isTRUE(all.equal(fuzzy, fozzie))) {
-    print("Not all observations equal!")
+  if (!isTRUE(all.equal(as.data.frame(fuzzy), as.data.frame(fozzie)))) {
+    message("Mismatch detected at size: ", size)
+    print(nrow(fuzzy))
+    print(nrow(fozzie))
   }
 
-  # Format timing output
-  timing_results <- data.frame(timing_results)
-  timing_results$time_ms <- timing_results$time / 1e6
-  timing_results$mill_comps <- round((nrow(df1) * nrow(df2)) / 1e6, 1)
-  timing_results$os <- Sys.info()["sysname"]
+  bench <- as_tibble(bench)
+  bench$method <- "distance"
+  bench$n_comps <- size ^ 2
+  bench$os <- Sys.info()["sysname"]
 
-  # Summary
-  timing_summary <- aggregate(time_ms ~ expr + mill_comps, data = timing_results, FUN = mean)
-  timing_summary <- timing_summary[order(timing_summary$expr), ]
-  timing_summary$ratio <- timing_summary$time_ms / timing_summary$time_ms[[2]]
-
-  print("Timing results:")
-  print(timing_summary)
+  results <- rbind(results, bench)
 }
+
+# Aggregate results: average and median time by method + n_comps
+summary_stats <- aggregate(
+  time ~ expr + method + n_comps,
+  data = results,
+  FUN = function(x) mean = mean(x)
+)
+
+# Convert matrix columns to separate columns
+summary_df <- tibble(
+  expr = summary_stats$expr,
+  method = summary_stats$method,
+  n_comps = summary_stats$n_comps,
+  mean_time = summary_stats$time / 1e6
+)
+
+# Reshape to wide format for ratio calculation
+wide_df <- reshape(
+  as.data.frame(summary_df),
+  idvar = "n_comps",
+  timevar = "expr",
+  direction = "wide"
+)
+
+# Add ratio columns: fuzzy / fozzie
+wide_df$mean_ratio <- wide_df$mean_time.fuzzy / wide_df$mean_time.fozzie
+
+# Select and reorder columns for clean output
+clean_df <- tibble(
+  n_comps = wide_df$n_comps,
+  mean_time_fuzzy = wide_df$mean_time.fuzzy,
+  mean_time_fozzie = wide_df$mean_time.fozzie,
+  mean_ratio = wide_df$mean_ratio,
+)
+
+cat("\nDistance timing summary with ratios (fuzzy / fozzie):\n")
+print(clean_df)
+
+write.csv(results, "outputs/latest_distance_benchmark.csv", row.names = FALSE)
+q("no")
+

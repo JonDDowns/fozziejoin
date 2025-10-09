@@ -3,8 +3,8 @@ Title: Performant Data Frame Joins with Inexact String Matching
 Version: 0.0.9
 Authors@R: 
     person("Jon", "Downs", , "jon@jondowns.net", role = c("aut", "cre"))
-Description: Dataframes can be joined based on inexact matching using
-    Levenshtein edit distance and similar algorithms.
+Description: Join dataframes and tibbles by inexact criteria, such as
+    numeric difference and string distance.
 License: MIT + file LICENSE
 Depends: 
     R (>= 4.2)

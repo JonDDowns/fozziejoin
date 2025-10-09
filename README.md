@@ -72,7 +72,7 @@ macOS is expected to work but is not yet officially tested.
 devtools::install_github("JonDDowns/fozziejoin")
 
 # Alternatively, install a tagged release:
-# install.packages("https://github.com/JonDDowns/fozziejoin/archive/refs/tags/v0.0.8.tar.gz", type = "source")
+# install.packages("https://github.com/JonDDowns/fozziejoin/archive/refs/tags/v0.0.9.tar.gz", type = "source")
 ```
 
 ##### Windows users
@@ -104,13 +104,51 @@ Rscript -e 'devtools::install_github("JonDDowns/fozziejoin")'
 #### From binary (Windows only)
 
 Binaries are found in the [releases](https://github.com/JonDDowns/fozziejoin/releases)
-section. Currently, binaries are built for R 4.4.3. This binary is confirmed to
-work on R 4.3.1. We will not be actively supporting other R versions at this
-time, as our primary target is an eventual CRAN release. Please consider 
-installing from source.
+section. Currently, binaries are built for the current (4.5.1), development
+(4.6.0) and most recent old release (4.4.3). Installation has not been tested
+on a wide variety of R versions yet. These binaries are provided to encourage
+more user testing while we pursue CRAN release, our primary goal. At that
+point, the installation process should become easier for most users.
 
+##### Download and extract release bundle
+
+```{r}
+# Define GitHub release URL
+release_url <- "https://github.com/JonDDowns/fozziejoin/releases/download/v0.0.9/fozziejoin_winbuilds_0.0.9.zip"
+
+# Download the zip file
+temp_zip <- tempfile(fileext = ".zip")
+download.file(release_url, temp_zip, mode = "wb")
+
+# Extract to a temp directory
+extract_dir <- tempfile()
+dir.create(extract_dir)
+unzip(temp_zip, exdir = extract_dir)
 ```
-install.packages('https://github.com/JonDDowns/fozziejoin/releases/download/v0.0.8/fozziejoin_0.0.8', type='win.binary')
+
+#####  Extract the correct version for your system.
+
+Set the `fozzie_version` variable based on your setup. Currently, three build
+targets are produced. Choose the one most appropriate for your R version.
+Below are suggested versions to use:
+
+- R version 4.6.0 or higher: `r_4.6.0`
+- R versions 4.5.0 or higher: `r_4.5.1`
+- R versions 4.4.3 and before: `r_4.4.3`
+
+```{r}
+# r_folder <- "r_4.6.0"
+# r_folder <- "r_4.4.3"
+r_folder <- "r_4.5.1"
+
+# Path to the correct subfolder
+pkg_path <- file.path(extract_dir, "fozziejoin_winbuilds_0.0.9", r_folder)
+
+# Find the compiled binary (assumes only one .zip inside each subfolder)
+pkg_file <- list.files(pkg_path, pattern = "\\.zip$", full.names = TRUE)
+
+# Install the package
+install.packages(pkg_file, repos = NULL, type = "win.binary")
 ```
 
 ### Usage
