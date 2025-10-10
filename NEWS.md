@@ -3,16 +3,17 @@
 - Two vignettes added:
     - General package overview
     - Benchmarking sample and considerations
+- Interval join with `interval_mode = 'real'` now handles a mix of integer and
+  double inputs correctly.
 - If `by = NULL`, the internal `common_by` function will now print the columns
   used in the join.
 - License information updated to reflect author(s) of all imported Rust crates.
   This seems necessary based on a review of other similar `extendr` packages.
-- Reproducible benchmark scripts
-    - GitHub Actions workflows are now used to create reproducible benchmarking
-      results.
-    - Benchmark scripts have minimized dependencies for faster workflow runs
-    - Benchmark test sample sizes have been downscaled to run on less powerful
-      hardware.
+- Reproducible benchmark scripts created using github workflows
+- Users can now set a global thread count via `options(fozzie.nthread = 4)`,
+  which will be respected by all functions with an nthread argument. By
+  default, the package uses the default from the multithreading Rust library
+  `rayon`.
 
 # fozziejoin 0.0.9
 

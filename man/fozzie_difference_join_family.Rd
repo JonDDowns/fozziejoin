@@ -18,7 +18,7 @@ fozzie_difference_join(
   how = "inner",
   max_distance = 1,
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_difference_inner_join(
@@ -27,7 +27,7 @@ fozzie_difference_inner_join(
   by = NULL,
   max_distance = 1,
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_difference_left_join(
@@ -36,7 +36,7 @@ fozzie_difference_left_join(
   by = NULL,
   max_distance = 1,
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_difference_right_join(
@@ -45,7 +45,7 @@ fozzie_difference_right_join(
   by = NULL,
   max_distance = 1,
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_difference_anti_join(
@@ -54,7 +54,7 @@ fozzie_difference_anti_join(
   by = NULL,
   max_distance = 1,
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_difference_full_join(
@@ -63,7 +63,7 @@ fozzie_difference_full_join(
   by = NULL,
   max_distance = 1,
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_difference_semi_join(
@@ -72,7 +72,7 @@ fozzie_difference_semi_join(
   by = NULL,
   max_distance = 1,
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 }
 \arguments{
@@ -97,7 +97,10 @@ or a named list like \code{list(col1 = "col2")}.}
 
 \item{distance_col}{Optional name of column to store computed differences.}
 
-\item{nthread}{Optional integer to specify number of threads for parallelization.}
+\item{nthread}{Optional integer specifying the number of threads to use for
+parallelization. If not provided, the value is determined by
+\code{options("fozzie.nthread")}. The package default is inherited from
+Rayon, the multithreading library used throughout the package.}
 }
 \value{
 A data frame with approximately matched rows depending on the join type. See individual functions like \code{fozzie_difference_inner_join()} for examples.

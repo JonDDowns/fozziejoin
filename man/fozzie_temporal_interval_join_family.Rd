@@ -20,7 +20,7 @@ fozzie_temporal_interval_join(
   maxgap = 0,
   minoverlap = 0,
   unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_temporal_interval_inner_join(
@@ -31,7 +31,7 @@ fozzie_temporal_interval_inner_join(
   maxgap = 0,
   minoverlap = 0,
   unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_temporal_interval_left_join(
@@ -42,7 +42,7 @@ fozzie_temporal_interval_left_join(
   maxgap = 0,
   minoverlap = 0,
   unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_temporal_interval_right_join(
@@ -53,7 +53,7 @@ fozzie_temporal_interval_right_join(
   maxgap = 0,
   minoverlap = 0,
   unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_temporal_interval_full_join(
@@ -64,7 +64,7 @@ fozzie_temporal_interval_full_join(
   maxgap = 0,
   minoverlap = 0,
   unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_temporal_interval_anti_join(
@@ -75,7 +75,7 @@ fozzie_temporal_interval_anti_join(
   maxgap = 0,
   minoverlap = 0,
   unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_temporal_interval_semi_join(
@@ -86,7 +86,7 @@ fozzie_temporal_interval_semi_join(
   maxgap = 0,
   minoverlap = 0,
   unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 }
 \arguments{
@@ -121,7 +121,10 @@ fozzie_temporal_interval_semi_join(
 \item{unit}{A string specifying the time unit for \code{maxgap} and \code{minoverlap}. One of:
 \code{"days"}, \code{"hours"}, \code{"minutes"}, \code{"seconds"}, \code{"ms"}, \code{"us"}, \code{"ns"}.}
 
-\item{nthread}{Optional integer to specify number of threads for parallelization.}
+\item{nthread}{Optional integer specifying the number of threads to use for
+parallelization. If not provided, the value is determined by
+\code{options("fozzie.nthread")}. The package default is inherited from
+Rayon, the multithreading library used throughout the package.}
 }
 \value{
 A data frame with approximately matched rows depending on the join type.

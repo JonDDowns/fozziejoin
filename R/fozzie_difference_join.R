@@ -17,8 +17,10 @@
 #'   - `"semi"`: rows from `df1` that matched with one or more matches in `df2`.
 #' @param max_distance A numeric threshold for allowable absolute difference between values (lower is stricter).
 #' @param distance_col Optional name of column to store computed differences.
-#' @param nthread Optional integer to specify number of threads for parallelization.
-#'
+#' @param nthread Optional integer specifying the number of threads to use for
+#'        parallelization. If not provided, the value is determined by 
+#'        `options("fozzie.nthread")`. The package default is inherited from
+#'         Rayon, the multithreading library used throughout the package.
 #' @return A data frame with approximately matched rows depending on the join type. See individual functions like `fozzie_difference_inner_join()` for examples.
 #'   If `distance_col` is specified, an additional numeric column is included.
 #'
@@ -37,7 +39,7 @@ fozzie_difference_join <- function(
     how = "inner",
     max_distance = 1,
     distance_col = NULL,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   by <- normalize_by(df1, df2, by)
   tmp <- fozzie_difference_join_rs(
     df1, df2, by,
@@ -55,7 +57,7 @@ fozzie_difference_inner_join <- function(
     df1, df2, by = NULL,
     max_distance = 1,
     distance_col = NULL,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_difference_join(
     df1, df2, by,
     how = "inner",
@@ -71,7 +73,7 @@ fozzie_difference_left_join <- function(
     df1, df2, by = NULL,
     max_distance = 1,
     distance_col = NULL,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_difference_join(
     df1, df2, by,
     how = "left",
@@ -87,7 +89,7 @@ fozzie_difference_right_join <- function(
     df1, df2, by = NULL,
     max_distance = 1,
     distance_col = NULL,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_difference_join(
     df1, df2, by,
     how = "right",
@@ -103,7 +105,7 @@ fozzie_difference_anti_join <- function(
     df1, df2, by = NULL,
     max_distance = 1,
     distance_col = NULL,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_difference_join(
     df1, df2, by,
     how = "anti",
@@ -119,7 +121,7 @@ fozzie_difference_full_join <- function(
     df1, df2, by = NULL,
     max_distance = 1,
     distance_col = NULL,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_difference_join(
     df1, df2, by,
     how = "full",
@@ -135,7 +137,7 @@ fozzie_difference_semi_join <- function(
     df1, df2, by = NULL,
     max_distance = 1,
     distance_col = NULL,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_difference_join(
     df1, df2, by,
     how = "semi",

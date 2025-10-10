@@ -19,7 +19,10 @@
 #'   - `"manhattan"`: sum of absolute differences.
 #'   - `"euclidean"`: square root of sum of squared differences.
 #' @param distance_col Optional name of column to store computed distances.
-#' @param nthread Optional integer to specify number of threads for parallelization.
+#' @param nthread Optional integer specifying the number of threads to use for
+#'        parallelization. If not provided, the value is determined by 
+#'        `options("fozzie.nthread")`. The package default is inherited from
+#'         Rayon, the multithreading library used throughout the package.
 #'
 #' @return A data frame with approximately matched rows depending on the join type. If `distance_col` is specified, an additional numeric column is included.
 #'
@@ -37,7 +40,7 @@ fozzie_distance_join <- function(
     max_distance = 1,
     method = "manhattan",
     distance_col = NULL,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   by <- normalize_by(df1, df2, by)
   tmp <- fozzie_distance_join_rs(
     df1, df2, by,
@@ -57,7 +60,7 @@ fozzie_distance_inner_join <- function(
     max_distance = 1,
     method = "manhattan",
     distance_col = NULL,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_distance_join(
     df1, df2, by,
     how = "inner",
@@ -75,7 +78,7 @@ fozzie_distance_left_join <- function(
     max_distance = 1,
     method = "manhattan",
     distance_col = NULL,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_distance_join(
     df1, df2, by,
     how = "left",
@@ -93,7 +96,7 @@ fozzie_distance_right_join <- function(
     max_distance = 1,
     method = "manhattan",
     distance_col = NULL,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_distance_join(
     df1, df2, by,
     how = "right",
@@ -111,7 +114,7 @@ fozzie_distance_full_join <- function(
     max_distance = 1,
     method = "manhattan",
     distance_col = NULL,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_distance_join(
     df1, df2, by,
     how = "full",
@@ -129,7 +132,7 @@ fozzie_distance_anti_join <- function(
     max_distance = 1,
     method = "manhattan",
     distance_col = NULL,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_distance_join(
     df1, df2, by,
     how = "anti",
@@ -147,7 +150,7 @@ fozzie_distance_semi_join <- function(
     max_distance = 1,
     method = "manhattan",
     distance_col = NULL,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_distance_join(
     df1, df2, by,
     how = "semi",

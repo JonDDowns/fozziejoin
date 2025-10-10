@@ -54,7 +54,7 @@ seed <- 2016
 params <- list(
   list(method = "osa", mode = "inner", max_dist = 1, q = 0),
   list(method = "jaccard", mode = "inner", max_dist = 0.5, q = 2),
-  list(method = "levenshtein", mode = "inner", max_dist = 1)
+  list(method = "lv", mode = "inner", max_dist = 1)
 )
 
 data(misspellings)

@@ -19,7 +19,7 @@ fozzie_distance_join(
   max_distance = 1,
   method = "manhattan",
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_distance_inner_join(
@@ -29,7 +29,7 @@ fozzie_distance_inner_join(
   max_distance = 1,
   method = "manhattan",
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_distance_left_join(
@@ -39,7 +39,7 @@ fozzie_distance_left_join(
   max_distance = 1,
   method = "manhattan",
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_distance_right_join(
@@ -49,7 +49,7 @@ fozzie_distance_right_join(
   max_distance = 1,
   method = "manhattan",
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_distance_full_join(
@@ -59,7 +59,7 @@ fozzie_distance_full_join(
   max_distance = 1,
   method = "manhattan",
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_distance_anti_join(
@@ -69,7 +69,7 @@ fozzie_distance_anti_join(
   max_distance = 1,
   method = "manhattan",
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_distance_semi_join(
@@ -79,7 +79,7 @@ fozzie_distance_semi_join(
   max_distance = 1,
   method = "manhattan",
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 }
 \arguments{
@@ -109,7 +109,10 @@ fozzie_distance_semi_join(
 
 \item{distance_col}{Optional name of column to store computed distances.}
 
-\item{nthread}{Optional integer to specify number of threads for parallelization.}
+\item{nthread}{Optional integer specifying the number of threads to use for
+parallelization. If not provided, the value is determined by
+\code{options("fozzie.nthread")}. The package default is inherited from
+Rayon, the multithreading library used throughout the package.}
 }
 \value{
 A data frame with approximately matched rows depending on the join type. If \code{distance_col} is specified, an additional numeric column is included.

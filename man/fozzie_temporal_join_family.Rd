@@ -19,7 +19,7 @@ fozzie_temporal_join(
   max_distance = 1,
   unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_temporal_inner_join(
@@ -29,7 +29,7 @@ fozzie_temporal_inner_join(
   max_distance = 1,
   unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_temporal_left_join(
@@ -39,7 +39,7 @@ fozzie_temporal_left_join(
   max_distance = 1,
   unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_temporal_right_join(
@@ -49,7 +49,7 @@ fozzie_temporal_right_join(
   max_distance = 1,
   unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_temporal_full_join(
@@ -59,7 +59,7 @@ fozzie_temporal_full_join(
   max_distance = 1,
   unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_temporal_anti_join(
@@ -69,7 +69,7 @@ fozzie_temporal_anti_join(
   max_distance = 1,
   unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_temporal_semi_join(
@@ -79,7 +79,7 @@ fozzie_temporal_semi_join(
   max_distance = 1,
   unit = c("days", "hours", "minutes", "seconds", "ms", "us", "ns"),
   distance_col = NULL,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 }
 \arguments{
@@ -107,7 +107,10 @@ If joining on \code{Date} columns, only \code{"days"} is allowed.}
 
 \item{distance_col}{Optional name of column to store computed time differences (in seconds or days).}
 
-\item{nthread}{Optional integer to specify number of threads for parallelization.}
+\item{nthread}{Optional integer specifying the number of threads to use for
+parallelization. If not provided, the value is determined by
+\code{options("fozzie.nthread")}. The package default is inherited from
+Rayon, the multithreading library used throughout the package.}
 }
 \value{
 A data frame with approximately matched rows depending on the join type. If \code{distance_col} is specified, an additional numeric column is included.

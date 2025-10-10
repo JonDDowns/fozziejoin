@@ -20,7 +20,7 @@ fozzie_interval_join(
   maxgap = 0,
   minoverlap = 0,
   interval_mode = c("auto", "real", "integer"),
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_interval_inner_join(
@@ -31,7 +31,7 @@ fozzie_interval_inner_join(
   maxgap = 0,
   minoverlap = 0,
   interval_mode = "auto",
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_interval_left_join(
@@ -42,7 +42,7 @@ fozzie_interval_left_join(
   maxgap = 0,
   minoverlap = 0,
   interval_mode = "auto",
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_interval_right_join(
@@ -53,7 +53,7 @@ fozzie_interval_right_join(
   maxgap = 0,
   minoverlap = 0,
   interval_mode = "auto",
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_interval_full_join(
@@ -64,7 +64,7 @@ fozzie_interval_full_join(
   maxgap = 0,
   minoverlap = 0,
   interval_mode = "auto",
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_interval_anti_join(
@@ -75,7 +75,7 @@ fozzie_interval_anti_join(
   maxgap = 0,
   minoverlap = 0,
   interval_mode = "auto",
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_interval_semi_join(
@@ -86,7 +86,7 @@ fozzie_interval_semi_join(
   maxgap = 0,
   minoverlap = 0,
   interval_mode = "auto",
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 }
 \arguments{
@@ -125,7 +125,10 @@ fozzie_interval_semi_join(
 \item \code{"integer"}: treat interval boundaries as discrete integer ranges. This mode behaves similarly to Bioconductor's \code{IRanges} — intervals are inclusive and defined over integer coordinates, so \verb{[start, end]} includes both endpoints. This affects how overlaps, gaps, and minimum overlap lengths are calculated, especially when \code{maxgap} or \code{minoverlap} are used.
 }}
 
-\item{nthread}{Optional integer to specify number of threads for parallelization.}
+\item{nthread}{Optional integer specifying the number of threads to use for
+parallelization. If not provided, the value is determined by
+\code{options("fozzie.nthread")}. The package default is inherited from
+Rayon, the multithreading library used throughout the package.}
 }
 \value{
 A data frame with approximately matched rows depending on the join type.
