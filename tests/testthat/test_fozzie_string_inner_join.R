@@ -339,6 +339,7 @@ testthat::test_that("nthread argument works for unnormalized edit distances", {
     runtime <- system.time(fozzie_string_join(
       do.call(rbind, replicate(10, test_df, simplify = FALSE)),
       whoops,
+      by = c('Name'),
       method = method,
       max_distance = 1,
       nthread = 2
@@ -356,8 +357,28 @@ testthat::test_that("nthread argument works for normalized edit distances", {
     runtime <- system.time(fozzie_string_join(
       do.call(rbind, replicate(10, test_df, simplify = FALSE)),
       whoops,
+      by = c('Name'),
       method = method,
       max_distance = 1,
+      nthread = 2
+    ))
+    testthat::expect_lte(runtime["user.self"], 2.5 * runtime["elapsed"])
+  }
+})
+
+testthat::test_that("nthread argument works for qgram edit distances", {
+  # The runtime is so small that false positives will pop up.
+  # Need to artificially inflate the test DF size.
+
+  norm_methods <- c("cosine", "jaccard", "qgram")
+  for (method in norm_methods) {
+    runtime <- system.time(fozzie_string_join(
+      do.call(rbind, replicate(10, test_df, simplify = FALSE)),
+      whoops,
+      by = 'Name',
+      method = method,
+      max_distance = 1,
+      q = 2,
       nthread = 2
     ))
     testthat::expect_lte(runtime["user.self"], 2.5 * runtime["elapsed"])
