@@ -15,3 +15,5 @@
 ^CODE_OF_CONDUCT\.md$
 ^data-raw$
 ^fozziejoin-tests$
+^doc$
+^Meta$

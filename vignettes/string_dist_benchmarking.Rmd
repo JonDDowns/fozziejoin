@@ -37,15 +37,16 @@ For comprehensive benchmarking methods and results, please refer to:
 ### Benchmark Setup
 
 We use the `qdapDictionaries::DICTIONARY` as our reference word list and
-`qdapDictionaries::misspellings` as the source of noisy input. Each method is
-tested at a sample size of 250.
+`qdapDictionaries::misspellings` as the source of noisy input. For
+demonstration purposes, we use a sample size of 100 misspellings.
 
-```{r}
+```{r, message = FALSE}
 library(microbenchmark)
 library(fuzzyjoin)
 library(fozziejoin)
 library(qdapDictionaries)
 library(tibble)
+library(dplyr)
 
 nsamp <- 100
 seed <- 2016
@@ -53,19 +54,19 @@ seed <- 2016
 params <- list(
   list(method = "osa", mode = "inner", max_dist = 1, q = 0),
   list(method = "jaccard", mode = "inner", max_dist = 0.5, q = 2),
-  list(method = "cosine", mode = "inner", max_dist = 0.5, q = 2)
+  list(method = "lv", mode = "inner", max_dist = 1)
 )
 
 data(misspellings)
+sub_misspellings <- misspellings[sample(seq_len(nrow(misspellings)), nsamp), ]
+
 words <- as.data.frame(DICTIONARY)
 results <- data.frame()
 ```
 
 ```{r}
 for (p in params) {
-    param <- params[3]
   set.seed(seed)
-  sub_misspellings <- misspellings[sample(seq_len(nrow(misspellings)), nsamp), ]
 
   bench <- microbenchmark(
     fuzzy = fuzzy <- stringdist_join(
@@ -136,6 +137,42 @@ print(clean_df)
 
 If you wish to perform your own benchmarks of `fozziejoin` and `fuzzyjoin`,
 please consider these factors that may influence your results.
+
+
+#### Results may not be Identical
+
+The ouput of `fozziejoin` is not guaranteed to be identical to `fuzzyjoin`,
+especially for normalized distances. For instance, these cosine distance joins
+produce different results:
+
+```{r}
+fozzie_cos <- fozzie_string_join(
+  sub_misspellings, words, 
+  by = c(misspelling = 'word'), 
+  method='cosine', q = 3, max_distance = 0.5,
+  distance_col = 'dist'
+)
+fuzzy_cos <- stringdist_join(
+  sub_misspellings, words,
+  by = c(misspelling = 'word'),
+  method = 'cosine', q = 3, max_dist = 0.5,
+  distance_col = 'dist'
+)
+```
+
+Upon further exploration, `fozziejoin` results contain additional rows that
+`fuzzyjoin` does not. Each row has a cosine distance of around 0.5, the
+threshold for inclusion. This implies the difference results from floating
+point rounding errors.
+
+```{r}
+joinby <- c('misspelling', 'correct', 'word')
+only_fozzie <- anti_join(fozzie_cos, fuzzy_cos, by = joinby)
+print(table(only_fozzie$dist))
+
+only_fuzzy <- anti_join(fuzzy_cos, fozzie_cos, by = joinby)
+print(paste("Fozzie contains all fuzzy rows:", nrow(only_fuzzy) == 0))
+```
 
 #### Multithreading
 

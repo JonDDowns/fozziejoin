@@ -112,3 +112,22 @@ pub fn get_pool(nthread: Option<usize>) -> Result<ThreadPool> {
         Ok(pool)
     }
 }
+
+pub fn any_numeric_to_vec64(df: &List, key: &str) -> Result<Vec<f64>> {
+    let df_col = df
+        .dollar(key)
+        .map_err(|_| anyhow!("Column `{}` not found in df1", key))?;
+
+    let df_vals: Vec<f64> = if let Some(v) = df_col.as_real_vector() {
+        v.to_vec()
+    } else if let Some(v) = df_col.as_integer_vector() {
+        v.iter().map(|&x| x as f64).collect()
+    } else {
+        return Err(anyhow!(
+            "Column `{}` in df1 is not numeric (integer or double)",
+            key
+        ));
+    };
+
+    Ok(df_vals)
+}

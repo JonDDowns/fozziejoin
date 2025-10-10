@@ -339,6 +339,7 @@ testthat::test_that("nthread argument works for unnormalized edit distances", {
     runtime <- system.time(fozzie_string_join(
       do.call(rbind, replicate(10, test_df, simplify = FALSE)),
       whoops,
+      by = c('Name'),
       method = method,
       max_distance = 1,
       nthread = 2
@@ -356,6 +357,7 @@ testthat::test_that("nthread argument works for normalized edit distances", {
     runtime <- system.time(fozzie_string_join(
       do.call(rbind, replicate(10, test_df, simplify = FALSE)),
       whoops,
+      by = c('Name'),
       method = method,
       max_distance = 1,
       nthread = 2
@@ -373,6 +375,7 @@ testthat::test_that("nthread argument works for qgram edit distances", {
     runtime <- system.time(fozzie_string_join(
       do.call(rbind, replicate(10, test_df, simplify = FALSE)),
       whoops,
+      by = 'Name',
       method = method,
       max_distance = 1,
       q = 2,

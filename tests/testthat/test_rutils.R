@@ -2,7 +2,7 @@ df1 <- data.frame(x1 = 1:3, x2 = letters[1:3], shared = c("a", "b", "c"))
 df2 <- data.frame(x2 = 4:6, x1 = LETTERS[1:3], shared = c("a", "b", "d"))
 
 test_that("auto-detects shared columns when by is NULL", {
-  result <- normalize_by(df1, df2, NULL)
+  suppressMessages(result <- normalize_by(df1, df2, NULL))
   expect_equal(result, list(x1 = "x1", x2 = "x2", shared = "shared"))
 })
 

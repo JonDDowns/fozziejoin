@@ -5,10 +5,10 @@ src/vendor/
 src/rust/vendor.tar.xz
 
 /outputs/*
-!/outputs/benchmark_plot_Linux.svg
-!/outputs/benchmark_plot_Windows.svg
-!/outputs/benchmark_plot_Windows.svg
-!/outputs/fozzie_bench_plot.png
+!/outputs/difference_benchmark.csv
+!/outputs/distance_benchmark.csv
+!/outputs/interval_benchmark.csv
+!/outputs/string_benchmark.csv
 
 # History files
 .Rhistory
@@ -68,3 +68,5 @@ rsconnect/
 
 CRAN-SUBMISSION
 revdep/
+/doc/
+/Meta/

@@ -25,7 +25,10 @@
 #'   - `"auto"`: automatically infer mode based on column types.
 #'   - `"real"`: treat interval boundaries as continuous numeric values (e.g., `double`). Overlaps are computed using strict inequality and floating-point arithmetic.
 #'   - `"integer"`: treat interval boundaries as discrete integer ranges. This mode behaves similarly to Bioconductor's `IRanges` — intervals are inclusive and defined over integer coordinates, so `[start, end]` includes both endpoints. This affects how overlaps, gaps, and minimum overlap lengths are calculated, especially when `maxgap` or `minoverlap` are used.
-#' @param nthread Optional integer to specify number of threads for parallelization.
+#' @param nthread Optional integer specifying the number of threads to use for
+#'        parallelization. If not provided, the value is determined by 
+#'        `options("fozzie.nthread")`. The package default is inherited from
+#'        Rayon, the multithreading library used throughout the package.
 #'
 #' @return A data frame with approximately matched rows depending on the join type.
 #'
@@ -48,7 +51,7 @@ fozzie_interval_join <- function(
     maxgap = 0,
     minoverlap = 0,
     interval_mode = c("auto", "real", "integer"),
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   by <- normalize_by(df1, df2, by)
 
   interval_mode <- match.arg(interval_mode)
@@ -87,7 +90,7 @@ fozzie_interval_inner_join <- function(
     maxgap = 0,
     minoverlap = 0,
     interval_mode = "auto",
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_interval_join(
     df1, df2, by,
     how = "inner",
@@ -107,7 +110,7 @@ fozzie_interval_left_join <- function(
     maxgap = 0,
     minoverlap = 0,
     interval_mode = "auto",
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_interval_join(
     df1, df2, by,
     how = "left",
@@ -127,7 +130,7 @@ fozzie_interval_right_join <- function(
     maxgap = 0,
     minoverlap = 0,
     interval_mode = "auto",
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_interval_join(
     df1, df2, by,
     how = "right",
@@ -147,7 +150,7 @@ fozzie_interval_full_join <- function(
     maxgap = 0,
     minoverlap = 0,
     interval_mode = "auto",
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_interval_join(
     df1, df2, by,
     how = "full",
@@ -167,7 +170,7 @@ fozzie_interval_anti_join <- function(
     maxgap = 0,
     minoverlap = 0,
     interval_mode = "auto",
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_interval_join(
     df1, df2, by,
     how = "anti",
@@ -187,7 +190,7 @@ fozzie_interval_semi_join <- function(
     maxgap = 0,
     minoverlap = 0,
     interval_mode = "auto",
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_interval_join(
     df1, df2, by,
     how = "semi",

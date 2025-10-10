@@ -32,7 +32,10 @@
 #' @param distance_col Optional name of column to store computed string distances.
 #' @param max_prefix Integer (for Jaro-Winkler) specifying the prefix length influencing similarity boost.
 #' @param prefix_weight Numeric (for Jaro-Winkler) specifying the prefix weighting factor.
-#' @param nthread Optional integer to specify number of threads for parallelization.
+#' @param nthread Optional integer specifying the number of threads to use for
+#'        parallelization. If not provided, the value is determined by 
+#'        `options("fozzie.nthread")`. The package default is inherited from
+#'        Rayon, the multithreading library used throughout the package.
 #'
 #' @return A data frame with fuzzy-matched rows depending on the join type. See individual functions like `fozzie_string_inner_join()` for examples.
 #'   If `distance_col` is specified, an additional numeric column is included.
@@ -62,7 +65,7 @@ fozzie_string_join <- function(
     q = NULL,
     max_prefix = 0,
     prefix_weight = 0,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   by <- normalize_by(df1, df2, by)
 
   # Run Rust function and return
@@ -84,7 +87,7 @@ fozzie_string_inner_join <- function(
     q = NULL,
     max_prefix = 0,
     prefix_weight = 0,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_string_join(
     df1, df2, by,
     method = method,
@@ -109,7 +112,7 @@ fozzie_string_left_join <- function(
     q = NULL,
     max_prefix = 0,
     prefix_weight = 0,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_string_join(
     df1, df2, by,
     method = method,
@@ -134,7 +137,7 @@ fozzie_string_right_join <- function(
     q = NULL,
     max_prefix = 0,
     prefix_weight = 0,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_string_join(
     df1, df2, by,
     method = method,
@@ -159,7 +162,7 @@ fozzie_string_anti_join <- function(
     q = NULL,
     max_prefix = 0,
     prefix_weight = 0,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_string_join(
     df1, df2, by,
     method = method,
@@ -184,7 +187,7 @@ fozzie_string_full_join <- function(
     q = NULL,
     max_prefix = 0,
     prefix_weight = 0,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_string_join(
     df1, df2, by,
     method = method,
@@ -209,7 +212,7 @@ fozzie_string_semi_join <- function(
     q = NULL,
     max_prefix = 0,
     prefix_weight = 0,
-    nthread = NULL) {
+    nthread = getOption("fozzie.nthread", NULL)) {
   fozzie_string_join(
     df1, df2, by,
     method = method,

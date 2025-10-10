@@ -1,3 +1,4 @@
+use crate::utils::any_numeric_to_vec64;
 use anyhow::{anyhow, Result};
 use core::f64;
 use extendr_api::prelude::*;
@@ -73,36 +74,8 @@ pub fn difference_join(
     let lk = by.0.as_str();
     let rk = by.1.as_str();
 
-    let left_col = df1
-        .dollar(lk)
-        .map_err(|_| anyhow!("Column `{}` not found in df1", lk))?;
-
-    let vec1: Vec<f64> = if let Some(v) = left_col.as_real_vector() {
-        v.to_vec()
-    } else if let Some(v) = left_col.as_integer_vector() {
-        v.iter().map(|&x| x as f64).collect()
-    } else {
-        return Err(anyhow!(
-            "Column `{}` in df1 is not numeric (integer or double)",
-            lk
-        ));
-    };
-
-    let right_col = df2
-        .dollar(rk)
-        .map_err(|_| anyhow!("Column `{}` not found in df2", rk))?;
-    use extendr_api::prelude::*;
-
-    let vec2: Vec<f64> = if let Some(v) = right_col.as_real_vector() {
-        v.to_vec()
-    } else if let Some(v) = left_col.as_integer_vector() {
-        v.iter().map(|&x| x as f64).collect()
-    } else {
-        return Err(anyhow!(
-            "Column `{}` in df1 is not numeric (integer or double)",
-            lk
-        ));
-    };
+    let vec1 = any_numeric_to_vec64(df1, lk)?;
+    let vec2 = any_numeric_to_vec64(df2, rk)?;
 
     let (idxs1, idxs2, dists) = fuzzy_indices_diff(vec1, vec2, max_distance, &pool);
     Ok((idxs1, idxs2, dists))

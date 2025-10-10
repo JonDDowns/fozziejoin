@@ -112,3 +112,24 @@ test_that("named list for `by` works with interval join", {
   result <- fozzie_interval_join(df1, df2, by = list(a = "c", b = "d"))
   expect_equal(nrow(result), 2)
 })
+
+test_that("interval_mode = real handles integer inputs", {
+  df1 <- data.frame(
+    start = c(100.0, 200.5, 300.2, 400.0),
+    end   = c(105.0, 210.0, 305.0, 410.0)
+  )
+
+  df2 <- data.frame(
+    start = c(102.0, 205.0, 299.0, 405.0),
+    end   = c(106L, 209L, 304L, 415L)
+  )
+
+  olaps <- fozzie_interval_join(
+    df1, df2,
+    by = c(start = "start", end = "end"),
+    how = "inner",
+  )
+
+  expect_equal(nrow(olaps), 4)
+})
+

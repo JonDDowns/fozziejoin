@@ -1,4 +1,5 @@
 use crate::interval::OverlapType;
+use crate::utils::any_numeric_to_vec64;
 use anyhow::{anyhow, Result};
 use extendr_api::prelude::*;
 use interavl::IntervalTree;
@@ -34,29 +35,10 @@ pub fn fuzzy_indices_interval_real(
     let (left_start_key, right_start_key) = &keys[0];
     let (left_end_key, right_end_key) = &keys[1];
 
-    let left_start = df1
-        .dollar(left_start_key)
-        .map_err(|_| anyhow!("Column '{}' not found in df1", left_start_key))?
-        .as_real_vector()
-        .ok_or_else(|| anyhow!("Column '{}' in df1 is not numeric", left_start_key))?;
-
-    let left_end = df1
-        .dollar(left_end_key)
-        .map_err(|_| anyhow!("Column '{}' not found in df1", left_end_key))?
-        .as_real_vector()
-        .ok_or_else(|| anyhow!("Column '{}' in df1 is not numeric", left_end_key))?;
-
-    let right_start = df2
-        .dollar(right_start_key)
-        .map_err(|_| anyhow!("Column '{}' not found in df2", right_start_key))?
-        .as_real_vector()
-        .ok_or_else(|| anyhow!("Column '{}' in df2 is not numeric", right_start_key))?;
-
-    let right_end = df2
-        .dollar(right_end_key)
-        .map_err(|_| anyhow!("Column '{}' not found in df2", right_end_key))?
-        .as_real_vector()
-        .ok_or_else(|| anyhow!("Column '{}' in df2 is not numeric", right_end_key))?;
+    let left_start = any_numeric_to_vec64(df1, left_start_key)?;
+    let left_end = any_numeric_to_vec64(df1, left_end_key)?;
+    let right_start = any_numeric_to_vec64(df2, right_start_key)?;
+    let right_end = any_numeric_to_vec64(df2, right_end_key)?;
 
     if left_start.len() != left_end.len() || right_start.len() != right_end.len() {
         return Err(anyhow!("Start and end columns must have equal lengths"));

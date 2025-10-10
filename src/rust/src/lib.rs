@@ -203,6 +203,15 @@ pub fn fozzie_interval_join_rs(
     Ok(joined)
 }
 
+/// @title Get number of threads in global thread pool
+/// @description Returns default rayon number of threads
+/// @keywords internal
+/// @export
+#[extendr]
+fn get_nthread_default() -> usize {
+    rayon::current_num_threads()
+}
+
 // Export the function to R
 extendr_module! {
     mod fozziejoin;
@@ -210,4 +219,5 @@ extendr_module! {
     fn fozzie_difference_join_rs;
     fn fozzie_distance_join_rs;
     fn fozzie_interval_join_rs;
+    fn get_nthread_default;
 }

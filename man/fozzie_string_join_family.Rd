@@ -22,7 +22,7 @@ fozzie_string_join(
   q = NULL,
   max_prefix = 0,
   prefix_weight = 0,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_string_inner_join(
@@ -35,7 +35,7 @@ fozzie_string_inner_join(
   q = NULL,
   max_prefix = 0,
   prefix_weight = 0,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_string_left_join(
@@ -48,7 +48,7 @@ fozzie_string_left_join(
   q = NULL,
   max_prefix = 0,
   prefix_weight = 0,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_string_right_join(
@@ -61,7 +61,7 @@ fozzie_string_right_join(
   q = NULL,
   max_prefix = 0,
   prefix_weight = 0,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_string_anti_join(
@@ -74,7 +74,7 @@ fozzie_string_anti_join(
   q = NULL,
   max_prefix = 0,
   prefix_weight = 0,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_string_full_join(
@@ -87,7 +87,7 @@ fozzie_string_full_join(
   q = NULL,
   max_prefix = 0,
   prefix_weight = 0,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 
 fozzie_string_semi_join(
@@ -100,7 +100,7 @@ fozzie_string_semi_join(
   q = NULL,
   max_prefix = 0,
   prefix_weight = 0,
-  nthread = NULL
+  nthread = getOption("fozzie.nthread", NULL)
 )
 }
 \arguments{
@@ -146,7 +146,10 @@ or a named list like \code{list(col1 = "col2")}.}
 
 \item{prefix_weight}{Numeric (for Jaro-Winkler) specifying the prefix weighting factor.}
 
-\item{nthread}{Optional integer to specify number of threads for parallelization.}
+\item{nthread}{Optional integer specifying the number of threads to use for
+parallelization. If not provided, the value is determined by
+\code{options("fozzie.nthread")}. The package default is inherited from
+Rayon, the multithreading library used throughout the package.}
 }
 \value{
 A data frame with fuzzy-matched rows depending on the join type. See individual functions like \code{fozzie_string_inner_join()} for examples.
