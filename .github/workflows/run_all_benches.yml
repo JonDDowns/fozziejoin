@@ -29,7 +29,7 @@ jobs:
           extra-packages: any::remotes, any::tibble, any::fuzzyjoin, any::qdapDictionaries, any::microbenchmark, any::IRanges
 
       - name: Install local package
-        run: Rscript -e 'remotes::install_local(".", dependencies = FALSE)'
+        run: Rscript -e 'remotes::install_local(".", dependencies = FALSE, force = TRUE)'
 
       - name: Run difference benchmarks
         run: Rscript scripts/difference_benchmark.R
