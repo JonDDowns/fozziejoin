@@ -34,6 +34,12 @@ fozzie_distance_join_rs <- function(df1, df2, by, method, how, max_distance, dis
 #' @export
 fozzie_interval_join_rs <- function(df1, df2, by, how, overlap_type, maxgap, minoverlap, interval_mode, nthread) .Call(wrap__fozzie_interval_join_rs, df1, df2, by, how, overlap_type, maxgap, minoverlap, interval_mode, nthread)
 
+#' @title Internal: Regex Join via Rust
+#' @description Internal function. Performs a regex-based fuzzy join using Rust backend.
+#' @keywords internal
+#' @export
+fozzie_regex_join_rs <- function(df1, df2, by, how, ignore_case, nthread) .Call(wrap__fozzie_regex_join_rs, df1, df2, by, how, ignore_case, nthread)
+
 #' @title Get number of threads in global thread pool
 #' @description Returns default rayon number of threads
 #' @keywords internal
