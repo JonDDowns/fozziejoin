@@ -4,7 +4,6 @@
 
 use anyhow::{anyhow, Result};
 use extendr_api::prelude::*;
-use itertools::iproduct;
 use rayon::prelude::*;
 use rayon::ThreadPool;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -115,95 +114,83 @@ impl QGramDistance for Jaccard {
         q: usize,
         pool: &ThreadPool,
     ) -> Result<Vec<(usize, usize, f64)>> {
-        let mut left_meta: FxHashMap<&str, (Vec<usize>, FxHashSet<&str>)> = FxHashMap::default();
-        let left_iter = left
-            .dollar(left_key)
-            .map_err(|_| anyhow!("Column '{}' not found in left dataframe", left_key))?
-            .as_str_iter()
-            .ok_or_else(|| anyhow!("Column '{}' is not a string vector", left_key))?;
+        // Build RHS q-gram reverse index
+        let mut rhs_qgram_index: FxHashMap<&str, Vec<usize>> = FxHashMap::default();
+        let mut rhs_qgrams: FxHashMap<usize, FxHashSet<&str>> = FxHashMap::default();
 
-        for (index, val) in left_iter.enumerate() {
-            let entry = left_meta
-                .entry(val)
-                .or_insert_with(|| (Vec::new(), FxHashSet::default()));
-            entry.0.push(index + 1);
-
-            let mut ring = VecDeque::with_capacity(q + 1);
-            for (i, _) in val.char_indices() {
-                ring.push_back(i);
-                if ring.len() == q + 1 {
-                    let start = ring[0];
-                    let end = ring[q];
-                    entry.1.insert(&val[start..end]);
-                    ring.pop_front();
-                }
-            }
-            if ring.len() == q {
-                let start = ring[0];
-                let end = val.len();
-                entry.1.insert(&val[start..end]);
-            }
-        }
-
-        let mut right_meta: FxHashMap<&str, (Vec<usize>, FxHashSet<&str>)> = FxHashMap::default();
         let right_iter = right
             .dollar(right_key)
             .map_err(|_| anyhow!("Column '{}' not found in right dataframe", right_key))?
             .as_str_iter()
             .ok_or_else(|| anyhow!("Column '{}' is not a string vector", right_key))?;
 
-        for (index, val) in right_iter.enumerate() {
-            let entry = right_meta
-                .entry(val)
-                .or_insert_with(|| (Vec::new(), FxHashSet::default()));
-            entry.0.push(index + 1);
-
-            let mut ring = VecDeque::with_capacity(q + 1);
-            for (i, _) in val.char_indices() {
-                ring.push_back(i);
-                if ring.len() == q + 1 {
-                    let start = ring[0];
-                    let end = ring[q];
-                    entry.1.insert(&val[start..end]);
-                    ring.pop_front();
-                }
-            }
-            if ring.len() == q {
-                let start = ring[0];
-                let end = val.len();
-                entry.1.insert(&val[start..end]);
+        for (r_idx, val) in right_iter.enumerate() {
+            let idx = r_idx + 1;
+            let grams = get_qgram_set(val, q);
+            rhs_qgrams.insert(idx, grams.clone());
+            for gram in grams {
+                rhs_qgram_index.entry(gram).or_default().push(idx);
             }
         }
 
-        let idxs = pool.install(|| {
-            left_meta
-                .par_iter()
-                .filter_map(|(_, (v1, hs1))| {
-                    let mut idxs = Vec::new();
-                    for (_, (v2, hs2)) in right_meta.iter() {
-                        let dist = if hs1.is_empty() && hs2.is_empty() {
-                            0.0
-                        } else {
-                            let intersection_size = hs1.intersection(hs2).count();
-                            let union_size = hs1.union(hs2).count();
-                            1.0 - (intersection_size as f64) / (union_size as f64)
-                        };
+        // Match LHS records to RHS candidates via shared q-grams
+        let left_proto = left
+            .dollar(left_key)
+            .map_err(|_| anyhow!("Column '{}' not found in left dataframe", left_key))?;
+        let left_iter = left_proto
+            .as_str_vector()
+            .ok_or_else(|| anyhow!("Column '{}' is not a string vector", left_key))?;
 
-                        if dist <= max_distance {
-                            iproduct!(v1, v2).for_each(|(a, b)| {
-                                idxs.push((*a, *b, dist));
-                            });
+        let results = pool.install(|| {
+            left_iter
+                .par_iter()
+                .enumerate()
+                .filter_map(|(l_idx, val)| {
+                    let lhs_idx = l_idx + 1;
+                    let lhs_grams = get_qgram_set(val, q);
+
+                    // Collect RHS candidates that share at least one q-gram
+                    let mut candidates = FxHashSet::default();
+                    for gram in &lhs_grams {
+                        if let Some(rhs_idxs) = rhs_qgram_index.get(gram) {
+                            candidates.extend(rhs_idxs);
                         }
                     }
-                    if idxs.is_empty() {
-                        None
-                    } else {
-                        Some(idxs)
+
+                    if candidates.is_empty() {
+                        return None;
                     }
+
+                    // Compare Jaccard distance for each candidate
+                    let mut matches = Vec::new();
+                    for &rhs_idx in &candidates {
+                        let rhs_grams = &rhs_qgrams[&rhs_idx];
+
+                        // Predict best-case similarity
+                        let max_intersection = lhs_grams.len().min(rhs_grams.len());
+                        let min_union = lhs_grams.len().max(rhs_grams.len());
+                        let min_possible_distance =
+                            1.0 - (max_intersection as f64 / min_union as f64);
+
+                        if min_possible_distance > max_distance {
+                            continue; // Skip: can't possibly be close enough
+                        }
+
+                        // Proceed with actual Jaccard distance
+                        let intersection = lhs_grams.intersection(rhs_grams).count();
+                        let union = lhs_grams.union(rhs_grams).count();
+                        let dist = 1.0 - (intersection as f64 / union as f64);
+
+                        if dist <= max_distance {
+                            matches.push((lhs_idx, rhs_idx, dist));
+                        }
+                    }
+                    Some(matches)
                 })
                 .flatten()
                 .collect()
         });
-        Ok(idxs)
+
+        Ok(results)
     }
 }
