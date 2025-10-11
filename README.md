@@ -15,6 +15,8 @@ Currently, the following function families are available:
 - `fozzie_difference_join`
 - `fozzie_distance_join`
 - `fozzie_interval_join`
+- `fozzie_interval_join`
+- `fozzie_regex_join`
 - `fozzie_temporal_join`
 - `fozzie_temporal_interval_join`
 

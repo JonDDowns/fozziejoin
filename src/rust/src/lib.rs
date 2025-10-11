@@ -6,6 +6,7 @@ pub mod difference;
 pub mod distance;
 pub mod interval;
 pub mod merge;
+pub mod regex;
 pub mod string;
 pub mod utils;
 
@@ -15,6 +16,7 @@ use crate::interval::integer::fuzzy_indices_interval_int;
 use crate::interval::real::fuzzy_indices_interval_real;
 use crate::merge::dispatch_join;
 use crate::merge::DistanceData;
+use crate::regex::{regex_join, regex_pairs};
 use crate::string::string_join;
 use crate::utils::get_pool;
 
@@ -203,6 +205,53 @@ pub fn fozzie_interval_join_rs(
     Ok(joined)
 }
 
+/// @title Internal: Regex Join via Rust
+/// @description Internal function. Performs a regex-based fuzzy join using Rust backend.
+/// @keywords internal
+/// @export
+#[extendr]
+pub fn fozzie_regex_join_rs(
+    df1: List,
+    df2: List,
+    by: List,
+    how: String,
+    ignore_case: bool,
+    nthread: Option<usize>,
+) -> Result<List> {
+    let pool = get_pool(nthread)?;
+
+    let keys: Vec<(String, String)> = by
+        .iter()
+        .map(|(left_key, val)| {
+            let right_key = val
+                .as_string_vector()
+                .ok_or_else(|| anyhow!("Missing string vector for key '{}'", left_key))?;
+            Ok((left_key.to_string(), right_key[0].clone()))
+        })
+        .collect::<Result<_>>()?;
+
+    let (mut idxs1, mut idxs2) = regex_join(&df1, &df2, keys[0].clone(), ignore_case, &pool)
+        .map_err(|e| anyhow!("Failed initial regex join: {}", e))?;
+
+    let out: List = if keys.len() == 1 {
+        let dists: Vec<f64> = Vec::new();
+        let dists = DistanceData::Single(&dists);
+        dispatch_join(how.as_str(), &df1, &df2, idxs1, idxs2, None, dists, by)
+    } else {
+        for bypair in &keys[1..] {
+            let (a, b) = regex_pairs(&df1, &idxs1, &df2, &idxs2, bypair, ignore_case, &pool)
+                .map_err(|e| anyhow!("Failed difference_pairs for {:?}: {}", bypair, e))?;
+            idxs1 = a;
+            idxs2 = b;
+        }
+        let dists: Vec<Vec<f64>> = Vec::new();
+        let dists = DistanceData::Matrix(&dists);
+        dispatch_join(how.as_str(), &df1, &df2, idxs1, idxs2, None, dists, by)
+    };
+
+    Ok(out)
+}
+
 /// @title Get number of threads in global thread pool
 /// @description Returns default rayon number of threads
 /// @keywords internal
@@ -219,5 +268,6 @@ extendr_module! {
     fn fozzie_difference_join_rs;
     fn fozzie_distance_join_rs;
     fn fozzie_interval_join_rs;
+    fn fozzie_regex_join_rs;
     fn get_nthread_default;
 }
