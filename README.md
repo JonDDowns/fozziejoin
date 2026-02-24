@@ -1,7 +1,7 @@
 # fozziejoin 🧸
 
-> ⚠️ **Note**: This project is in early development.
-> APIs may change, and installing from source requires the Rust toolchain.
+> ⚠️ **Note**: This repo has been archived. 
+> The new home for this and other fozziejoin projects is in the [fozziejoin repo in the fozzieverse oragnization](https://github.com/fozzieverse/fozziejoin). 
 
 `fozziejoin` is an R package that performs fast fuzzy joins using Rust as a
 backend. It is a performance-minded re-imagining of the very popular
